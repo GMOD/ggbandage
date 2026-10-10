@@ -2,8 +2,9 @@ engine <- local({
   ctx <- NULL
   function() {
     if (is.null(ctx)) {
-      ctx <<- V8::v8()
-      ctx$source(system.file("js", "bandage.js", package = "ggbandage"))
+      fresh <- V8::v8()
+      fresh$source(system.file("js", "bandage.js", package = "ggbandage"))
+      ctx <<- fresh
     }
     ctx
   }
