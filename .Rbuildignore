@@ -1,0 +1,8 @@
+^\.github$
+^node_modules$
+^scripts$
+^package\.json$
+^pnpm-lock\.yaml$
+^pnpm-workspace\.yaml$
+^\.Rproj\.user$
+^.*\.Rproj$

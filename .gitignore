@@ -1,0 +1,6 @@
+node_modules
+.Rproj.user
+.Rhistory
+Rplots.pdf
+*.tar.gz
+ggbandage.Rcheck/

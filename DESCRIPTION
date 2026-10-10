@@ -1,0 +1,23 @@
+Package: ggbandage
+Title: Pangenome Graph Figures with 'ggplot2'
+Version: 0.0.0.9000
+Authors@R: person("Colin", "Diesh", email = "colindiesh@berkeley.edu", role = c("aut", "cre"))
+Description: Lays out a GFA pangenome graph with the Bandage engine from
+    '@jbrowse/bandage-core', run in 'V8', and draws it as 'ggplot2' layers.
+License: GPL (>= 3)
+URL: https://github.com/GMOD/ggbandage
+BugReports: https://github.com/GMOD/ggbandage/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    ggplot2 (>= 3.5.0),
+    grDevices,
+    grid,
+    jsonlite,
+    stats,
+    utils,
+    V8
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

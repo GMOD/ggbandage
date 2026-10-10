@@ -1,0 +1,13 @@
+{
+  "name": "ggbandage-engine",
+  "private": true,
+  "type": "module",
+  "description": "Builds inst/js/bandage.js, the bandage-core bundle the R package runs in V8",
+  "scripts": {
+    "build": "node scripts/build-js.mjs"
+  },
+  "devDependencies": {
+    "@jbrowse/bandage-core": "link:../bandage-core",
+    "esbuild": "^0.28.2"
+  }
+}
