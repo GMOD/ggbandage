@@ -64,6 +64,23 @@ the tests on the result, since a change there fires no event here.
 
 Tube maps, walk rows, gene pins, node labels and the walk keys' colour bars.
 
+## See also
+
+- [@jbrowse/bandage-core](https://github.com/GMOD/bandage-core) - Bandage layout
+  and drawing engine
+- [ggtubemap](https://github.com/GMOD/ggtubemap) - tube maps as ggplot2 layers
+- [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer) -
+  JBrowse 2 plugin that browses these graphs by locus
+- [BandageJS](https://github.com/cmdcolin/BandageJS) - standalone page for GFA
+  and gbz-base graphs
+- [@jbrowse/graph-stress-layout](https://github.com/GMOD/graph-stress-layout) -
+  stress layout that keeps the reference straight
+
+Tutorials on [jbrowse.org](https://jbrowse.org/jb2/docs/tutorials/)
+
+- [HPRC part 3: repeat lengths](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc_repeats/)
+- [HPRC part 1: graph alleles and haplotypes](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/)
+
 ## License
 
 GPL-3.0-or-later, as bandage-core, Bandage and OGDF are.
