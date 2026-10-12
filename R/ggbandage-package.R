@@ -4,7 +4,7 @@
 "_PACKAGE"
 
 utils::globalVariables(c(
-  "x", "y", "draw", "ink", "width", "angle", "length", "halfWidth",
+  "x", "y", "draw", "ink", "width", "angle", "halfWidth",
   "color", "alpha", "panel"
 ))
 

@@ -14,7 +14,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
     geom_bandage_edges() +
     geom_bandage_nodes() +
     geom_bandage_arrows() +
-    ggplot2::theme_void(base_size = 11) +
+    ggplot2::theme_void() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(8, 8, 8, 8),
       strip.text = ggplot2::element_text(

@@ -37,15 +37,14 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
   )
   ctx <- engine()
   ctx$assign("gfaText", read_gfa(gfa))
-  ctx$assign("spec", spec, auto_unbox = TRUE)
+  ctx$assign("gfaName", basename(gfa))
+  ctx$assign("spec", spec)
+  on.exit(ctx$eval("gfaText = null"))
   json <- ctx$eval(
-    sprintf(
-      "bandage.gfaFigureData(gfaText, %s, spec).then(JSON.stringify)",
-      jsonlite::toJSON(basename(gfa), auto_unbox = TRUE)
-    ),
+    "bandage.gfaFigureData(gfaText, gfaName, spec).then(JSON.stringify)",
     await = TRUE
   )
-  as_bandage_layout(jsonlite::fromJSON(json, simplifyVector = TRUE))
+  as_bandage_layout(jsonlite::fromJSON(json))
 }
 
 # y down, as on screen, becomes y up, and the panels become a factor in the
@@ -56,25 +55,20 @@ as_bandage_layout <- function(d) {
     as.data.frame(cols, stringsAsFactors = FALSE)
   }
   panels <- frame(d$panels)
-  panel_factor <- function(p) factor(p, levels = panels$panel)
+  upright <- function(x, flip = "y") {
+    for (col in flip) x[[col]] <- -x[[col]]
+    if (!is.null(x$panel)) x$panel <- factor(x$panel, levels = panels$panel)
+    x
+  }
+
   info <- frame(d$nodeInfo)
+  nodes <- upright(frame(d$nodes))
+  extra <- setdiff(names(info), "node")
+  nodes[extra] <- info[match(nodes$node, info$node), extra]
 
-  nodes <- frame(d$nodes)
-  nodes$y <- -nodes$y
-  nodes$panel <- panel_factor(nodes$panel)
-  nodes <- cbind(nodes, info[match(nodes$node, info$node), -1, drop = FALSE])
-
-  edges <- frame(d$edges)
-  for (col in c("y0", "cy0", "cy1", "y1")) edges[[col]] <- -edges[[col]]
-  edges$panel <- panel_factor(edges$panel)
-
-  arrows <- frame(d$arrows)
-  arrows$y <- -arrows$y
-  arrows$angle <- -arrows$angle
-  arrows$panel <- panel_factor(arrows$panel)
-
-  rows <- frame(d$rowLabels)
-  rows$y <- -rows$y
+  edges <- upright(frame(d$edges), c("y0", "cy0", "cy1", "y1"))
+  arrows <- upright(frame(d$arrows), c("y", "angle"))
+  rows <- upright(frame(d$rowLabels))
 
   structure(
     list(

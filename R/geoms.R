@@ -26,22 +26,17 @@ table_from <- function(data, pick) {
 }
 
 with_defaults <- function(mapping, defaults) {
-  if (is.null(mapping)) {
-    return(defaults)
-  }
-  merged <- defaults
-  for (name in names(mapping)) merged[[name]] <- mapping[[name]]
-  merged
+  defaults[names(mapping)] <- mapping
+  defaults
 }
 
 # The canvas strokes all of one faded colour as one path, so where faded
 # strokes overlap they do not darken. Separate translucent paths would, so a
 # faded colour is mixed with the background instead.
 ink <- function(color, alpha, background) {
-  rgb <- grDevices::col2rgb(color) / 255
-  bg <- as.vector(grDevices::col2rgb(background) / 255)
-  mixed <- rgb * rep(alpha, each = 3) + bg * rep(1 - alpha, each = 3)
-  grDevices::rgb(mixed[1, ], mixed[2, ], mixed[3, ])
+  bg <- as.vector(grDevices::col2rgb(background)) / 255
+  mixed <- bg + (grDevices::col2rgb(color) / 255 - bg) * rep(alpha, each = 3)
+  grDevices::rgb(t(mixed))
 }
 
 # Faded strokes go under lifted ones, as the canvas paints them. A stroke's
@@ -75,7 +70,7 @@ bezier_points <- function(e, scale) {
     abs(e$cy1 - e$cy0) + abs(e$x1 - e$cx1) + abs(e$y1 - e$cy1)
   steps <- pmin(32, pmax(2, ceiling(reach * scale / 3)))
   i <- rep(seq_len(nrow(e)), steps)
-  t <- unlist(lapply(steps, function(n) seq(0, 1, length.out = n)))
+  t <- (sequence(steps) - 1) / (steps[i] - 1)
   u <- 1 - t
   b0 <- u^3
   b1 <- 3 * u^2 * t
@@ -124,16 +119,7 @@ GeomBandagePath <- ggplot2::ggproto("GeomBandagePath", ggplot2::Geom,
 #' @export
 geom_bandage_nodes <- function(mapping = NULL, data = NULL,
                                background = "white", ...) {
-  ggplot2::layer(
-    geom = GeomBandagePath, stat = "identity", position = "identity",
-    data = table_from(data, function(m) nodes_of(m, background)),
-    mapping = with_defaults(mapping, ggplot2::aes(
-      x = x, y = y, group = draw,
-      colour = I(ink), linewidth = I(px_linewidth(width))
-    )),
-    inherit.aes = FALSE, show.legend = NA,
-    params = list(...)
-  )
+  path_layer(mapping, data, function(m) nodes_of(m, background), ...)
 }
 
 #' Graph edges as their Bezier curves
@@ -141,9 +127,13 @@ geom_bandage_nodes <- function(mapping = NULL, data = NULL,
 #' @export
 geom_bandage_edges <- function(mapping = NULL, data = NULL,
                                background = "white", ...) {
+  path_layer(mapping, data, function(m) edges_of(m, background), ...)
+}
+
+path_layer <- function(mapping, data, pick, ...) {
   ggplot2::layer(
     geom = GeomBandagePath, stat = "identity", position = "identity",
-    data = table_from(data, function(m) edges_of(m, background)),
+    data = table_from(data, pick),
     mapping = with_defaults(mapping, ggplot2::aes(
       x = x, y = y, group = draw,
       colour = I(ink), linewidth = I(px_linewidth(width))

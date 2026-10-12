@@ -6,3 +6,4 @@
 ^pnpm-workspace\.yaml$
 ^\.Rproj\.user$
 ^.*\.Rproj$
+^agent-docs$

@@ -30,10 +30,10 @@ test_that("a mapped aesthetic replaces the view's colour", {
   g <- bandage_layout(pggb)
   p <- ggplot2::ggplot(g) + geom_bandage_nodes(ggplot2::aes(colour = length))
   d <- ggplot2::layer_data(p)
-  expect_false(identical(d$colour, ggbandage:::nodes_of(g)$ink))
+  expect_false(identical(d$colour, nodes_of(g)$ink))
 })
 
 test_that("faded ink is mixed with the background, not stacked", {
-  expect_equal(ggbandage:::ink("#000000", 0.5, "white"), "#808080")
-  expect_equal(ggbandage:::ink("#ff0000", 1, "white"), "#FF0000")
+  expect_equal(ink("#000000", 0.5, "white"), "#808080")
+  expect_equal(ink("#ff0000", 1, "white"), "#FF0000")
 })
