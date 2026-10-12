@@ -48,17 +48,16 @@ and name their rows on y.
 ## The engine bundle
 
 `inst/js/bandage.js` is bandage-core bundled for V8, committed so installing
-needs no JavaScript toolchain. Its first line names the core it was built from.
-To rebuild it, with bandage-core checked out beside this repo:
+needs no JavaScript toolchain. Its first line names the core release it was
+built from, the one `package.json` pins. To move to a new release:
 
 ```console
-cd ../bandage-core && pnpm install && cd -
-pnpm install
+pnpm add -D -E @jbrowse/bandage-core@<version>
 pnpm build
 ```
 
-The `bundle` workflow rebuilds it nightly against bandage-core `main` and runs
-the tests on the result, since a change there fires no event here.
+The `bundle` workflow checks the committed bundle is the pinned release's
+build, and nightly builds the latest release and runs the tests on it.
 
 ## Not yet
 

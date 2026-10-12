@@ -1,6 +1,4 @@
-import { execFileSync } from 'node:child_process'
-import { readFileSync, realpathSync, writeFileSync } from 'node:fs'
-import path from 'node:path'
+import { readFileSync, writeFileSync } from 'node:fs'
 
 import { build } from 'esbuild'
 
@@ -8,16 +6,9 @@ import { build } from 'esbuild'
 // can evaluate, with no modules, file system or network, and FMMM's WASM
 // inlined. The banner names the core it was built from, so a committed bundle
 // says what it is.
-const core = realpathSync('node_modules/@jbrowse/bandage-core')
 const { version } = JSON.parse(
-  readFileSync(path.join(core, 'package.json'), 'utf8'),
+  readFileSync('node_modules/@jbrowse/bandage-core/package.json', 'utf8'),
 )
-let commit = ''
-try {
-  commit = execFileSync('git', ['-C', core, 'rev-parse', '--short', 'HEAD'], {
-    encoding: 'utf8',
-  }).trim()
-} catch {}
 
 const OUT = 'inst/js/bandage.js'
 
@@ -92,7 +83,7 @@ const decoder = `function bandageBase64(s) {
 }`
 
 const banner = [
-  `// @jbrowse/bandage-core@${version}${commit ? ` (${commit})` : ''}, bundled by scripts/build-js.mjs`,
+  `// @jbrowse/bandage-core@${version}, bundled by scripts/build-js.mjs`,
   'if (!globalThis.performance) globalThis.performance = { now: () => Date.now() };',
   decoder,
 ].join('\n')

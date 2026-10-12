@@ -1,7 +1,8 @@
-# inst/js/bandage.js is committed, so nothing else ever rebuilds it, and it
-# bundles bandage-core `main`, which moves on its own. A break is normally
-# caused by a commit there, which fires no event here, so the nightly run is
-# the one that finds it.
+# inst/js/bandage.js is committed, built from the bandage-core release that
+# package.json pins. `pinned` checks the committed bundle is that build.
+# `latest` builds the newest release and runs the tests on it, so a core
+# release that breaks the tables shows up here before anyone bumps the pin;
+# a release fires no event here, so the nightly run is the one that finds it.
 on:
   push:
     branches: [main]
@@ -14,39 +15,40 @@ on:
 name: bundle
 
 jobs:
-  bundle:
-    name: bundle builds and draws against bandage-core main
+  pinned:
+    name: the committed bundle is the pinned core's build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: ggbandage
-      # the `link:` dependency resolves to a sibling bandage-core checkout
-      - uses: actions/checkout@v4
-        with:
-          repository: GMOD/bandage-core
-          path: bandage-core
       - uses: pnpm/action-setup@v4
         with:
           version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: pnpm install --frozen-lockfile=false
-        working-directory: bandage-core
-      - run: pnpm install --frozen-lockfile=false
-        working-directory: ggbandage
+      - run: pnpm install --frozen-lockfile
       - run: pnpm build
-        working-directory: ggbandage
+      - run: git diff --exit-code inst/js/bandage.js
+
+  latest:
+    name: the latest core release builds and passes the tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm add -D -E @jbrowse/bandage-core@latest
+      - run: pnpm build
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          working-directory: ggbandage
           extra-packages: any::testthat
-      - name: the tests pass on the rebuilt bundle
-        working-directory: ggbandage
-        run: |
+      - run: |
           R CMD INSTALL .
           Rscript -e 'testthat::test_local(stop_on_failure = TRUE)'

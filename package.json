@@ -7,7 +7,7 @@
     "build": "node scripts/build-js.mjs"
   },
   "devDependencies": {
-    "@jbrowse/bandage-core": "link:../bandage-core",
+    "@jbrowse/bandage-core": "10.2.1",
     "esbuild": "^0.28.2"
   }
 }

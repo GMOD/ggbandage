@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@jbrowse/bandage-core':
-        specifier: link:../bandage-core
-        version: link:../bandage-core
+        specifier: 10.2.1
+        version: 10.2.1
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -173,10 +173,45 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@gmod/bgzf-filehandle@6.7.0':
+    resolution: {integrity: sha512-ThtHVneb+tASyGFACVL/rMu6d5AY0vWK6poeOJwIIAaJpXYpptrmwvhdk2xk5eoNzL+iN40B3bXytMvQ+e+80Q==}
+
+  '@gmod/gbz-base@7.4.0':
+    resolution: {integrity: sha512-RVkx84He7NWo7MpexZ041sc6YWQqdusOdmX3pO52BXM7Km9HZ9nweeZeybUBOGx9u22Uof63o07y889sKlYffA==}
+    hasBin: true
+
+  '@gmod/shared-read-cache@2.0.0':
+    resolution: {integrity: sha512-nU4HPB+DlvZqRVJZvtIbJ3zS+kSKfOhibCu3Y7Sia9D4GwA1MotdBNH19hM8/gP/tYuHGaSdvpGhZ0FfJbw/Hg==}
+
+  '@gmod/tabix@3.10.1':
+    resolution: {integrity: sha512-bynf5MGr50O6Re2asEbt3kEfULUhXb2J87dqFK/78xXfJIWWrKfuQCA+ADSp3QJtdODvTf7ftWiTnc8yLQ0Yrw==}
+
+  '@jbrowse/bandage-core@10.2.1':
+    resolution: {integrity: sha512-2znMe0leiseBSSs9jjLqZSY7tb3YSLCDFAUlYgxydxKs9IjLwC8EhjioWJPxRxxkjFpdKl7NgBa+T2FoMkO2eg==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  '@jbrowse/graph-stress-layout@1.0.0':
+    resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
+    engines: {node: '>=20'}
+
+  '@jbrowse/quick-lru@8.0.0':
+    resolution: {integrity: sha512-zToC0THd94TGr4cWMp9eOCRB8eeN004ncajZzVOoM8WEWV90YMTX5SX9zY6Nk1hhY7ASKWnfOmguXt7SoXaLzw==}
+    engines: {node: '>=22'}
+
+  '@jbrowse/tubemap-core@1.0.0':
+    resolution: {integrity: sha512-6mkKyeq2onugbvptWeq49gCy26cYjLki8YRGXgBVSdg/uFUdL7+qoiu1vMWTa+9YOOBhs21QBG+9oan+iQJvtw==}
+
   esbuild@0.28.2:
     resolution: {integrity: sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==}
     engines: {node: '>=18'}
     hasBin: true
+
+  generic-filehandle2@2.5.0:
+    resolution: {integrity: sha512-qrzjvxfFTswagFQRW7Gc8m5Fy+ra538mrXg4Ggtn+05PpeGYQ9QPkvQQ2O4poa2eGdUN/jAR49M5Y31Wvrr/xA==}
+
+  pako-esm2@2.0.2:
+    resolution: {integrity: sha512-bm+PwddAyroj8Ny8tNuLepGW28OUdI2b/PkvhaW2jHBVZ5fgcR1xsrLPiOKwk8LoXyc1az2NdHlvICBN2BjR6Q==}
 
 snapshots:
 
@@ -258,6 +293,37 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
+  '@gmod/bgzf-filehandle@6.7.0':
+    dependencies:
+      generic-filehandle2: 2.5.0
+      pako-esm2: 2.0.2
+
+  '@gmod/gbz-base@7.4.0':
+    dependencies:
+      generic-filehandle2: 2.5.0
+
+  '@gmod/shared-read-cache@2.0.0': {}
+
+  '@gmod/tabix@3.10.1':
+    dependencies:
+      '@gmod/bgzf-filehandle': 6.7.0
+      '@gmod/shared-read-cache': 2.0.0
+      '@jbrowse/quick-lru': 8.0.0
+      generic-filehandle2: 2.5.0
+
+  '@jbrowse/bandage-core@10.2.1':
+    dependencies:
+      '@gmod/gbz-base': 7.4.0
+      '@gmod/tabix': 3.10.1
+      '@jbrowse/graph-stress-layout': 1.0.0
+      '@jbrowse/tubemap-core': 1.0.0
+
+  '@jbrowse/graph-stress-layout@1.0.0': {}
+
+  '@jbrowse/quick-lru@8.0.0': {}
+
+  '@jbrowse/tubemap-core@1.0.0': {}
+
   esbuild@0.28.2:
     optionalDependencies:
       '@esbuild/aix-ppc64': 0.28.2
@@ -286,3 +352,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.28.2
       '@esbuild/win32-ia32': 0.28.2
       '@esbuild/win32-x64': 0.28.2
+
+  generic-filehandle2@2.5.0: {}
+
+  pako-esm2@2.0.2: {}
