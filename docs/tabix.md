@@ -68,6 +68,9 @@ calls `ggbandage:::fetch_range` through `console.r.call`.
 - A URL becomes one `Range` request per call through `curl`. A local file is
   read with `seek` and `readBin`
 - A length of `-1` means the whole file, which the reader uses for the `.tbi`
+- A range that runs past the end of a file returns the bytes that exist, and
+  an HTTP 416 reads as no bytes, because the reader asks for whole 64 kB
+  blocks near the end of small files
 - An R error in `fetch_range`, such as a missing file or an HTTP error status,
   reaches the caller as the error message, and the V8 context stays usable
 

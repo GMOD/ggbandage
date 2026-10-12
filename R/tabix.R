@@ -41,7 +41,10 @@ parse_region <- function(region) {
     regexec("^\\s*([^:\\s]+):([0-9,]+)-([0-9,]+)\\s*$", region, perl = TRUE)
   )[[1]]
   if (!length(m)) {
-    stop(sprintf("\"%s\" is not a region like chr6:160,614,798-160,647,758", region))
+    stop(
+      sprintf("\"%s\" is not a region like chr6:160,614,798-160,647,758", region),
+      call. = FALSE
+    )
   }
   num <- function(s) as.numeric(gsub(",", "", s))
   list(refName = m[[2]], start = num(m[[3]]) - 1, end = num(m[[4]]))
@@ -59,36 +62,29 @@ fetch_range <- function(location, position, length) {
 }
 
 file_range <- function(path, position, length) {
-  if (!file.exists(path)) stop(sprintf("%s does not exist", path), call. = FALSE)
+  if (!file.exists(path)) {
+    stop(sprintf("%s does not exist", path), call. = FALSE)
+  }
+  left <- max(0, file.size(path) - position)
+  n <- if (length < 0) left else min(length, left)
+  if (n == 0) return(raw())
   con <- file(path, "rb")
   on.exit(close(con))
-  if (length < 0) length <- file.size(path) - position
   seek(con, position)
-  readBin(con, "raw", length)
+  readBin(con, "raw", n)
 }
 
 url_range <- function(url, position, length) {
+  if (length == 0) return(raw())
   handle <- curl::new_handle()
-  if (length >= 0 || position > 0) {
-    last <- if (length >= 0) as.character(position + length - 1) else ""
-    curl::handle_setheaders(
-      handle,
-      Range = sprintf("bytes=%.0f-%s", position, last)
-    )
+  if (length > 0 || position > 0) {
+    last <- if (length > 0) sprintf("%.0f", position + length - 1) else ""
+    curl::handle_setopt(handle, range = sprintf("%.0f-%s", position, last))
   }
   res <- curl::curl_fetch_memory(url, handle)
+  if (res$status_code == 416) return(raw())
   if (res$status_code >= 400) {
-    stop(sprintf("HTTP %d reading %s", res$status_code, url))
+    stop(sprintf("HTTP %d reading %s", res$status_code, url), call. = FALSE)
   }
   res$content
-}
-
-file_size <- function(location) {
-  if (is_url(location)) {
-    handle <- curl::new_handle(nobody = TRUE)
-    res <- curl::curl_fetch_memory(location, handle)
-    as.numeric(curl::parse_headers_list(res$headers)[["content-length"]])
-  } else {
-    file.size(location)
-  }
 }

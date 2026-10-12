@@ -104,14 +104,20 @@ const decoder = `function bandageBase64(s) {
 const textDecoder = `if (!globalThis.TextDecoder) {
   globalThis.TextDecoder = class TextDecoder {
     decode(bytes = new Uint8Array(0)) {
-      const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes.buffer ?? bytes);
+      const b = ArrayBuffer.isView(bytes)
+        ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+        : new Uint8Array(bytes);
       let out = '';
       for (let i = 0; i < b.length; ) {
         const c = b[i++];
-        const extra = c >= 0xf0 ? 3 : c >= 0xe0 ? 2 : c >= 0xc0 ? 1 : 0;
+        const extra = c >= 0xf8 ? -1 : c >= 0xf0 ? 3 : c >= 0xe0 ? 2 : c >= 0xc0 ? 1 : 0;
+        if (extra < 0 || (c >= 0x80 && c < 0xc0) || i + extra > b.length) {
+          out += '\\ufffd';
+          continue;
+        }
         let cp = extra === 0 ? c : c & (0x3f >> extra);
         for (let k = 0; k < extra; k++) cp = (cp << 6) | (b[i++] & 0x3f);
-        out += String.fromCodePoint(cp);
+        out += cp > 0x10ffff ? '\\ufffd' : String.fromCodePoint(cp);
       }
       return out;
     }

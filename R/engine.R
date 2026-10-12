@@ -34,6 +34,9 @@ read_gfa <- function(path) {
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, region = NULL, ...) {
+  if (grepl("\\.walks\\.bed\\.gz$", gfa)) {
+    stop("a gfa-to-tabix --walks file is not read yet", call. = FALSE)
+  }
   tabix <- is_tabix_graph(gfa)
   if (tabix && is.null(region)) {
     stop("an index holds a whole genome's graph; give the `region` to draw")

@@ -55,6 +55,38 @@ test_that("a missing index file is named in the error, and the engine recovers",
   )
 })
 
+test_that("a contig-layout index and a walks file are refused", {
+  expect_error(
+    bandage_layout(
+      test_path("testdata", "ecoli_contig"),
+      region = "K12#1#chr:1004500-1004961"
+    ),
+    "not anchored"
+  )
+  expect_error(bandage_layout("chr22.GRCh38.walks.bed.gz"), "--walks")
+})
+
+test_that("a byte range reads the same from a file and from a URL", {
+  skip_on_os("windows")
+  file <- paste0(index, ".segs.bed.gz")
+  url <- paste0("file://", normalizePath(file))
+  for (range in list(c(0, 100), c(10, 20), c(0, -1), c(5, -1))) {
+    expect_identical(
+      url_range(url, range[1], range[2]),
+      file_range(file, range[1], range[2])
+    )
+  }
+})
+
+test_that("a range past the end of a file is empty or short, never an error", {
+  file <- paste0(index, ".segs.bed.gz")
+  size <- file.size(file)
+  expect_length(file_range(file, 0, 1e6), size)
+  expect_length(file_range(file, size - 10, 1e6), 10)
+  expect_length(file_range(file, size + 5, 100), 0)
+  expect_length(file_range(file, 3, 0), 0)
+})
+
 test_that("a region parses from the browser's 1-based locus", {
   expect_equal(
     parse_region("GRCh38#0#chr6:31,000,001-31,100,000"),
