@@ -41,14 +41,40 @@ ggplot(g) +
 
 Widths are absolute, as on screen: a 6 px node is 1/16 in at any figure size.
 
+## From a gfa-to-tabix index
+
+- **In:** the `.graph.json` manifest or `.segs.bed.gz` that
+  [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) writes, local or a URL,
+  and a `region`
+- **Out:** the graph under that region, laid out as a GFA is
+
+```r
+g <- bandage_layout(
+  "hprc.graph.json",
+  region = "GRCh38#0#chr6:31,000,000-31,100,000",
+  layout = "auto"
+)
+```
+
+- Over a URL, R reads the index and the few blocks the region needs with range
+  requests, so the whole GFA never downloads
+- `chr6` names `GRCh38#0#chr6` when exactly one sequence in the index ends
+  that way
+- The index needs gfa-to-tabix's default `anchored` layout. A
+  `--layout contig` index raises an error, and `--walks` files are not read yet
+- Node names keep the strand the index filed them with. gfa-to-tabix flips a
+  node the reference reads in reverse, so `23+` in a GFA may be `23-` here
+- The reader is [@gmod/tabix](https://github.com/GMOD/tabix-js) in the engine
+  bundle. V8 has no file system or network, so it asks R for each byte range
+
 Layouts are `force` (the default), `auto` (anchored to the reference),
 `ordered` and `samplerows`. The anchored and row layouts put reference bp on x
 and name their rows on y.
 
 ## The engine bundle
 
-`inst/js/bandage.js` is bandage-core bundled for V8, committed so installing
-needs no JavaScript toolchain. Its first line names the core release it was
+`inst/js/bandage.js` is bandage-core and the tabix reader bundled for V8,
+committed so installing needs no JavaScript toolchain. Its first line names the core release it was
 built from, the one `package.json` pins. To move to a new release:
 
 ```console
@@ -61,12 +87,15 @@ build, and nightly builds the latest release and runs the tests on it.
 
 ## Not yet
 
-Tube maps, walk rows, gene pins, node labels and the walk keys' colour bars.
+Tube maps, walk rows, gene pins, node labels, the walk keys' colour bars, and
+reading gfa-to-tabix `--walks` files.
 
 ## See also
 
 - [@jbrowse/bandage-core](https://github.com/GMOD/bandage-core) - Bandage layout
   and drawing engine
+- [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) - indexes a GFA by genome
+  coordinate, for the `region` form of `bandage_layout()`
 - [ggtubemap](https://github.com/GMOD/ggtubemap) - tube maps as ggplot2 layers
 - [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer) -
   JBrowse 2 plugin that browses these graphs by locus

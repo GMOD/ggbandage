@@ -18,26 +18,36 @@ read_gfa <- function(path) {
 
 #' Lay out a GFA graph with the Bandage engine
 #'
-#' @param gfa path to a GFA file, plain or gzipped
+#' @param gfa path or URL of a GFA file, plain or gzipped, or of a
+#'   gfa-to-tabix index: the `.graph.json` manifest, a `.segs.bed.gz` file, or
+#'   the prefix of a local pair. An index needs `region`
 #' @param layout `"force"`, `"auto"`, `"ordered"` or `"samplerows"`
 #' @param walks walk (P/W line) names to lift out of the drawing
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
-#' @param ... other figure spec fields, such as `region`, `referencePath`,
+#' @param region a locus such as `"GRCh38#0#chr6:31,000,000-31,100,000"`. On
+#'   an index, the part of the graph under it, fetched by range request; on a
+#'   GFA, the region the core crops to
+#' @param ... other figure spec fields, such as `referencePath`,
 #'   `colorScheme`, `nodeWidth`, `contigThickness`, `quality`, `engine`
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
-                           width = 1000, ...) {
+                           width = 1000, region = NULL, ...) {
+  tabix <- is_tabix_graph(gfa)
+  if (tabix && is.null(region)) {
+    stop("an index holds a whole genome's graph; give the `region` to draw")
+  }
   spec <- c(
     list(layout = layout, width = width),
+    if (!tabix && !is.null(region)) list(region = region),
     if (length(walks)) list(walks = as.list(walks)),
     if (!is.null(facet)) list(facet = facet),
     list(...)
   )
   ctx <- engine()
-  ctx$assign("gfaText", read_gfa(gfa))
-  ctx$assign("gfaName", basename(gfa))
+  ctx$assign("gfaText", if (tabix) cut_tabix(ctx, gfa, region) else read_gfa(gfa))
+  ctx$assign("gfaName", if (tabix) region else basename(gfa))
   ctx$assign("spec", spec)
   on.exit(ctx$eval("gfaText = null"))
   json <- ctx$eval(
@@ -45,6 +55,11 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     await = TRUE
   )
   as_bandage_layout(jsonlite::fromJSON(json))
+}
+
+cut_tabix <- function(ctx, index, region) {
+  ctx$assign("cut", c(tabix_files(index), parse_region(region)))
+  ctx$eval("bandage.cutTabix(cut)", await = TRUE)
 }
 
 # y down, as on screen, becomes y up, and the panels become a factor in the

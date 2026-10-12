@@ -10,11 +10,14 @@ bandage_layout(
   walks = NULL,
   facet = NULL,
   width = 1000,
+  region = NULL,
   ...
 )
 }
 \arguments{
-\item{gfa}{path to a GFA file, plain or gzipped}
+\item{gfa}{path or URL of a GFA file, plain or gzipped, or of a
+gfa-to-tabix index: the \code{.graph.json} manifest, a \code{.segs.bed.gz} file, or
+the prefix of a local pair. An index needs \code{region}}
 
 \item{layout}{\code{"force"}, \code{"auto"}, \code{"ordered"} or \code{"samplerows"}}
 
@@ -25,7 +28,11 @@ bandage_layout(
 \item{width}{the width in px the drawing is fit to, which decides whether
 strand arrows show}
 
-\item{...}{other figure spec fields, such as \code{region}, \code{referencePath},
+\item{region}{a locus such as \code{"GRCh38#0#chr6:31,000,000-31,100,000"}. On
+an index, the part of the graph under it, fetched by range request; on a
+GFA, the region the core crops to}
+
+\item{...}{other figure spec fields, such as \code{referencePath},
 \code{colorScheme}, \code{nodeWidth}, \code{contigThickness}, \code{quality}, \code{engine}}
 }
 \description{
