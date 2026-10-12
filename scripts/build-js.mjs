@@ -2,9 +2,9 @@ import { readFileSync, writeFileSync } from 'node:fs'
 
 import { build } from 'esbuild'
 
-// The engine the R package runs: bandage-core's gfaFigureData as one script V8
-// can evaluate, with no modules, file system or network, and FMMM's WASM
-// inlined. The banner names the core it was built from, so a committed bundle
+// The engine the R package runs: bandage-core's gfaFigureData and the tabix cut
+// as one script V8 can evaluate, with no modules, file system or network, and
+// FMMM's WASM inlined. The banner names the core it was built from, so a committed bundle
 // says what it is.
 const { version } = JSON.parse(
   readFileSync('node_modules/@jbrowse/bandage-core/package.json', 'utf8'),
@@ -12,9 +12,27 @@ const { version } = JSON.parse(
 
 const OUT = 'inst/js/bandage.js'
 
+// generic-filehandle2 imports fs/promises for a local file class the cut never
+// opens: R serves every byte
+const noFs = {
+  name: 'no-fs',
+  setup(b) {
+    b.onResolve({ filter: /^fs\/promises$/ }, () => ({
+      path: 'fs/promises',
+      namespace: 'no-fs',
+    }))
+    b.onLoad({ filter: /.*/, namespace: 'no-fs' }, () => ({
+      contents: 'export const open = null, readFile = null, stat = null',
+    }))
+  },
+}
+
 const { outputFiles } = await build({
   stdin: {
-    contents: "export { gfaFigureData } from '@jbrowse/bandage-core/figureData'",
+    contents: [
+      "export { gfaFigureData } from '@jbrowse/bandage-core/figureData'",
+      "export { cutTabix } from './scripts/tabix-cut.mjs'",
+    ].join('\n'),
     resolveDir: process.cwd(),
     loader: 'js',
   },
@@ -25,6 +43,7 @@ const { outputFiles } = await build({
   mainFields: ['module', 'main'],
   charset: 'ascii',
   minifyWhitespace: true,
+  plugins: [noFs],
   write: false,
   outfile: OUT,
   define: { 'import.meta.url': 'undefined' },
@@ -82,10 +101,82 @@ const decoder = `function bandageBase64(s) {
   return out;
 }`
 
+const textDecoder = `if (!globalThis.TextDecoder) {
+  globalThis.TextDecoder = class TextDecoder {
+    decode(bytes = new Uint8Array(0)) {
+      const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes.buffer ?? bytes);
+      let out = '';
+      for (let i = 0; i < b.length; ) {
+        const c = b[i++];
+        const extra = c >= 0xf0 ? 3 : c >= 0xe0 ? 2 : c >= 0xc0 ? 1 : 0;
+        let cp = extra === 0 ? c : c & (0x3f >> extra);
+        for (let k = 0; k < extra; k++) cp = (cp << 6) | (b[i++] & 0x3f);
+        out += String.fromCodePoint(cp);
+      }
+      return out;
+    }
+  };
+}`
+
+const textEncoder = `if (!globalThis.TextEncoder) {
+  globalThis.TextEncoder = class TextEncoder {
+    encode(text = '') {
+      const out = [];
+      for (const ch of text) {
+        const cp = ch.codePointAt(0);
+        if (cp < 0x80) out.push(cp);
+        else if (cp < 0x800) out.push(0xc0 | (cp >> 6), 0x80 | (cp & 0x3f));
+        else if (cp < 0x10000) out.push(0xe0 | (cp >> 12), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
+        else out.push(0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 0x3f), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
+      }
+      return Uint8Array.from(out);
+    }
+    encodeInto(text, dest) {
+      const bytes = this.encode(text);
+      const written = Math.min(bytes.length, dest.length);
+      dest.set(bytes.subarray(0, written));
+      return { read: text.length, written };
+    }
+  };
+}`
+
+const abortController = `if (!globalThis.AbortController) {
+  class AbortSignal {
+    aborted = false;
+    reason = undefined;
+    listeners = [];
+    addEventListener(_type, fn) { this.listeners.push(fn); }
+    removeEventListener(_type, fn) { this.listeners = this.listeners.filter(f => f !== fn); }
+    throwIfAborted() { if (this.aborted) throw this.reason; }
+  }
+  globalThis.AbortController = class AbortController {
+    signal = new AbortSignal();
+    abort(reason = new Error('aborted')) {
+      if (this.signal.aborted) return;
+      this.signal.aborted = true;
+      this.signal.reason = reason;
+      for (const fn of this.signal.listeners) fn({ type: 'abort' });
+    }
+  };
+}`
+
+const dataFetch = `if (!globalThis.fetch) {
+  globalThis.fetch = async url => {
+    const m = /^data:[^,]*;base64,(.*)$/.exec(url);
+    if (!m) throw new Error('V8 has no network: cannot fetch ' + url);
+    const bytes = bandageBase64(m[1]);
+    return { ok: true, arrayBuffer: async () => bytes.buffer };
+  };
+}`
+
 const banner = [
   `// @jbrowse/bandage-core@${version}, bundled by scripts/build-js.mjs`,
   'if (!globalThis.performance) globalThis.performance = { now: () => Date.now() };',
   decoder,
+  textDecoder,
+  textEncoder,
+  abortController,
+  dataFetch,
 ].join('\n')
 
 const js = base64Wasm(outputFiles[0].text)
