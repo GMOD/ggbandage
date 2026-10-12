@@ -44,6 +44,17 @@ test_that("an index without a region, or with one it lacks, says so", {
   expect_error(bandage_layout(index, region = "chr"), "not a region")
 })
 
+test_that("a missing index file is named in the error, and the engine recovers", {
+  expect_error(
+    bandage_layout("nowhere/x.segs.bed.gz", region = "chr:1-100"),
+    "nowhere/x.segs.bed.gz.tbi does not exist"
+  )
+  expect_s3_class(
+    bandage_layout(index, region = "chr:1004500-1004961"),
+    "bandage_layout"
+  )
+})
+
 test_that("a region parses from the browser's 1-based locus", {
   expect_equal(
     parse_region("GRCh38#0#chr6:31,000,001-31,100,000"),

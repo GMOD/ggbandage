@@ -65,7 +65,8 @@ g <- bandage_layout(
 - Node names keep the strand the index filed them with. gfa-to-tabix flips a
   node the reference reads in reverse, so `23+` in a GFA may be `23-` here
 - The reader is [@gmod/tabix](https://github.com/GMOD/tabix-js) in the engine
-  bundle. V8 has no file system or network, so it asks R for each byte range
+  bundle. V8 has no file system or network, so it asks R for each byte range.
+  [docs/tabix.md](docs/tabix.md) follows one call through
 
 Layouts are `force` (the default), `auto` (anchored to the reference),
 `ordered` and `samplerows`. The anchored and row layouts put reference bp on x
@@ -97,6 +98,8 @@ reading gfa-to-tabix `--walks` files.
 - [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) - indexes a GFA by genome
   coordinate, for the `region` form of `bandage_layout()`
 - [ggtubemap](https://github.com/GMOD/ggtubemap) - tube maps as ggplot2 layers
+- [ggjbrowse](https://github.com/GMOD/ggjbrowse) - genome browser tracks as
+  ggplot2 layers; reads indexed files into V8 the same way
 - [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer) -
   JBrowse 2 plugin that browses these graphs by locus
 - [BandageJS](https://github.com/cmdcolin/BandageJS) - standalone page for GFA

@@ -59,6 +59,7 @@ fetch_range <- function(location, position, length) {
 }
 
 file_range <- function(path, position, length) {
+  if (!file.exists(path)) stop(sprintf("%s does not exist", path), call. = FALSE)
   con <- file(path, "rb")
   on.exit(close(con))
   if (length < 0) length <- file.size(path) - position
