@@ -48,15 +48,24 @@ Widths are absolute, as on screen: a 6 px node is 1/16 in at any figure size.
   and a `region`
 - **Out:** the graph under that region, laid out as a GFA is
 
+The HPRC release 2.1 graph, from the files behind the
+[JBrowse HPRC demo](https://jbrowse.org/demos/hprc/), cut at LPA's KIV-2 repeat:
+
 ```r
 g <- bandage_layout(
-  "hprc.graph.json",
-  region = "GRCh38#0#chr6:31,000,000-31,100,000",
+  "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz",
+  region = "chr6:160,616,004-160,646,753",
   layout = "auto"
 )
+autoplot(g)
+ggplot2::ggsave("kiv2-index.png", width = 10, height = 4)
 ```
 
-- Over a URL, R reads the index and the few blocks the region needs with range
+![The KIV-2 repeat array cut from the hosted HPRC index: the GRCh38 reference on top and each allele on a row by rank](man/figures/kiv2-index.png)
+
+- The cut takes half a second and downloads 0.7 MB of the index's 32 MB.
+  [docs/tabix.md](docs/tabix.md#at-hprc-scale) times wider windows
+- Over a URL, R reads the index and the blocks the region needs with range
   requests, so the whole GFA never downloads
 - `chr6` names `GRCh38#0#chr6` when exactly one sequence in the index ends
   that way
@@ -67,6 +76,8 @@ g <- bandage_layout(
 - The reader is [@gmod/tabix](https://github.com/GMOD/tabix-js) in the engine
   bundle. V8 has no file system or network, so it asks R for each byte range.
   [docs/tabix.md](docs/tabix.md) follows one call through
+- A local index works the same: `bandage_layout("hprc.graph.json", region = ...)`
+  with the manifest `gfa-to-tabix build` writes
 
 Layouts are `force` (the default), `auto` (anchored to the reference),
 `ordered` and `samplerows`. The anchored and row layouts put reference bp on x

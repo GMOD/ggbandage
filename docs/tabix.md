@@ -101,6 +101,30 @@ page walks one call through that loop. The two packages differ in the callback:
 - The build stubs `fs/promises`, which `generic-filehandle2` imports for a
   local file class nothing opens
 
+## At HPRC scale
+
+The [JBrowse HPRC demo](https://jbrowse.org/demos/hprc/) hosts the release 2.1
+Minigraph-Cactus graph's anchored index: 759,223 segments, an 11 MB segment file,
+a 20 MB link file and a `.tbi` of about 240 kB for each. Timed on 2026-10-12 over a home
+connection, with `layout = "auto"`:
+
+| Region                           | Span    | Nodes drawn | Downloaded | Time  |
+| -------------------------------- | ------- | ----------- | ---------- | ----- |
+| chr6:160,616,004-160,646,753     | 31 kb   | 29          | 0.7 MB     | 0.5 s |
+| chr6:160,000,000-161,500,000     | 1.5 Mb  | 395         | 0.7 MB     | 0.2 s |
+| chr6:29,700,000-33,200,000       | 3.5 Mb  | 1,311       | 1.0 MB     | 0.3 s |
+| chr6:28,000,000-34,000,000       | 6 Mb    | 1,702       | 1.0 MB     | 0.3 s |
+| chr1:100,000,000-110,000,000     | 10 Mb   | 1,421       | 0.8 MB     | 0.3 s |
+
+- Each cut is four range requests: the two `.tbi` files whole, 0.5 MB that
+  every cut pays, then one read of the segment file and one of the link file
+- The 3.5 Mb plot is too dense to read as a figure, so the table times the
+  fetch and the cut, not a layout of that many nodes
+- At the KIV-2 window, htslib's `tabix` returns 27 segment rows and 46 link
+  rows. The drawing has those 27 segments plus 2 that links reach, and 42 edge
+  curves. The link file also returns links that touch nothing in the cut, and
+  `anchoredCut` drops them
+
 ## Test fixtures
 
 `tests/testthat/testdata/ecoli_pggb.*` and `ecoli_rgfa.*` are indexes of the
