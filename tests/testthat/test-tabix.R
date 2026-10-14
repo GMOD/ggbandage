@@ -78,6 +78,24 @@ test_that("a byte range reads the same from a file and from a URL", {
   }
 })
 
+test_that("a server that ignores Range still yields the bytes asked for", {
+  file <- paste0(index, ".segs.bed.gz")
+  whole <- readBin(file, "raw", file.size(file))
+  local_mocked_bindings(
+    curl_fetch_memory = function(url, handle) {
+      list(status_code = 200L, content = whole)
+    },
+    .package = "curl"
+  )
+  url <- "https://example.org/x.segs.bed.gz"
+  for (range in list(c(0, 100), c(10, 20), c(5, -1), c(0, 1e6))) {
+    expect_identical(
+      url_range(url, range[1], range[2]),
+      file_range(file, range[1], range[2])
+    )
+  }
+})
+
 test_that("a range past the end of a file is empty or short, never an error", {
   file <- paste0(index, ".segs.bed.gz")
   size <- file.size(file)
@@ -92,4 +110,7 @@ test_that("a region parses from the browser's 1-based locus", {
     parse_region("GRCh38#0#chr6:31,000,001-31,100,000"),
     list(refName = "GRCh38#0#chr6", start = 31000000, end = 31100000)
   )
+  expect_error(parse_region("chr6:0-100"), "1 <= start <= end")
+  expect_error(parse_region("chr6:500-100"), "1 <= start <= end")
+  expect_equal(parse_region("chr6:7-7")[c("start", "end")], list(start = 6, end = 7))
 })

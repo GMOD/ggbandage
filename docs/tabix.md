@@ -71,6 +71,9 @@ calls `ggbandage:::fetch_range` through `console.r.call`.
 - A range that runs past the end of a file returns the bytes that exist, and
   an HTTP 416 reads as no bytes, because the reader asks for whole 64 kB
   blocks near the end of small files
+- A server without range support, such as `python -m http.server`, answers
+  `200` with the whole file. `url_range` cuts the asked-for bytes from it, so
+  the cut is right but downloads the file on every read
 - An R error in `fetch_range`, such as a missing file or an HTTP error status,
   reaches the caller as the error message, and the V8 context stays usable
 

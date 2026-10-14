@@ -1,4 +1,4 @@
-is_url <- function(x) grepl("^https?://", x)
+is_url <- function(x) grepl("^(https?|ftp|file)://", x)
 
 is_tabix_graph <- function(x) {
   grepl("\\.graph\\.json$|\\.segs\\.bed\\.gz$", x) ||
@@ -47,7 +47,15 @@ parse_region <- function(region) {
     )
   }
   num <- function(s) as.numeric(gsub(",", "", s))
-  list(refName = m[[2]], start = num(m[[3]]) - 1, end = num(m[[4]]))
+  start <- num(m[[3]])
+  end <- num(m[[4]])
+  if (start < 1 || end < start) {
+    stop(
+      sprintf("\"%s\" needs 1 <= start <= end, as a 1-based locus", region),
+      call. = FALSE
+    )
+  }
+  list(refName = m[[2]], start = start - 1, end = end)
 }
 
 # V8 calls these through console.r.call, so every argument arrives as a string
@@ -74,10 +82,13 @@ file_range <- function(path, position, length) {
   readBin(con, "raw", n)
 }
 
+# A server without range support answers 200 with the whole file, which the
+# reader would take as the bytes it asked for, so the range is cut from that
 url_range <- function(url, position, length) {
   if (length == 0) return(raw())
   handle <- curl::new_handle()
-  if (length > 0 || position > 0) {
+  ranged <- length > 0 || position > 0
+  if (ranged) {
     last <- if (length > 0) sprintf("%.0f", position + length - 1) else ""
     curl::handle_setopt(handle, range = sprintf("%.0f-%s", position, last))
   }
@@ -85,6 +96,11 @@ url_range <- function(url, position, length) {
   if (res$status_code == 416) return(raw())
   if (res$status_code >= 400) {
     stop(sprintf("HTTP %d reading %s", res$status_code, url), call. = FALSE)
+  }
+  if (ranged && res$status_code == 200) {
+    left <- max(0, length(res$content) - position)
+    n <- if (length < 0) left else min(length, left)
+    return(res$content[position + seq_len(n)])
   }
   res$content
 }

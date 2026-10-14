@@ -11,8 +11,14 @@ engine <- local({
 })
 
 read_gfa <- function(path) {
+  if (is_url(path)) {
+    local <- tempfile()
+    on.exit(unlink(local))
+    writeBin(url_range(path, 0, -1), local)
+    path <- local
+  }
   con <- gzfile(path)
-  on.exit(close(con))
+  on.exit(close(con), add = TRUE, after = FALSE)
   paste(readLines(con, warn = FALSE), collapse = "\n")
 }
 

@@ -37,3 +37,11 @@ test_that("faded ink is mixed with the background, not stacked", {
   expect_equal(ink("#000000", 0.5, "white"), "#808080")
   expect_equal(ink("#ff0000", 1, "white"), "#FF0000")
 })
+
+test_that("a GFA reads from a URL, plain or gzipped", {
+  skip_on_os("windows")
+  for (path in c(pggb, rgfa)) {
+    url <- paste0("file://", normalizePath(path))
+    expect_identical(read_gfa(url), read_gfa(path))
+  }
+})
