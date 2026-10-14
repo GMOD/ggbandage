@@ -114,3 +114,16 @@ test_that("a region parses from the browser's 1-based locus", {
   expect_error(parse_region("chr6:500-100"), "1 <= start <= end")
   expect_equal(parse_region("chr6:7-7")[c("start", "end")], list(start = 6, end = 7))
 })
+
+test_that("the bundle's TextDecoder reads long ASCII runs and UTF-8 alike", {
+  ctx <- engine()
+  text <- paste0(strrep("a", 9000), "é∑\U0001F600", strrep("b", 10))
+  expect_identical(
+    ctx$call("s => new TextDecoder().decode(new TextEncoder().encode(s))", text),
+    text
+  )
+  expect_identical(
+    ctx$eval("new TextDecoder().decode(new Uint8Array([0x61, 0xff, 0x62]))"),
+    "a�b"
+  )
+})

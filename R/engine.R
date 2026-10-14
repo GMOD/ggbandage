@@ -55,20 +55,22 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     list(...)
   )
   ctx <- engine()
-  ctx$assign("gfaText", if (tabix) cut_tabix(ctx, gfa, region) else read_gfa(gfa))
-  ctx$assign("gfaName", if (tabix) region else basename(gfa))
-  ctx$assign("spec", spec)
-  on.exit(ctx$eval("gfaText = null"))
-  json <- ctx$eval(
-    "bandage.gfaFigureData(gfaText, gfaName, spec).then(JSON.stringify)",
+  json <- ctx$call(
+    "(text, name, spec) => bandage.gfaFigureData(text, name, spec).then(JSON.stringify)",
+    if (tabix) cut_tabix(ctx, gfa, region) else read_gfa(gfa),
+    if (tabix) region else basename(gfa),
+    spec,
     await = TRUE
   )
   as_bandage_layout(jsonlite::fromJSON(json))
 }
 
 cut_tabix <- function(ctx, index, region) {
-  ctx$assign("cut", c(tabix_files(index), parse_region(region)))
-  ctx$eval("bandage.cutTabix(cut)", await = TRUE)
+  ctx$call(
+    "bandage.cutTabix",
+    c(tabix_files(index), parse_region(region)),
+    await = TRUE
+  )
 }
 
 # y down, as on screen, becomes y up, and the panels become a factor in the
