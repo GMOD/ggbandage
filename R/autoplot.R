@@ -1,6 +1,7 @@
 #' The graph as the Bandage view draws it
 #'
-#' Edges, nodes and arrowheads at the view's colours, a panel per lifted walk,
+#' Edges, nodes and arrowheads at the view's colours on white, the background
+#' the geoms mix faded ink with, a panel per lifted walk,
 #' and a reference bp axis under the layouts whose x is reference bp. Every
 #' piece is an ordinary ggplot2 layer, scale or theme, so `+` changes any of
 #' it.
@@ -16,6 +17,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
     geom_bandage_arrows() +
     ggplot2::theme_void() +
     ggplot2::theme(
+      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       plot.margin = ggplot2::margin(8, 8, 8, 8),
       strip.text = ggplot2::element_text(
         hjust = 0, lineheight = 1.1, margin = ggplot2::margin(b = 4)

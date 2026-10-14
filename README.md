@@ -79,6 +79,34 @@ ggplot2::ggsave("kiv2-index.png", width = 10, height = 4)
 - A local index works the same: `bandage_layout("hprc.graph.json", region = ...)`
   with the manifest `gfa-to-tabix build` writes
 
+### Several loci in one figure
+
+Each plot is a ggplot, so patchwork tiles four loci with common deletions, cut
+from the same hosted index. The four cuts take under 3 s together:
+
+```r
+library(patchwork)
+
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+deletions <- c(
+  RHD = "chr1:25,250,000-25,450,000",
+  AMY1 = "chr1:103,540,000-103,780,000",
+  C4 = "chr6:31,975,000-32,060,000",
+  CYP2D6 = "chr22:42,115,000-42,155,000"
+)
+plots <- Map(
+  function(gene, region) {
+    autoplot(bandage_layout(index, region = region, layout = "auto")) +
+      ggplot2::ggtitle(gene)
+  },
+  names(deletions), deletions
+)
+wrap_plots(plots, ncol = 2)
+ggplot2::ggsave("deletions.png", width = 14, height = 8)
+```
+
+![Four loci cut from the hosted HPRC index. A dashed edge is a deletion that skips the reference between its ends, such as the RHD gene deletion](man/figures/deletions.png)
+
 Layouts are `force` (the default), `auto` (anchored to the reference),
 `ordered` and `samplerows`. The anchored and row layouts put reference bp on x
 and name their rows on y.

@@ -14,7 +14,8 @@
 \item{ncol}{panels across, for a faceted layout}
 }
 \description{
-Edges, nodes and arrowheads at the view's colours, a panel per lifted walk,
+Edges, nodes and arrowheads at the view's colours on white, the background
+the geoms mix faded ink with, a panel per lifted walk,
 and a reference bp axis under the layouts whose x is reference bp. Every
 piece is an ordinary ggplot2 layer, scale or theme, so \code{+} changes any of
 it.
