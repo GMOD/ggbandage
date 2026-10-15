@@ -4,3 +4,4 @@ node_modules
 Rplots.pdf
 *.tar.gz
 ggbandage.Rcheck/
+.claude
