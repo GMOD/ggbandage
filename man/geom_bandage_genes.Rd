@@ -18,7 +18,8 @@ a list of two layers, the outlines and the names
 }
 \description{
 Outlines each exon round the stretch of node that carries it, under the
-nodes, and names each gene at its midpoint, as the Bandage view does. Needs
+nodes, and names each gene at its midpoint, as the Bandage view does; where
+two names would overlap, the longer gene keeps its name. Needs
 a layout made with \code{genes}; add it before \code{\link[=geom_bandage_nodes]{geom_bandage_nodes()}} so the
 nodes draw over the outline.
 }

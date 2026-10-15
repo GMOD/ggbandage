@@ -97,7 +97,20 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     src$text, src$name, spec, gene_source(genes),
     await = TRUE
   )
-  as_bandage_layout(jsonlite::fromJSON(json))
+  d <- jsonlite::fromJSON(json)
+  missing <- setdiff(walks, d$walkNames)
+  if (length(missing)) {
+    warning(
+      sprintf(
+        "no walk named %s; the graph has %s%s",
+        paste(missing, collapse = ", "),
+        paste(utils::head(d$walkNames, 6), collapse = ", "),
+        if (length(d$walkNames) > 6) ", ..." else ""
+      ),
+      call. = FALSE
+    )
+  }
+  as_bandage_layout(d)
 }
 
 gene_source <- function(genes) {

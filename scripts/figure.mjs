@@ -87,7 +87,7 @@ async function genesOf(genes, graph) {
 const POINT = /[ML](-?[\d.e-]+),(-?[\d.e-]+)/g
 
 async function pinRows(graph, layout, genes) {
-  const pins = { gene: [], x: [], y: [], covered: [] }
+  const pins = { gene: [], x: [], y: [], covered: [], bp: [] }
   const exons = { gene: [], node: [], stretch: [], x: [], y: [] }
   let stretch = 0
   for (const pin of genePins(
@@ -99,6 +99,7 @@ async function pinRows(graph, layout, genes) {
     pins.x.push(pin.at.x)
     pins.y.push(pin.at.y)
     pins.covered.push(pin.covered)
+    pins.bp.push(pin.gene.end - pin.gene.start)
     for (const { nodeId, d } of pin.exonsByNode) {
       for (const part of d.split('M').filter(Boolean)) {
         stretch++
@@ -123,6 +124,7 @@ export async function figure(text, name, spec, genes) {
   return {
     ...figureData(graph, layout, options),
     keys: keyRows(scene),
+    walkNames: [...new Set((graph.paths ?? []).map(p => p.name))],
     ...(await pinRows(graph, layout, genes)),
   }
 }

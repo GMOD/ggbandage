@@ -214,10 +214,31 @@ exons_of <- function(model, outline) {
   e
 }
 
+# Where two names would overlap, the longer gene keeps its name. A name takes
+# about 7 px a character at the width the layout was fit to.
+gene_labels <- function(model) {
+  g <- model$genes
+  if (!nrow(g)) {
+    return(g)
+  }
+  g <- g[order(-g$bp), ]
+  half <- (nchar(g$gene) * 7 + 12) / 2 / model$meta$scaleX
+  tall <- 20 / model$meta$scaleY
+  keep <- logical(nrow(g))
+  for (i in seq_len(nrow(g))) {
+    k <- which(keep)
+    keep[i] <- !any(
+      abs(g$x[k] - g$x[i]) < half[k] + half[i] & abs(g$y[k] - g$y[i]) < tall
+    )
+  }
+  g[keep, ]
+}
+
 #' Genes pinned on the backbone
 #'
 #' Outlines each exon round the stretch of node that carries it, under the
-#' nodes, and names each gene at its midpoint, as the Bandage view does. Needs
+#' nodes, and names each gene at its midpoint, as the Bandage view does; where
+#' two names would overlap, the longer gene keeps its name. Needs
 #' a layout made with `genes`; add it before [geom_bandage_nodes()] so the
 #' nodes draw over the outline.
 #' @inheritParams geom_bandage_nodes
@@ -238,7 +259,7 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
     ),
     ggplot2::layer(
       geom = ggplot2::GeomLabel, stat = "identity", position = "identity",
-      data = table_from(data, function(m) m$genes),
+      data = table_from(data, gene_labels),
       mapping = ggplot2::aes(x = x, y = y, label = gene),
       inherit.aes = FALSE, show.legend = FALSE,
       params = list(

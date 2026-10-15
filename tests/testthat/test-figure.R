@@ -48,6 +48,10 @@ test_that("a walk file cuts the walks under a region", {
   expect_s3_class(bandage_layout(walk_file, region = region), "bandage_layout")
 })
 
+test_that("a walk the graph lacks warns, naming the ones it has", {
+  expect_warning(bandage_layout(pggb, walks = "K12"), "no walk named K12; the graph has K12#1")
+})
+
 test_that("the stress engine lays the graph out", {
   g <- bandage_layout(pggb, engine = "stress")
   expect_setequal(unique(g$nodes$node), unique(bandage_layout(pggb)$nodes$node))
