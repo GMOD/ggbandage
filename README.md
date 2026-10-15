@@ -164,16 +164,21 @@ Every figure is a ggplot, so patchwork stacks it with other ggplot2 packages:
 
 `inst/js/bandage.js` is bandage-core, the tabix reader and graph-walks bundled
 for V8, committed so installing needs no JavaScript toolchain. Its first line
-names the core release it was built from, the one `package.json` pins. To move
-to a new release:
+names the core release it was built from, the one `package.json` pins. To
+take the latest releases by hand:
 
 ```console
-pnpm add -D -E @jbrowse/bandage-core@<version>
-pnpm build
+scripts/update-deps.sh
 ```
 
-The `bundle` workflow checks the committed bundle is the pinned release's
-build, and nightly builds the latest release and runs the tests on it.
+- The `bundle` workflow checks the committed bundle is the pinned releases'
+  build
+- The `update-deps` workflow runs `scripts/update-deps.sh` daily: it moves
+  every bundled package to its latest release and the packages they depend on
+  to the newest their ranges allow, rebuilds, and commits to main once R CMD
+  check passes
+- `@jbrowse` releases go in the day they come out. Others wait three days,
+  the `minimumReleaseAge` in `pnpm-workspace.yaml`
 
 ## See also
 

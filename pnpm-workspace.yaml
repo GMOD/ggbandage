@@ -1,4 +1,7 @@
 allowBuilds:
   esbuild: true
+# a release waits three days before an install takes it, except ours, which
+# the update-deps workflow takes the day they come out
+minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - '@jbrowse/*'
