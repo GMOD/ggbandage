@@ -1,20 +1,30 @@
 #' The graph as the Bandage view draws it
 #'
 #' Edges, nodes and arrowheads at the view's colours on white, the background
-#' the geoms mix faded ink with, a panel per lifted walk,
-#' and a reference bp axis under the layouts whose x is reference bp. Every
-#' piece is an ordinary ggplot2 layer, scale or theme, so `+` changes any of
-#' it.
+#' the geoms mix faded ink with, each lifted walk's colour bar, a panel per
+#' walk when faceted, the genes pinned on the backbone, and a reference bp axis
+#' under the layouts whose x is reference bp. Every piece is an ordinary
+#' ggplot2 layer, scale or theme, so `+` changes any of it.
 #' @param object a `bandage_layout`
 #' @param ... unused
 #' @param ncol panels across, for a faceted layout
+#' @param labels name each node, with [geom_bandage_labels()]
 #' @exportS3Method ggplot2::autoplot
-autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
+autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
   m <- object$meta
+  faceted <- nrow(object$panels) > 1
+  genes <- if (nrow(object$genes)) geom_bandage_genes()
   p <- ggplot2::ggplot(object) +
     geom_bandage_edges() +
+    genes[1] +
     geom_bandage_nodes() +
     geom_bandage_arrows() +
+    genes[2] +
+    if (labels) geom_bandage_labels()
+  if (nrow(object$keys)) {
+    p <- p + geom_bandage_keys(text = !faceted)
+  }
+  p <- p +
     ggplot2::theme_void() +
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
@@ -27,7 +37,13 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
   if (!m$pixelRows) {
     p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX)
   }
-  if (nrow(object$panels) > 1) {
+  if (nrow(object$keys) && !nrow(object$rows)) {
+    # room over the drawing for the key bars, 24 px at the width it was fit to
+    p <- p + ggplot2::scale_y_continuous(
+      expand = ggplot2::expansion(mult = 0.05, add = c(0, 24 / m$scaleY))
+    )
+  }
+  if (faceted) {
     panels <- object$panels
     titles <- stats::setNames(
       paste0(

@@ -138,8 +138,26 @@ gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 -o ecoli_pggb
 gfa-to-tabix ecoli_rgfa_slice.gfa.gz -o ecoli_rgfa
 ```
 
+`ecoli_pggb.K12.walks.bed.gz` is the pggb GFA's walk file, made with
+gfa-to-tabix 1.0.0:
+
+```console
+gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 -o ecoli_pggb
+```
+
+## Walk files
+
+- **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, with
+  its `.tbi`, and a `region`
+- **Out:** the reference over the region, `context` bp past each end, and the
+  walks of the `haplotypes` asked for, as GFA with W lines
+- [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) does the cut, the
+  reader the JBrowse graph plugin and BandageJS use, over the same R byte-range
+  callback
+- A cut at KIV-2 with five HPRC haplotypes takes about 3 s from the hosted
+  1.2 GB file
+
 ## Not yet
 
-- `--walks` files (every haplotype's path)
 - Contig-layout indexes
 - The coarse tier that `gfa-to-tabix build` writes for wide windows

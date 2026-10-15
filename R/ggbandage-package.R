@@ -5,7 +5,8 @@
 
 utils::globalVariables(c(
   "x", "y", "draw", "ink", "width", "angle", "halfWidth",
-  "color", "alpha", "panel"
+  "color", "alpha", "panel", "name", "stretch", "gene", "stops", "walk",
+  "note", "xmin", "xmax", "kind", "label", "readout"
 ))
 
 #' @export

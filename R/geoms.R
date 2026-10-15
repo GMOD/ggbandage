@@ -168,6 +168,169 @@ GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
   }
 )
 
+# A node's label goes at the middle point of its longest stroke
+label_points <- function(model) {
+  n <- model$nodes
+  if (!nrow(n)) {
+    return(n)
+  }
+  key <- paste(n$panel, n$stroke)
+  mid <- stats::ave(seq_along(key), key, FUN = function(i) i == i[ceiling(length(i) / 2)])
+  reach <- stats::ave(n$x, key, FUN = function(x) diff(range(x))) +
+    stats::ave(n$y, key, FUN = function(y) diff(range(y)))
+  n <- n[mid == 1, ]
+  n <- n[order(-reach[mid == 1]), ]
+  n[!duplicated(paste(n$panel, n$node)), ]
+}
+
+#' Node names, at the middle of each node
+#'
+#' Labels each node once per panel, by default with its GFA name, longest
+#' nodes first, dropping a label that would overlap one already drawn. Map
+#' `label` to another column of the node table, such as `length`, to write
+#' that instead.
+#' @inheritParams geom_bandage_nodes
+#' @param check_overlap drop a label that overlaps one drawn before it
+#' @param size text size in mm
+#' @export
+geom_bandage_labels <- function(mapping = NULL, data = NULL,
+                                check_overlap = TRUE, size = 2.6, ...) {
+  ggplot2::layer(
+    geom = ggplot2::GeomText, stat = "identity", position = "identity",
+    data = table_from(data, label_points),
+    mapping = with_defaults(mapping, ggplot2::aes(x = x, y = y, label = name)),
+    inherit.aes = FALSE, show.legend = FALSE,
+    params = list(check_overlap = check_overlap, size = size, colour = "grey15", ...)
+  )
+}
+
+exons_of <- function(model, outline) {
+  e <- model$exons
+  if (!nrow(e)) {
+    return(e)
+  }
+  width <- tapply(model$nodes$width, model$nodes$node, max)
+  e$width <- width[e$node] + 2 * outline
+  e
+}
+
+#' Genes pinned on the backbone
+#'
+#' Outlines each exon round the stretch of node that carries it, under the
+#' nodes, and names each gene at its midpoint, as the Bandage view does. Needs
+#' a layout made with `genes`; add it before [geom_bandage_nodes()] so the
+#' nodes draw over the outline.
+#' @inheritParams geom_bandage_nodes
+#' @param outline px the outline reaches past each side of the node
+#' @param colour the outline's colour
+#' @return a list of two layers, the outlines and the names
+#' @export
+geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
+  list(
+    ggplot2::layer(
+      geom = GeomBandagePath, stat = "identity", position = "identity",
+      data = table_from(data, function(m) exons_of(m, outline)),
+      mapping = ggplot2::aes(
+        x = x, y = y, group = stretch, linewidth = I(px_linewidth(width))
+      ),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = list(colour = colour)
+    ),
+    ggplot2::layer(
+      geom = ggplot2::GeomLabel, stat = "identity", position = "identity",
+      data = table_from(data, function(m) m$genes),
+      mapping = ggplot2::aes(x = x, y = y, label = gene),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = list(
+        size = 3, fontface = "italic", colour = "#1c1c22", fill = "white",
+        vjust = 1.6
+      )
+    )
+  )
+}
+
+FADED <- "#a0a0a0"
+
+# Each lifted walk's key, and unfaceted, a faded swatch for what no walk visits
+keys_of <- function(model) {
+  k <- model$keys
+  if (!nrow(k)) {
+    return(k)
+  }
+  k$alpha <- 1
+  if (nrow(model$panels) == 1) {
+    k$panel <- NULL
+    k <- rbind(k, data.frame(
+      walk = "", stops = FADED, alpha = 0.3, scale = "",
+      note = paste("not on", if (nrow(k) == 1) k$walk else "these walks")
+    ))
+  } else {
+    k$panel <- factor(k$panel, levels = model$panels$panel)
+  }
+  k
+}
+
+GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
+  required_aes = c("stops", "label"),
+  default_aes = ggplot2::aes(alpha = 1),
+  extra_params = c("na.rm", "text"),
+  draw_panel = function(data, panel_params, coord, text = TRUE) {
+    if (!nrow(data)) {
+      return(grid::nullGrob())
+    }
+    px <- function(v) grid::unit(v / 96, "inches")
+    font <- grid::gpar(fontsize = 8.25, col = "grey15")
+    grobs <- list()
+    at <- 6
+    for (i in seq_len(nrow(data))) {
+      colours <- strsplit(data$stops[i], ",", fixed = TRUE)[[1]]
+      bar <- if (length(colours) > 1) 48 else 18
+      fill <- if (length(colours) > 1) {
+        grid::linearGradient(colours, x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5)
+      } else {
+        ggplot2::alpha(colours, data$alpha[i])
+      }
+      top <- grid::unit(1, "npc") - px(6)
+      grobs[[length(grobs) + 1]] <- grid::rectGrob(
+        x = px(at), y = top, width = px(bar), height = px(8),
+        just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
+      )
+      at <- at + bar + 5
+      if (text && nzchar(data$label[i])) {
+        grobs[[length(grobs) + 1]] <- grid::textGrob(
+          data$label[i], x = px(at), y = top - px(4), just = "left", gp = font
+        )
+        at <- at + grid::convertWidth(
+          grid::grobWidth(grobs[[length(grobs)]]), "inches", valueOnly = TRUE
+        ) * 96
+      }
+      at <- at + 16
+    }
+    do.call(grid::grobTree, grobs)
+  }
+)
+
+#' Each lifted walk's colour bar, as the Bandage view's key draws it
+#'
+#' A bar of the walk's colour, or of the scale a shaded walk runs over, with
+#' its name and its length against the reference, at the top left of the
+#' panel. Unfaceted, a faded swatch follows for the rest of the graph.
+#' @inheritParams geom_bandage_nodes
+#' @param text write each walk's name and note beside its bar; faceted, the
+#'   panel's title already does
+#' @export
+geom_bandage_keys <- function(data = NULL, text = TRUE) {
+  ggplot2::layer(
+    geom = GeomBandageKey, stat = "identity", position = "identity",
+    data = table_from(data, keys_of),
+    mapping = ggplot2::aes(
+      stops = stops, label = paste0(walk, note), alpha = I(alpha)
+    ),
+    inherit.aes = FALSE, show.legend = FALSE,
+    params = list(text = text)
+  )
+}
+
 #' Strand arrowheads, a fixed size at any zoom
 #' @inheritParams geom_bandage_nodes
 #' @export

@@ -55,7 +55,7 @@ test_that("a missing index file is named in the error, and the engine recovers",
   )
 })
 
-test_that("a contig-layout index and a walks file are refused", {
+test_that("a contig-layout index is refused", {
   expect_error(
     bandage_layout(
       test_path("testdata", "ecoli_contig"),
@@ -63,7 +63,6 @@ test_that("a contig-layout index and a walks file are refused", {
     ),
     "not anchored"
   )
-  expect_error(bandage_layout("chr22.GRCh38.walks.bed.gz"), "--walks")
 })
 
 test_that("a byte range reads the same from a file and from a URL", {

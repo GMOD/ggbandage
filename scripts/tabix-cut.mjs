@@ -12,7 +12,7 @@ function fromR(fn, ...args) {
   return value
 }
 
-function rangeFile(location) {
+export function rangeFile(location) {
   const bytes = (position, length) =>
     bandageBase64(
       (fromR('fetch_range', location, position, length) ?? '').replace(
@@ -27,10 +27,11 @@ function rangeFile(location) {
   }
 }
 
-function openIndexed(file, index) {
+export function openIndexed(file, index) {
   return new TabixIndexedFile({
     filehandle: rangeFile(file),
-    tbiFilehandle: rangeFile(index),
+    [index.endsWith('.csi') ? 'csiFilehandle' : 'tbiFilehandle']:
+      rangeFile(index),
     chunkCacheIdleTimeoutMs: 0,
   })
 }

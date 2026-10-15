@@ -30,7 +30,8 @@ const noFs = {
 const { outputFiles } = await build({
   stdin: {
     contents: [
-      "export { gfaFigureData } from '@jbrowse/bandage-core/figureData'",
+      "export { figure, walkRows } from './scripts/figure.mjs'",
+      "export { cutWalks } from './scripts/walks-cut.mjs'",
       "export { cutTabix } from './scripts/tabix-cut.mjs'",
     ].join('\n'),
     resolveDir: process.cwd(),
@@ -77,7 +78,7 @@ function base64Wasm(js) {
   const cooked = new Function(`return \`${js.slice(body, end)}\``)()
   const bytes = Uint8Array.from(cooked, ch => {
     const c = ch.charCodeAt(0)
-    return ~c >> 8 & c
+    return (~c >> 8) & c
   })
   if (String.fromCharCode(...bytes.subarray(1, 4)) !== 'asm') {
     throw new Error('the inlined literal is not a wasm module')

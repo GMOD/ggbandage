@@ -4,7 +4,7 @@
 \alias{autoplot.bandage_layout}
 \title{The graph as the Bandage view draws it}
 \usage{
-\method{autoplot}{bandage_layout}(object, ..., ncol = NULL)
+\method{autoplot}{bandage_layout}(object, ..., ncol = NULL, labels = FALSE)
 }
 \arguments{
 \item{object}{a \code{bandage_layout}}
@@ -12,11 +12,13 @@
 \item{...}{unused}
 
 \item{ncol}{panels across, for a faceted layout}
+
+\item{labels}{name each node, with \code{\link[=geom_bandage_labels]{geom_bandage_labels()}}}
 }
 \description{
 Edges, nodes and arrowheads at the view's colours on white, the background
-the geoms mix faded ink with, a panel per lifted walk,
-and a reference bp axis under the layouts whose x is reference bp. Every
-piece is an ordinary ggplot2 layer, scale or theme, so \code{+} changes any of
-it.
+the geoms mix faded ink with, each lifted walk's colour bar, a panel per
+walk when faceted, the genes pinned on the backbone, and a reference bp axis
+under the layouts whose x is reference bp. Every piece is an ordinary
+ggplot2 layer, scale or theme, so \code{+} changes any of it.
 }

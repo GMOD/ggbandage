@@ -12,8 +12,11 @@ importers:
         specifier: 3.10.2
         version: 3.10.2
       '@jbrowse/bandage-core':
-        specifier: 10.2.3
-        version: 10.2.3
+        specifier: 10.3.0
+        version: 10.3.0
+      '@jbrowse/graph-walks':
+        specifier: 1.1.0
+        version: 1.1.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -189,8 +192,8 @@ packages:
   '@gmod/tabix@3.10.2':
     resolution: {integrity: sha512-vlHs03ILhRNuVWbqaA01nNQvRZBR+/uXia/1hWVu4wsHoArVfro5bUBCcYAhBo+kes7tdYJRc7xVWxwxT4Jscw==}
 
-  '@jbrowse/bandage-core@10.2.3':
-    resolution: {integrity: sha512-RPK+0h3Z08haxpTPwZHFvHH9PO89yIGg9LDaTMCvzsvenbKvYCoJ+JsRRtOuTtpeJpXN+UbPRMW57Avnexsvww==}
+  '@jbrowse/bandage-core@10.3.0':
+    resolution: {integrity: sha512-YvP52dbXKn4hp9h7pUwIv72+9pwDXONzKTHSksCMszJggv2v6Xw66kc+06WUoNXPPoK4aaUEq/9YsGw7b0Szow==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -202,12 +205,16 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
+  '@jbrowse/graph-walks@1.1.0':
+    resolution: {integrity: sha512-/HtOJh0gw3Mo+JqTAI4cbVmdHhLJE0mTne6v93cZT8UdRZE9LNyu/5VegZtFaJeMENfiITmBR8Uqk9Z7UXDr/Q==}
+    engines: {node: '>=20'}
+
   '@jbrowse/quick-lru@8.0.0':
     resolution: {integrity: sha512-zToC0THd94TGr4cWMp9eOCRB8eeN004ncajZzVOoM8WEWV90YMTX5SX9zY6Nk1hhY7ASKWnfOmguXt7SoXaLzw==}
     engines: {node: '>=22'}
 
-  '@jbrowse/tubemap-core@1.1.0':
-    resolution: {integrity: sha512-7x08COgIJJaSbThSJ2kq5khv92snriLbpvCigyVYRIGt8CK0n9fmtF2tKtWoCHnkkjL7KuMwpjvHqxvJ4pV/XQ==}
+  '@jbrowse/tubemap-core@2.0.0':
+    resolution: {integrity: sha512-hSa1f8LO1916BtJwZ5u2tBG2CKlYtoeMIbWkjlvlaBi9rUPBDgjuWCDBtep1OJAqIX3/LLSxnFOhUsM9vvTqxQ==}
 
   esbuild@0.28.2:
     resolution: {integrity: sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==}
@@ -318,21 +325,23 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.0
 
-  '@jbrowse/bandage-core@10.2.3':
+  '@jbrowse/bandage-core@10.3.0':
     dependencies:
       '@gmod/gbz-base': 7.4.0
       '@gmod/tabix': 3.10.2
       '@jbrowse/graph-fmmm-layout': 1.0.2
       '@jbrowse/graph-stress-layout': 1.0.0
-      '@jbrowse/tubemap-core': 1.1.0
+      '@jbrowse/tubemap-core': 2.0.0
 
   '@jbrowse/graph-fmmm-layout@1.0.2': {}
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
+  '@jbrowse/graph-walks@1.1.0': {}
+
   '@jbrowse/quick-lru@8.0.0': {}
 
-  '@jbrowse/tubemap-core@1.1.0': {}
+  '@jbrowse/tubemap-core@2.0.0': {}
 
   esbuild@0.28.2:
     optionalDependencies:

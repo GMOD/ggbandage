@@ -42,6 +42,6 @@ test_that("a GFA reads from a URL, plain or gzipped", {
   skip_on_os("windows")
   for (path in c(pggb, rgfa)) {
     url <- paste0("file://", normalizePath(path))
-    expect_identical(read_gfa(url), read_gfa(path))
+    expect_identical(read_text(url), read_text(path))
   }
 })
