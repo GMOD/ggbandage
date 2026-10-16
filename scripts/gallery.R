@@ -7,7 +7,7 @@ setup <- r"(library(ggbandage)
 library(ggplot2)
 library(patchwork)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f2.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f3.GRCh38.walks.bed.gz"
 index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
