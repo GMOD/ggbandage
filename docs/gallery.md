@@ -51,42 +51,18 @@ autoplot(g)
 
 `chr6:160,616,004-160,646,753`
 
-![Walk rows at KIV-2: GRCh38 spans 31 kb, HG00133#2 164 kb, and the other haplotypes between, the extra copies off the reference's path in purple](../gallery/kiv2_rows.png)
+![Walk rows at KIV-2 joined by ribbons where neighbours share sequence: GRCh38 spans 31 kb and HG00133#2 164 kb, and the other four haplotypes carry part of HG00133's 133 kb of extra copies, drawn in its blue](../gallery/kiv2_rows.png)
 
 ```r
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
 autoplot(rows)
 ```
 
-## Genes, walk rows and both layouts of one cut
-
-`chr6:160,616,004-160,646,753`
-
-![A ggjbrowse RefSeq track of LPA over the KIV-2 walk rows, over the force-directed and stress layouts of the same cut with HG00133#2 lifted and shaded along its length](../gallery/kiv2_combined.png)
-
-```r
-rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
-track <- ggjbrowse::jbrowse_features(
-  genes, "chr6", 160616003, 160646753,
-  index = paste0(genes, ".csi")
-)
-cut <- tempfile(fileext = ".gfa")
-writeLines(bandage_gfa(walks, kiv2, haplotypes = five), cut)
-lifted <- "HG00133#2#CM090065.1"
-force <- bandage_layout(cut, walks = lifted, genes = genes)
-stress <- bandage_layout(cut, walks = lifted, genes = genes, engine = "stress")
-x <- c(rows$origin, max(rows$rows$xmax))
-(autoplot(track) + coord_cartesian(xlim = x)) /
-  (autoplot(rows, readouts = FALSE) + coord_cartesian(xlim = x)) /
-  (autoplot(force) | autoplot(stress)) +
-  plot_layout(heights = c(2, 2, 5))
-```
-
 ## Amylase copy number in twelve haplotypes
 
 `chr1:103,540,000-103,780,000`
 
-![Walk rows over the salivary amylase genes: GRCh38 spans 240 kb, and the haplotypes run from 146 kb to 475 kb, each extra AMY1 copy a purple stretch off the reference's path](../gallery/amylase_rows.png)
+![Walk rows over the salivary amylase genes joined by ribbons: GRCh38 spans 240 kb and the haplotypes 146 kb to 475 kb, CHM13's extra copies in blue recur in five of them, and three haplotypes share a stretch of their own in pink](../gallery/amylase_rows.png)
 
 ```r
 rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = twelve)
@@ -110,17 +86,6 @@ g <- bandage_layout(
 autoplot(g)
 ```
 
-## The RHD deletion as walk rows
-
-`chr1:25,250,000-25,450,000`
-
-![Walk rows over RHD: eight haplotypes span the reference's 201 kb, and five carry the RhD-negative deletion, 70 kb shorter](../gallery/rhd_rows.png)
-
-```r
-rows <- bandage_walk_rows(walks, "chr1:25,250,000-25,450,000", haplotypes = twelve)
-autoplot(rows)
-```
-
 ## C4A and C4B in the stress layout
 
 `chr6:31,975,000-32,060,000`
@@ -132,17 +97,6 @@ g <- bandage_layout(
   index,
   region = "chr6:31,975,000-32,060,000", engine = "stress", genes = genes
 )
-autoplot(g)
-```
-
-## SMN1 and SMN2, force-directed
-
-`chr5:70,000,000-71,500,000`
-
-![Force-directed layout of 1.5 Mb around the spinal muscular atrophy genes: SMN1 and SMN2 sit among loops of segmental duplication, each gene's exons outlined](../gallery/smn_force.png)
-
-```r
-g <- bandage_layout(index, region = "chr5:70,000,000-71,500,000", genes = genes)
 autoplot(g)
 ```
 
@@ -169,34 +123,11 @@ plots <- Map(
 wrap_plots(plots, ncol = 2)
 ```
 
-## A tandem repeat as a tube map and a force layout
-
-`chr6:160,653,940-160,654,130`
-
-![A short tandem repeat near LPA cut from the walk file: a ggtubemap tube map of seven haplotypes over the force-directed layout of the same cut, HG00133#2 lifted and each node named](../gallery/str_tubemap.png)
-
-```r
-cut <- tempfile(fileext = ".gfa")
-writeLines(
-  bandage_gfa(
-    walks, "chr6:160,653,940-160,654,130",
-    haplotypes = c("CHM13#0", five), context = 0
-  ),
-  cut
-)
-tm <- ggtubemap::tubemap_layout(
-  ggtubemap::read_gfa(cut, reference = "GRCh38#0#chr6"),
-  node_width = "compressed"
-)
-g <- bandage_layout(cut, walks = "HG00133#2#CM090065.1", width = 600)
-autoplot(tm) / autoplot(g, labels = TRUE)
-```
-
 ## Your own colours: nodes by length
 
 `chr6:160,653,940-160,654,130`
 
-![The same tandem repeat force-directed and drawn with plain ggplot2 layers: grey edges, nodes coloured by log10 length on viridis, and each node of 5 bp or more labelled with its length](../gallery/own_colours.png)
+![A short tandem repeat near LPA, cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, nodes coloured by log10 length on viridis, and each node of 5 bp or more labelled with its length](../gallery/own_colours.png)
 
 ```r
 cut <- tempfile(fileext = ".gfa")
