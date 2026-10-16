@@ -16,7 +16,10 @@
 #'   in bp from the left flank, with `kind` and, on the reference's path,
 #'   `referenceStart` and `reversed`; and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
-#'   lower, `b0 > b1` where the lower walks it backwards
+#'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
+#'   per stretch of a block of nodes off the reference's path that two or more
+#'   rows walk, `letter` A for the block with the most bp over every visit.
+#'   Which rows are drawn decides the blocks: another row can split one.
 #' @export
 bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
                               context = 1000, referencePath = NULL,
@@ -46,13 +49,21 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
+  blocks <- as.data.frame(d$blocks)
+  blocks$xmin <- blocks$start
+  blocks$xmax <- blocks$start + blocks$bp
+  blocks$letter <- block_letters(blocks$block)
   structure(
     list(
-      rows = rows, runs = runs, links = as.data.frame(d$links),
+      rows = rows, runs = runs, links = as.data.frame(d$links), blocks = blocks,
       origin = d$origin, reference = d$reference
     ),
     class = "bandage_walk_rows"
   )
+}
+
+block_letters <- function(i) {
+  ifelse(i < 26, LETTERS[i %% 26 + 1], paste0(LETTERS[pmax(1, i %/% 26)], LETTERS[i %% 26 + 1]))
 }
 
 #' @export
@@ -105,9 +116,11 @@ bar_tiles <- function(runs, tile) {
 #' and its readout past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
 #' the reference shows the same colours wherever it recurs and an inverted
-#' one shows them reversed. Grey is sequence on nodes the reference does not
-#' walk, which may still resemble it, as an extra repeat copy does; outlined
-#' light grey is contig the walk leaves the cut for. Ribbons join the
+#' one shows them reversed. Light grey is sequence on nodes the reference does
+#' not walk, which may still resemble it, as an extra repeat copy does. A
+#' letter marks a block of those nodes that two or more drawn rows walk, the
+#' same letter wherever the block recurs, and the three largest blocks are
+#' filled. White is contig the walk leaves the cut for. Ribbons join the
 #' graph nodes neighbouring rows share, orange where one row walks them
 #' backwards. Inside a repeat, the ribbons show one pairing of the copies that
 #' keeps both rows in order, and a missing ribbon does not mean the rows share
@@ -140,8 +153,14 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   off <- paste("on nodes", reference, "does not walk")
   plain$key <- ifelse(plain$kind == "outside the cut", "outside the cut", off)
   labels <- c(off, "outside the cut", "same graph nodes", "same nodes, inverted")
-  keys <- stats::setNames(c("#8c8c8c", "#f4f4f4", "#d5dae1", "#f2b48e"), labels)
-  outlines <- stats::setNames(c("#8c8c8c", "#a8a8a8", "#d5dae1", "#f2b48e"), labels)
+  keys <- stats::setNames(c("#e8e8e8", "white", "#d5dae1", "#f2b48e"), labels)
+  outlines <- stats::setNames(c("#b5b5b5", "#9a9a9a", "#d5dae1", "#f2b48e"), labels)
+  blocks <- object$blocks
+  blocks$y <- y[blocks$row + 1]
+  fills <- c("#b2182b", "#1a1a1a", "#f4a6c8")
+  filled <- blocks[blocks$block < length(fills), ]
+  filled$letter <- factor(filled$letter, levels = block_letters(seq_along(fills) - 1))
+  lettered <- blocks[blocks$bp >= span * 0.012, ]
 
   links <- object$links
   if (!ribbons) {
@@ -177,6 +196,33 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       ),
       linewidth = 0.25
     ) +
+    ggplot2::geom_rect(
+      data = blocks[blocks$block >= length(fills), ],
+      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half),
+      fill = "#e8e8e8", colour = "#7a7a7a", linewidth = 0.25
+    ) +
+    ggplot2::geom_rect(
+      data = filled,
+      ggplot2::aes(
+        xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half,
+        alpha = letter, fill = I(fills[block + 1])
+      )
+    ) +
+    ggplot2::geom_text(
+      data = lettered,
+      ggplot2::aes(
+        x = (xmin + xmax) / 2, y = y, label = letter,
+        colour = I(ifelse(block < 2, "white", "grey15"))
+      ),
+      size = 2.6, fontface = "bold", show.legend = FALSE
+    ) +
+    ggplot2::scale_alpha_manual(
+      paste0("the same off-", reference, " nodes, wherever they recur:"),
+      values = rep(1, length(fills)), drop = TRUE,
+      guide = ggplot2::guide_legend(
+        order = 3, override.aes = list(fill = fills[seq_along(levels(droplevels(filled$letter)))])
+      )
+    ) +
     ggplot2::scale_fill_viridis_c(
       paste(reference, "position, Mb"),
       n.breaks = 3,
@@ -210,6 +256,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       axis.title.x = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.position = "top",
       legend.justification = "left",
+      legend.box = "vertical",
+      legend.box.just = "left",
+      legend.spacing.y = grid::unit(2, "pt"),
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.key.size = grid::unit(10, "pt")
     )

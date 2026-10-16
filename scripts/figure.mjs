@@ -320,6 +320,90 @@ function rowLinks(upper, lower, lengths, join) {
   return chained(sharedRuns(upper, lower, lengths, join), join)
 }
 
+// Blocks of nodes off the reference's path that two or more rows walk: the
+// nodes one set of rows walks, joined where a row walks them within `join` bp
+// of each other. offBlocks ranks blocks by bp over every visit, 0 for the
+// most, so a block has one rank in every row, set by neither the rows' order
+// nor the build order that created its nodes. It leaves out a block under
+// 0.3% of the bp off the path, and returns each row's stretches of each block.
+function offBlocks(bars, names, reference, lengths, join) {
+  const carriers = new Map()
+  bars.forEach((bar, i) => {
+    for (const id of bar?.offsets.keys() ?? []) {
+      if (!reference.has(id)) {
+        carriers.set(id, (carriers.get(id) ?? new Set()).add(names[i]))
+      }
+    }
+  })
+  const setKey = new Map()
+  for (const [id, rows] of carriers) {
+    if (rows.size > 1) {
+      setKey.set(id, [...rows].sort().join('\n'))
+    }
+  }
+  const parent = new Map([...setKey.keys()].map(id => [id, id]))
+  const find = id => {
+    while (parent.get(id) !== id) {
+      parent.set(id, parent.get(parent.get(id)))
+      id = parent.get(id)
+    }
+    return id
+  }
+  for (const bar of bars) {
+    const last = new Map()
+    bar?.steps.forEach((id, k) => {
+      const key = setKey.get(id)
+      if (key === undefined) {
+        return
+      }
+      const prev = last.get(key)
+      if (prev && bar.at[k] - prev.end <= join) {
+        parent.set(find(id), find(prev.id))
+      }
+      last.set(key, { id, end: bar.at[k] + lengths.get(id) })
+    })
+  }
+  const total = new Map()
+  const least = new Map()
+  let offBp = 0
+  for (const bar of bars) {
+    for (const [id, visits] of bar?.offsets ?? []) {
+      if (reference.has(id)) {
+        continue
+      }
+      offBp += lengths.get(id) * visits.length
+      if (setKey.has(id)) {
+        const root = find(id)
+        total.set(root, (total.get(root) ?? 0) + lengths.get(id) * visits.length)
+        least.set(root, [least.get(root) ?? id, id].sort()[0])
+      }
+    }
+  }
+  const ranked = [...total.keys()]
+    .filter(root => total.get(root) >= offBp * 0.003)
+    .sort((a, b) => total.get(b) - total.get(a) || (least.get(a) < least.get(b) ? -1 : 1))
+  const rank = new Map(ranked.map((root, i) => [root, i]))
+  const spans = []
+  bars.forEach((bar, i) => {
+    let last
+    bar?.steps.forEach((id, k) => {
+      const block = setKey.has(id) ? rank.get(find(id)) : undefined
+      if (block === undefined) {
+        return
+      }
+      const start = bar.at[k]
+      const end = start + lengths.get(id)
+      if (last && last.block === block && start - last.end <= join) {
+        last.end = end
+      } else {
+        last = { row: i, start, end, block }
+        spans.push(last)
+      }
+    })
+  })
+  return spans.map(({ row, start, end, block }) => ({ row, start, bp: end - start, block }))
+}
+
 function columns(records, keys) {
   return Object.fromEntries(keys.map(k => [k, records.map(r => r[k])]))
 }
@@ -411,5 +495,9 @@ export function walkRows(text, name, spec) {
       'reversed',
     ]),
     links: columns(links, ['row', 'a0', 'a1', 'b0', 'b1']),
+    blocks: columns(
+      offBlocks(bars, all.map(r => r.name), reference, lengths, join),
+      ['row', 'start', 'bp', 'block'],
+    ),
   }
 }

@@ -45,7 +45,10 @@ a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
 in bp from the left flank, with \code{kind} and, on the reference's path,
 \code{referenceStart} and \code{reversed}; and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
-lower, \code{b0 > b1} where the lower walks it backwards
+lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row
+per stretch of a block of nodes off the reference's path that two or more
+rows walk, \code{letter} A for the block with the most bp over every visit.
+Which rows are drawn decides the blocks: another row can split one.
 }
 \description{
 The reference walk on the top row and every other walk below it, each a bar

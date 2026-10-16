@@ -52,6 +52,18 @@ test_that("ribbons join neighbouring rows inside both bars", {
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(shared, ribbons = FALSE)))
 })
 
+test_that("a block letter marks the same off-reference nodes in every row, whatever the order", {
+  w <- bandage_walk_rows(pggb)
+  b <- w$blocks
+  expect_true(all(tapply(b$row, b$letter, function(r) length(unique(r))) >= 2))
+  expect_true(all(b$xmin >= 0 & b$xmax <= w$rows$bp[b$row + 1]))
+  key <- function(x) {
+    k <- paste(x$rows$label[x$blocks$row + 1], x$blocks$start, x$blocks$letter)
+    sort(k)
+  }
+  expect_equal(key(bandage_walk_rows(pggb, order = "shared")), key(w))
+})
+
 test_that("a bar on the reference's path is coloured by the reference position it covers", {
   w <- bandage_walk_rows(pggb)
   on <- w$runs[w$runs$kind == "on the reference's path", ]
