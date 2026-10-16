@@ -10,7 +10,7 @@ bandage_walk_rows(
   haplotypes = NULL,
   context = 1000,
   referencePath = NULL,
-  order = c("shared", "length"),
+  order = c("length", "shared"),
   join = NULL
 )
 }
@@ -32,25 +32,23 @@ one when \code{NULL}}
 \item{referencePath}{the reference walk, when it is not the one rank-0
 segments name or the first}
 
-\item{order}{\code{"shared"} puts each row under the one it shares the most
-sequence with; \code{"length"} puts the longest first}
+\item{order}{\code{"length"} puts the longest first; \code{"shared"} puts each row
+under the one it shares the most graph nodes with, a layout aid that says
+nothing about relatedness}
 
-\item{join}{bp of unshared sequence a stretch or ribbon runs across;
-\code{NULL} for 1/2000 of the longest bar}
+\item{join}{bp of unshared sequence a ribbon runs across; \code{NULL} for 1/2000
+of the longest bar}
 }
 \value{
 a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
-\code{bp} and \code{readout}; \code{runs}, a row per stretch of a bar with its \code{xmin},
-\code{xmax} and \code{source}, the label of the first row that carries it; and
-\code{links}, a row per ribbon from row \code{row} to the next, \code{a0}/\code{a1} along the
-upper bar and \code{b0}/\code{b1} along the lower, \code{b0 > b1} where the lower walks
-it backwards
+\code{bp} and \code{readout}; \code{runs}, a row per stretch of a bar, \code{xmin} and \code{xmax}
+in bp from the left flank, with \code{kind} and, on the reference's path,
+\code{referenceStart} and \code{reversed}; and \code{links}, a row per ribbon from row
+\code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
+lower, \code{b0 > b1} where the lower walks it backwards
 }
 \description{
 The reference walk on the top row and every other walk below it, each a bar
-of the sequence it carries through the region. A repeat expansion reads as
-bar length, which no node layout shows. \code{\link[=autoplot]{autoplot()}} colours each stretch
-of a bar by the first row down that carries it, so an extra copy has one
-colour in every row that has it, and draws a ribbon wherever neighbouring
-rows share sequence.
+of the sequence it carries between the reference nodes flanking the region.
+A repeat expansion reads as bar length, which no node layout shows.
 }

@@ -211,12 +211,13 @@ function sharedBp(a, b, lengths) {
 }
 
 // The reference first, then each row after the one it shares the most
-// sequence with, so neighbours share as much as they can
+// sequence with, so neighbours share as much as they can. A row cut from one
+// flank has no bar to compare, so the next is compared with the last that has.
 function sharedOrder(bars, lengths) {
   const order = [0]
   const rest = bars.map((_, i) => i).slice(1)
   while (rest.length) {
-    const last = bars[order.at(-1)]
+    const last = bars[[...order].reverse().find(i => bars[i]) ?? 0]
     let best = 0
     let bestBp = -1
     rest.forEach((i, k) => {
@@ -229,38 +230,6 @@ function sharedOrder(bars, lengths) {
     order.push(...rest.splice(best, 1))
   }
   return order
-}
-
-// A row's bar as stretches of one source, the first row down that carries
-// the node, or -1 for contig the cut does not hold, a stretch shorter than
-// `join` given the source of the one before it
-function spansOf(bar, row, first, lengths, join) {
-  const spans = []
-  bar.steps.forEach((step, k) => {
-    const gap = typeof step === 'number'
-    const bp = gap ? step : (lengths.get(step) ?? 0)
-    if (bp === 0) {
-      return
-    }
-    const source = gap ? -1 : (first.get(step) ?? row)
-    const last = spans.at(-1)
-    if (last && last.source === source) {
-      last.bp += bp
-    } else {
-      spans.push({ start: bar.at[k], bp, source })
-    }
-  })
-  const out = []
-  for (const span of spans) {
-    const last = out.at(-1)
-    const absorb = span.bp < join || last?.source === span.source
-    if (last && span.source !== -1 && last.source !== -1 && absorb) {
-      last.bp += span.bp
-    } else {
-      out.push(span)
-    }
-  }
-  return out
 }
 
 // Whether a lower-row visit at `b` carries a run on. A run of one node may go
@@ -346,33 +315,17 @@ function chained(runs, join) {
   return out
 }
 
-// The ribbons between two neighbouring rows: the chained shared runs, cut
-// where the upper row's spans change source, each piece 4 `join` across or
-// more
-function rowLinks(upper, lower, lengths, spans, join) {
-  const links = []
-  for (const run of chained(sharedRuns(upper, lower, lengths, join), join)) {
-    const along = a =>
-      run.b0 + ((a - run.a0) * (run.b1 - run.b0)) / (run.a1 - run.a0)
-    for (const span of spans) {
-      const a0 = Math.max(run.a0, span.start)
-      const a1 = Math.min(run.a1, span.start + span.bp)
-      if (a1 - a0 >= 4 * join && span.source >= 0) {
-        links.push({ a0, a1, b0: along(a0), b1: along(a1), source: span.source })
-      }
-    }
-  }
-  return links
+// The ribbons between two neighbouring rows: the chained shared runs
+function rowLinks(upper, lower, lengths, join) {
+  return chained(sharedRuns(upper, lower, lengths, join), join)
 }
-
 
 function columns(records, keys) {
   return Object.fromEntries(keys.map(k => [k, records.map(r => r[k])]))
 }
 
-// cutRows' rows, and what it leaves out: each node's offset along its bar, so
-// the rows can be ordered by what neighbours share, coloured by which row
-// first carries each stretch, and joined by ribbons where neighbours share it
+// cutRows' rows and runs, and what it leaves out: each node's offset along
+// its bar, so ribbons can join the nodes neighbouring rows share
 export function walkRows(text, name, spec) {
   const region = spec.region ? parseRegion(spec.region) : undefined
   const graph = loadGraph(text, name, { referencePath: spec.referencePath })
@@ -413,29 +366,21 @@ export function walkRows(text, name, spec) {
   const bars = order.map(i => cutBars[i])
   const join = spec.join ?? Math.max(...all.map(r => r.bp)) / 2000
 
-  const first = new Map()
-  bars.forEach((bar, i) => {
-    for (const id of bar?.offsets.keys() ?? []) {
-      if (!first.has(id)) {
-        first.set(id, i)
-      }
-    }
-  })
-  const rowSpans = all.map((row, i) =>
-    bars[i]
-      ? spansOf(bars[i], i, first, lengths, join)
-      : row.runs.map(run => ({
-          start: run.start,
-          bp: run.bp,
-          source: run.gap ? -1 : run.onReference ? 0 : i,
-        })),
+  const runs = all.flatMap((row, i) =>
+    row.runs.map(run => ({
+      row: i,
+      start: run.start,
+      bp: run.bp,
+      onReference: run.onReference,
+      gap: !!run.gap,
+      referenceStart: run.referenceStart ?? null,
+      reversed: !!run.reversed,
+    })),
   )
-  const spans = rowSpans.flatMap((s, i) => s.map(span => ({ row: i, ...span })))
-
   const links = []
   for (let i = 0; i + 1 < all.length; i++) {
     if (bars[i] && bars[i + 1]) {
-      const pair = rowLinks(bars[i], bars[i + 1], lengths, rowSpans[i], join)
+      const pair = rowLinks(bars[i], bars[i + 1], lengths, join)
       links.push(...pair.map(link => ({ row: i, ...link })))
     }
   }
@@ -451,11 +396,20 @@ export function walkRows(text, name, spec) {
       bp: all.map(r => r.bp),
       offReferenceBp: all.map(r => r.offReferenceBp),
       complete: all.map(r => r.complete),
+      linked: bars.map(bar => bar !== undefined),
       readout: all.map((r, i) =>
         walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
       ),
     },
-    spans: columns(spans, ['row', 'start', 'bp', 'source']),
-    links: columns(links, ['row', 'a0', 'a1', 'b0', 'b1', 'source']),
+    runs: columns(runs, [
+      'row',
+      'start',
+      'bp',
+      'onReference',
+      'gap',
+      'referenceStart',
+      'reversed',
+    ]),
+    links: columns(links, ['row', 'a0', 'a1', 'b0', 'b1']),
   }
 }

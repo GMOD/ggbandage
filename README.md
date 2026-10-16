@@ -67,7 +67,7 @@ ggplot(g) +
 <!-- gallery -->
 <table>
 <tr><td width="50%"><b><a href="docs/gallery.md#lpas-kiv-2-repeat-a-panel-per-walk">LPA's KIV-2 repeat, a panel per walk</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_walks.png" alt="Force-directed layout of the KIV-2 array cut from the walk file, GRCh38 and HG00097 each lifted in its own panel and shaded yellow to red along its length: HG00097 runs 55 kb through loops GRCh38's 33 kb skips" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#kiv-2-in-the-stress-layout-lpas-exons-pinned">KIV-2 in the stress layout, LPA's exons pinned</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_stress.png" alt="Stress layout of the KIV-2 array from the hosted index: the reference straight and coloured by position, LPA's exons outlined in orange, and the repeat alleles hanging below it" width="100%"></td></tr>
-<tr><td width="50%"><b><a href="docs/gallery.md#kiv-2-copy-number-as-walk-rows">KIV-2 copy number as walk rows</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_rows.png" alt="Walk rows at KIV-2 joined by ribbons where neighbours share sequence: GRCh38 spans 31 kb and HG00133#2 164 kb, and the other four haplotypes carry part of HG00133's 133 kb of extra copies, drawn in its blue" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#amylase-copy-number-in-twelve-haplotypes">Amylase copy number in twelve haplotypes</a></b><br><code>chr1:103,540,000-103,780,000</code><br><img src="gallery/amylase_rows.png" alt="Walk rows over the salivary amylase genes joined by ribbons: GRCh38 spans 240 kb and the haplotypes 146 kb to 475 kb, CHM13's extra copies in blue recur in five of them, and three haplotypes share a stretch of their own in pink" width="100%"></td></tr>
+<tr><td width="50%"><b><a href="docs/gallery.md#kiv-2-copy-number-as-walk-rows">KIV-2 copy number as walk rows</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_rows.png" alt="Walk rows at KIV-2 on a bp-from-flank axis: GRCh38 spans 31 kb and HG00133#2 164 kb, and each haplotype's extra sequence is grey, not aligned to GRCh38, with ribbons where neighbouring rows walk the same graph nodes" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#amylase-copy-number-in-twelve-haplotypes">Amylase copy number in twelve haplotypes</a></b><br><code>chr1:103,540,000-103,780,000</code><br><img src="gallery/amylase_rows.png" alt="Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, and the longest walk the same teal to green stretch of GRCh38 more than once, so its colours recur along the bar" width="100%"></td></tr>
 <tr><td width="50%"><b><a href="docs/gallery.md#the-amylase-locus-force-directed-the-longest-haplotype-lifted">The amylase locus force-directed, the longest haplotype lifted</a></b><br><code>chr1:103,540,000-103,780,000</code><br><img src="gallery/amylase_force.png" alt="Force-directed layout of the amylase locus with HG00128#1, 475 kb, lifted and shaded along its length through loops of extra AMY1 copies, the AMY genes outlined and named" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#c4a-and-c4b-in-the-stress-layout">C4A and C4B in the stress layout</a></b><br><code>chr6:31,975,000-32,060,000</code><br><img src="gallery/c4_stress.png" alt="Stress layout of the complement C4 genes in the MHC: the HERV-K insertions in C4A and C4B hang as loops below the reference, and a dashed arch skips a whole C4 module" width="100%"></td></tr>
 <tr><td width="50%"><b><a href="docs/gallery.md#four-common-deletions-in-the-stress-layout">Four common deletions in the stress layout</a></b><br><code>RHD, AMY1, C4, CYP2D6</code><br><img src="gallery/deletions.png" alt="Four loci in the stress layout, each a dashed arch over the reference where a deletion skips it, such as the RHD gene deletion" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#your-own-colours-nodes-by-length">Your own colours: nodes by length</a></b><br><code>chr6:160,653,940-160,654,130</code><br><img src="gallery/own_colours.png" alt="A short tandem repeat near LPA, cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, nodes coloured by log10 length on viridis, and each node of 5 bp or more labelled with its length" width="100%"></td></tr>
 </table>
@@ -119,23 +119,30 @@ The reference-anchored layouts, `layout = "auto"`, `"ordered"` and
 
 ## Walk rows
 
-`bandage_walk_rows()` draws each walk as a bar as long as its sequence through
-the region, the reference on top. A repeat expansion reads as bar length,
-which no node layout shows:
+`bandage_walk_rows()` draws each walk as a bar of the bp it carries between
+the reference nodes flanking the region, the reference on top and the rest
+longest first. A repeat expansion reads as bar length, which no node layout
+shows:
 
 ```r
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haplotypes)
 autoplot(rows)
 ```
 
-- `bandage_walk_rows()` puts each row under the one it shares the most
-  sequence with; `order = "length"` puts the longest first instead
-- `autoplot()` colours each stretch by the first row down that carries it:
-  grey for the reference's sequence and a hue for each row's own, so an extra
-  repeat copy has one colour in every row that has it
-- `autoplot()` draws a ribbon wherever neighbouring rows share sequence.
-  Where a repeat's copies could pair several ways, it keeps the pairing that
-  holds both rows in order, leaving unjoined a copy one row has more of
+- **x:** bp from the left flank, each haplotype on its own bp, not reference
+  coordinates
+- **Colour:** sequence on the reference's path takes the colour of the
+  reference position it covers. A duplicated reference stretch repeats its
+  colours, and an inverted one runs them backwards. Grey is sequence the graph
+  did not align to the reference
+- **Ribbons:** neighbouring rows walk the same graph nodes there, orange where
+  one walks them backwards. Shared nodes mean similar sequence, not shared
+  ancestry
+- Inside a repeat, the ribbons show one pairing of the copies, the one that
+  keeps both rows in order. A missing ribbon does not mean the rows share
+  nothing there
+- `order = "shared"` puts each row under the one it shares the most nodes
+  with, a layout aid that says nothing about relatedness
 - `rows$rows` has each walk's `bp` and readout, `rows$runs` each stretch of
   each bar, and `rows$links` each ribbon
 

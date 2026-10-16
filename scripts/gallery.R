@@ -45,14 +45,14 @@ autoplot(g))",
   ),
   figure(
     "kiv2_rows", "KIV-2 copy number as walk rows", "chr6:160,616,004-160,646,753",
-    "Walk rows at KIV-2 joined by ribbons where neighbours share sequence: GRCh38 spans 31 kb and HG00133#2 164 kb, and the other four haplotypes carry part of HG00133's 133 kb of extra copies, drawn in its blue",
+    "Walk rows at KIV-2 on a bp-from-flank axis: GRCh38 spans 31 kb and HG00133#2 164 kb, and each haplotype's extra sequence is grey, not aligned to GRCh38, with ribbons where neighbouring rows walk the same graph nodes",
     r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
 autoplot(rows))",
     height = 3.6
   ),
   figure(
     "amylase_rows", "Amylase copy number in twelve haplotypes", "chr1:103,540,000-103,780,000",
-    "Walk rows over the salivary amylase genes joined by ribbons: GRCh38 spans 240 kb and the haplotypes 146 kb to 475 kb, CHM13's extra copies in blue recur in five of them, and three haplotypes share a stretch of their own in pink",
+    "Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, and the longest walk the same teal to green stretch of GRCh38 more than once, so its colours recur along the bar",
     r"(rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = twelve)
 autoplot(rows))",
     height = 5

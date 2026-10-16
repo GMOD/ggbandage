@@ -14,10 +14,16 @@
 \item{readouts}{write each bar's length and its difference from the
 reference past its end}
 
-\item{ribbons}{join the stretches neighbouring rows share}
+\item{ribbons}{join the graph nodes neighbouring rows share}
 }
 \description{
-A bar per walk on a bp axis that starts where the region does, the walk's
-label on y and its readout past the bar's end, and ribbons between
-neighbouring bars where they share sequence.
+A bar per walk on an axis of bp from the left flank, the walk's label on y
+and its readout past the bar's end. Sequence on the reference's path takes
+the colour of the reference position it covers, so a duplicated stretch of
+the reference shows the same colours wherever it recurs and an inverted
+one shows them reversed; sequence off the path is grey. Ribbons join the
+graph nodes neighbouring rows share, orange where one row walks them
+backwards. Inside a repeat, the ribbons show one pairing of the copies that
+keeps both rows in order, and a missing ribbon does not mean the rows share
+nothing there.
 }

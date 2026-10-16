@@ -43,13 +43,21 @@ test_that("ribbons join neighbouring rows inside both bars", {
   w <- bandage_walk_rows(pggb)
   l <- w$links
   expect_gt(nrow(l), 0)
-  expect_true(all(l$a0 >= w$origin & l$a1 <= w$rows$xmax[l$row + 1]))
-  expect_true(all(pmin(l$b0, l$b1) >= w$origin))
-  expect_true(all(pmax(l$b0, l$b1) <= w$rows$xmax[l$row + 2] + 1e-6))
-  expect_equal(
-    bandage_walk_rows(pggb, order = "length")$rows$bp[-1],
-    sort(w$rows$bp[-1], decreasing = TRUE)
-  )
+  expect_true(all(l$a0 >= 0 & l$a1 <= w$rows$bp[l$row + 1]))
+  expect_true(all(pmin(l$b0, l$b1) >= 0))
+  expect_true(all(pmax(l$b0, l$b1) <= w$rows$bp[l$row + 2] + 1e-6))
+  expect_equal(w$rows$bp[-1], sort(w$rows$bp[-1], decreasing = TRUE))
+  shared <- bandage_walk_rows(pggb, order = "shared")
+  expect_setequal(shared$rows$label, w$rows$label)
+  expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(shared, ribbons = FALSE)))
+})
+
+test_that("a bar on the reference's path is coloured by the reference position it covers", {
+  w <- bandage_walk_rows(pggb)
+  on <- w$runs[w$runs$kind == "on the reference's path", ]
+  expect_false(anyNA(on$referenceStart))
+  tiles <- bar_tiles(w$runs, max(w$rows$bp) / 600)
+  expect_equal(tapply(tiles$xmax, tiles$row, max), tapply(w$runs$xmax, w$runs$row, max))
 })
 
 test_that("a walk file cuts the walks under a region", {
