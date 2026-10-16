@@ -151,6 +151,8 @@ autoplot(rows)
 - Inside a repeat, the ribbons show one pairing of the copies, the one that
   keeps both rows in order. A missing ribbon does not mean the rows share
   nothing there
+- A walk measured from one flank gets no ribbons or letters, and its readout
+  says so
 - `order = "shared"` puts each row under the one it shares the most nodes
   with, a layout aid that says nothing about relatedness
 - `rows$rows` has each walk's `bp` and readout, `rows$runs` each stretch of

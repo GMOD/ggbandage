@@ -52,6 +52,27 @@ test_that("ribbons join neighbouring rows inside both bars", {
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(shared, ribbons = FALSE)))
 })
 
+test_that("a walk measured from one flank says it gets no ribbons", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    "H\tVN:Z:1.1",
+    paste0("S\t", 1:6, "\t", strrep("A", 10)),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t3\t+\t4\t+\t0M", "L\t4\t+\t5\t+\t0M",
+    "L\t2\t+\t6\t+\t0M", "L\t6\t+\t4\t+\t0M",
+    "W\tref\t0\tchr\t0\t50\t>1>2>3>4>5",
+    "W\thap\t1\tc1\t0\t50\t>1>2>6>4>5",
+    "W\tcut\t1\tc2\t0\t25\t>1>2>6"
+  ), gfa)
+  w <- bandage_walk_rows(gfa, region = "ref#0#chr:21-30")
+  partial <- w$rows[w$rows$label == "cut#1", ]
+  expect_false(partial$linked)
+  expect_match(partial$readout, "no ribbons$")
+  expect_false(any(grepl("no ribbons", w$rows$readout[w$rows$linked])))
+  expect_false(any(grepl("the cut", w$rows$readout)))
+  expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w)))
+})
+
 test_that("a block letter marks the same off-reference nodes in every row, whatever the order", {
   w <- bandage_walk_rows(pggb)
   b <- w$blocks

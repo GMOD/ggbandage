@@ -12,7 +12,8 @@
 #' @param join bp of unshared sequence a ribbon runs across; `NULL` for 1/2000
 #'   of the longest bar
 #' @return a `bandage_walk_rows`: `rows`, a row per walk with its `label`,
-#'   `bp` and `readout`; `runs`, a row per stretch of a bar, `xmin` and `xmax`
+#'   `bp`, `readout` and `linked`, `FALSE` for a walk measured from one flank,
+#'   which gets no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
 #'   in bp from the left flank, with `kind` and, on the reference's path,
 #'   `referenceStart` and `reversed`; and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
@@ -49,7 +50,11 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
+  rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "· no ribbons"))
   blocks <- as.data.frame(d$blocks)
+  if (!nrow(blocks)) {
+    blocks <- data.frame(row = numeric(), start = numeric(), bp = numeric(), block = numeric())
+  }
   blocks$xmin <- blocks$start
   blocks$xmax <- blocks$start + blocks$bp
   blocks$letter <- block_letters(blocks$block)
