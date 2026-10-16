@@ -39,6 +39,19 @@ test_that("walk rows measure each walk on its own bp", {
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w)))
 })
 
+test_that("ribbons join neighbouring rows inside both bars", {
+  w <- bandage_walk_rows(pggb)
+  l <- w$links
+  expect_gt(nrow(l), 0)
+  expect_true(all(l$a0 >= w$origin & l$a1 <= w$rows$xmax[l$row + 1]))
+  expect_true(all(pmin(l$b0, l$b1) >= w$origin))
+  expect_true(all(pmax(l$b0, l$b1) <= w$rows$xmax[l$row + 2] + 1e-6))
+  expect_equal(
+    bandage_walk_rows(pggb, order = "length")$rows$bp[-1],
+    sort(w$rows$bp[-1], decreasing = TRUE)
+  )
+})
+
 test_that("a walk file cuts the walks under a region", {
   region <- "chr:1004500-1004961"
   gfa <- bandage_gfa(walk_file, region, context = 0)

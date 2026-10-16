@@ -4,7 +4,7 @@
 \alias{autoplot.bandage_walk_rows}
 \title{Walk rows as the Bandage view draws them}
 \usage{
-\method{autoplot}{bandage_walk_rows}(object, ..., readouts = TRUE)
+\method{autoplot}{bandage_walk_rows}(object, ..., readouts = TRUE, ribbons = TRUE)
 }
 \arguments{
 \item{object}{a \code{bandage_walk_rows}}
@@ -13,8 +13,11 @@
 
 \item{readouts}{write each bar's length and its difference from the
 reference past its end}
+
+\item{ribbons}{join the stretches neighbouring rows share}
 }
 \description{
 A bar per walk on a bp axis that starts where the region does, the walk's
-label on y and its readout past the bar's end.
+label on y and its readout past the bar's end, and ribbons between
+neighbouring bars where they share sequence.
 }
