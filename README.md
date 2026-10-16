@@ -22,33 +22,38 @@ library(ggbandage)
 
 walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f2.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
-haplotypes <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
 
 g <- bandage_layout(
   walks,
-  region = kiv2, haplotypes = haplotypes,
+  region = kiv2, haplotypes = "HG00097#1",
   walks = c("GRCh38#0#chr6", "HG00097#1#JBIRDD010000043.1"),
   facet = "walk"
 )
 autoplot(g, ncol = 2)
-ggplot2::ggsave("kiv2.pdf", width = 10, height = 6)
+ggplot2::ggsave("kiv2.pdf", width = 10, height = 4)
 ```
 
-![LPA's KIV-2 repeat array from the HPRC release 2.1 walk file, force-directed, a panel per walk with its colour bar running along the walk](gallery/kiv2_walks.png)
+![LPA's KIV-2 repeat array cut from the HPRC release 2.1 walk file for HG00097, force-directed, a panel per walk shaded along its length: HG00097 walks one 22 kb loop that GRCh38 skips](gallery/kiv2_walks.png)
 
 `autoplot()` draws the graph as the Bandage view does. To draw it your own way,
-map columns of the node table (`depth`, `length`, `backbone`, `node`, `name`):
+map columns of the node table (`depth`, `length`, `backbone`, `node`, `name`).
+Here `depth` counts how many times the cut's walks pass through each node:
 
 ```r
 library(ggplot2)
 
+haplotypes <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
+g <- bandage_layout(walks, region = kiv2, haplotypes = haplotypes)
 ggplot(g) +
-  geom_bandage_edges(aes(colour = I("grey70"))) +
-  geom_bandage_nodes(aes(colour = log10(length))) +
-  geom_bandage_labels() +
-  scale_colour_viridis_c() +
+  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_nodes(aes(colour = depth)) +
+  scale_colour_viridis_c(
+    "walk passes through node",
+    option = "mako", direction = -1, end = 0.85, breaks = 1:6
+  ) +
   coord_fixed() +
-  theme_void()
+  theme_void() +
+  theme(legend.position = "bottom")
 ```
 
 - Widths are absolute, as on screen: a 6 px node is 1/16 in at any figure size
@@ -66,10 +71,10 @@ ggplot(g) +
 
 <!-- gallery -->
 <table>
-<tr><td width="50%"><b><a href="docs/gallery.md#lpas-kiv-2-repeat-a-panel-per-walk">LPA's KIV-2 repeat, a panel per walk</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_walks.png" alt="Force-directed layout of the KIV-2 array cut from the walk file, GRCh38 and HG00097 each lifted in its own panel and shaded yellow to red along its length: HG00097 runs 55 kb through loops GRCh38's 33 kb skips" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#kiv-2-in-the-stress-layout-lpas-exons-pinned">KIV-2 in the stress layout, LPA's exons pinned</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_stress.png" alt="Stress layout of the KIV-2 array from the hosted index: the reference straight and coloured by position, LPA's exons outlined in orange, and the repeat alleles hanging below it" width="100%"></td></tr>
-<tr><td width="50%"><b><a href="docs/gallery.md#kiv-2-copy-number-as-walk-rows">KIV-2 copy number as walk rows</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_rows.png" alt="Walk rows at KIV-2 on a bp-from-flank axis: GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#amylase-copy-number-in-twelve-haplotypes">Amylase copy number in twelve haplotypes</a></b><br><code>chr1:103,540,000-103,780,000</code><br><img src="gallery/amylase_rows.png" alt="Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, HG00128#1 walks the stretch near 103.72 Mb twice, so its green recurs, and five haplotypes walk much of the non-reference block A twice" width="100%"></td></tr>
-<tr><td width="50%"><b><a href="docs/gallery.md#the-amylase-locus-force-directed-the-longest-haplotype-lifted">The amylase locus force-directed, the longest haplotype lifted</a></b><br><code>chr1:103,540,000-103,780,000</code><br><img src="gallery/amylase_force.png" alt="Force-directed layout of the amylase locus with HG00128#1, 475 kb, lifted and shaded along its length through loops of extra AMY1 copies, the AMY genes outlined and named" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#c4a-and-c4b-in-the-stress-layout">C4A and C4B in the stress layout</a></b><br><code>chr6:31,975,000-32,060,000</code><br><img src="gallery/c4_stress.png" alt="Stress layout of the complement C4 genes in the MHC: the HERV-K insertions in C4A and C4B hang as loops below the reference, and a dashed arch skips a whole C4 module" width="100%"></td></tr>
-<tr><td width="50%"><b><a href="docs/gallery.md#four-common-deletions-in-the-stress-layout">Four common deletions in the stress layout</a></b><br><code>RHD, AMY1, C4, CYP2D6</code><br><img src="gallery/deletions.png" alt="Four loci in the stress layout, each a dashed arch over the reference where a deletion skips it, such as the RHD gene deletion" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#your-own-colours-nodes-by-length">Your own colours: nodes by length</a></b><br><code>chr6:160,653,940-160,654,130</code><br><img src="gallery/own_colours.png" alt="A short tandem repeat near LPA, cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, nodes coloured by log10 length on viridis, and each node of 5 bp or more labelled with its length" width="100%"></td></tr>
+<tr><td width="50%"><b><a href="docs/gallery.md#kiv-2-against-a-straight-grch38-backbone-with-lpas-exons">KIV-2 against a straight GRCh38 backbone, with LPA's exons</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_stress.png" alt="Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#lpas-kiv-2-repeat-a-panel-per-walk">LPA's KIV-2 repeat, a panel per walk</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_walks.png" alt="Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and the panel titles give HG00097 55 kb and GRCh38 32.8 kb, each span the region plus 1 kb of flank either side" width="100%"></td></tr>
+<tr><td width="50%"><b><a href="docs/gallery.md#kiv-2-copy-number-as-walk-rows">KIV-2 copy number as walk rows</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_rows.png" alt="Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#amylase-copy-number-in-twelve-haplotypes">Amylase copy number in twelve haplotypes</a></b><br><code>chr1:103,540,000-103,780,000</code><br><img src="gallery/amylase_rows.png" alt="Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, HG00128#1 walks the stretch near 103.72 Mb twice, so its green recurs, and five haplotypes walk much of the non-reference block A twice" width="100%"></td></tr>
+<tr><td width="50%"><b><a href="docs/gallery.md#c4a-and-c4b-in-the-stress-layout">C4A and C4B in the stress layout</a></b><br><code>chr6:31,978,000-32,040,000</code><br><img src="gallery/c4_stress.png" alt="Stress layout of the complement C4 genes in the MHC, GRCh38 drawn straight, its C4A and C4B the long forms: non-reference sequence hangs in loops below C4A and C4B, and a dashed arch from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#rhd-and-cyp2d6-gene-deletions-as-arches">RHD and CYP2D6 gene deletions as arches</a></b><br><code>RHD, CYP2D6</code><br><img src="gallery/deletions.png" alt="RHD and CYP2D6 in the stress layout, one above the other, GRCh38 straight and genes named: in each, a dashed arch spans the whole gene, the route of haplotypes that skip it, and non-reference sequence hangs in grey" width="100%"></td></tr>
+<tr><td width="50%"><b><a href="docs/gallery.md#your-own-colours-kiv-2-nodes-by-walk-passes">Your own colours: KIV-2 nodes by walk passes</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/own_colours.png" alt="The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks pass through it, light for once to dark for six" width="100%"></td></tr>
 </table>
 <!-- /gallery -->
 
@@ -91,28 +96,25 @@ g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
 autoplot(g)
 ```
 
-
-Each plot is a ggplot, so patchwork tiles four loci with common deletions:
+Each plot is a ggplot, so patchwork stacks loci, here the RHD and CYP2D6
+gene deletions:
 
 ```r
 library(patchwork)
 
 deletions <- c(
   RHD = "chr1:25,250,000-25,450,000",
-  AMY1 = "chr1:103,540,000-103,780,000",
-  C4 = "chr6:31,975,000-32,060,000",
-  CYP2D6 = "chr22:42,115,000-42,155,000"
+  CYP2D6 = "chr22:42,118,000-42,136,000"
 )
 plots <- Map(
   function(gene, region) {
-    autoplot(bandage_layout(index, region = region, engine = "stress")) +
-      ggtitle(gene)
+    g <- bandage_layout(index, region = region, engine = "stress", genes = genes)
+    autoplot(g) + labs(title = gene, subtitle = region)
   },
   names(deletions), deletions
 )
-wrap_plots(plots, ncol = 2)
+wrap_plots(plots, ncol = 1, heights = c(1, 2.5))
 ```
-
 
 The reference-anchored layouts, `layout = "auto"`, `"ordered"` and
 `"samplerows"`, put reference bp on x and name their rows on y.
@@ -131,6 +133,9 @@ autoplot(rows)
 
 - **x:** bp from the left flank, each haplotype on its own bp, not reference
   coordinates
+- **Readout:** a bar's bp between the flanks, so GRCh38 reads 31 kb at KIV-2.
+  A layout's walk key counts the whole cut instead, `context` bp past each end
+  of the region included, and reads 32.8 kb for the same GRCh38 walk
 - **Colour:** sequence on the reference's path takes the colour of the
   reference position it covers. A duplicated reference stretch repeats its
   colours, and an inverted one runs them backwards. A copy the graph threads
@@ -176,11 +181,10 @@ autoplot(rows)
 
 Every figure is a ggplot, so patchwork stacks it with other ggplot2 packages:
 
-- [Genes, walk rows and both layouts of one cut](docs/gallery.md#genes-walk-rows-and-both-layouts-of-one-cut)
-  puts a [ggjbrowse](https://github.com/GMOD/ggjbrowse) gene track over the
-  walk rows, over the force-directed and stress layouts
-- [A tandem repeat as a tube map and a force layout](docs/gallery.md#a-tandem-repeat-as-a-tube-map-and-a-force-layout)
-  hands `bandage_gfa()`'s cut to [ggtubemap](https://github.com/GMOD/ggtubemap)
+- [ggjbrowse](https://github.com/GMOD/ggjbrowse) draws a gene track to set
+  over walk rows or a layout of the same region
+- [ggtubemap](https://github.com/GMOD/ggtubemap) draws a tube map from the GFA
+  that `bandage_gfa()` returns
 
 ## The engine bundle
 

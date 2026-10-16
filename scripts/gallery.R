@@ -26,26 +26,32 @@ figure <- function(id, title, locus, alt, code, width = 10, height = 6) {
 
 figures <- list(
   figure(
+    "kiv2_stress", "KIV-2 against a straight GRCh38 backbone, with LPA's exons", "chr6:160,616,004-160,646,753",
+    "Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence",
+    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
+ggplot(g) +
+  geom_bandage_edges() +
+  geom_bandage_genes() +
+  geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
+  coord_fixed() +
+  theme_void())",
+    width = 8, height = 4.4
+  ),
+  figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
-    "Force-directed layout of the KIV-2 array cut from the walk file, GRCh38 and HG00097 each lifted in its own panel and shaded yellow to red along its length: HG00097 runs 55 kb through loops GRCh38's 33 kb skips",
+    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and the panel titles give HG00097 55 kb and GRCh38 32.8 kb, each span the region plus 1 kb of flank either side",
     r"(g <- bandage_layout(
   walks,
-  region = kiv2, haplotypes = five,
+  region = kiv2, haplotypes = "HG00097#1",
   walks = c("GRCh38#0#chr6", "HG00097#1#JBIRDD010000043.1"),
   facet = "walk"
 )
-autoplot(g, ncol = 2))"
-  ),
-  figure(
-    "kiv2_stress", "KIV-2 in the stress layout, LPA's exons pinned", "chr6:160,616,004-160,646,753",
-    "Stress layout of the KIV-2 array from the hosted index: the reference straight and coloured by position, LPA's exons outlined in orange, and the repeat alleles hanging below it",
-    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
-autoplot(g))",
+autoplot(g, ncol = 2))",
     height = 4
   ),
   figure(
     "kiv2_rows", "KIV-2 copy number as walk rows", "chr6:160,616,004-160,646,753",
-    "Walk rows at KIV-2 on a bp-from-flank axis: GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
+    "Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
     r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
 autoplot(rows))",
     height = 4.4
@@ -58,64 +64,54 @@ autoplot(rows))",
     height = 6
   ),
   figure(
-    "amylase_force", "The amylase locus force-directed, the longest haplotype lifted", "chr1:103,540,000-103,780,000",
-    "Force-directed layout of the amylase locus with HG00128#1, 475 kb, lifted and shaded along its length through loops of extra AMY1 copies, the AMY genes outlined and named",
-    r"(g <- bandage_layout(
-  walks,
-  region = "chr1:103,540,000-103,780,000",
-  haplotypes = c("HG00128#1", "HG00099#2"),
-  walks = "HG00128#1#JBHIKS010000010.1",
-  genes = genes
-)
-autoplot(g))",
-    height = 7
-  ),
-  figure(
-    "c4_stress", "C4A and C4B in the stress layout", "chr6:31,975,000-32,060,000",
-    "Stress layout of the complement C4 genes in the MHC: the HERV-K insertions in C4A and C4B hang as loops below the reference, and a dashed arch skips a whole C4 module",
+    "c4_stress", "C4A and C4B in the stress layout", "chr6:31,978,000-32,040,000",
+    "Stress layout of the complement C4 genes in the MHC, GRCh38 drawn straight, its C4A and C4B the long forms: non-reference sequence hangs in loops below C4A and C4B, and a dashed arch from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA",
     r"(g <- bandage_layout(
   index,
-  region = "chr6:31,975,000-32,060,000", engine = "stress", genes = genes
+  region = "chr6:31,978,000-32,040,000", engine = "stress", genes = genes
 )
 autoplot(g))",
-    height = 4
+    height = 2.6
   ),
   figure(
-    "deletions", "Four common deletions in the stress layout", "RHD, AMY1, C4, CYP2D6",
-    "Four loci in the stress layout, each a dashed arch over the reference where a deletion skips it, such as the RHD gene deletion",
+    "deletions", "RHD and CYP2D6 gene deletions as arches", "RHD, CYP2D6",
+    "RHD and CYP2D6 in the stress layout, one above the other, GRCh38 straight and genes named: in each, a dashed arch spans the whole gene, the route of haplotypes that skip it, and non-reference sequence hangs in grey",
     r"(deletions <- c(
   RHD = "chr1:25,250,000-25,450,000",
-  AMY1 = "chr1:103,540,000-103,780,000",
-  C4 = "chr6:31,975,000-32,060,000",
-  CYP2D6 = "chr22:42,115,000-42,155,000"
+  CYP2D6 = "chr22:42,118,000-42,136,000"
 )
 plots <- Map(
   function(gene, region) {
-    autoplot(bandage_layout(index, region = region, engine = "stress")) +
-      ggtitle(gene)
+    g <- bandage_layout(index, region = region, engine = "stress", genes = genes)
+    ggplot(g) +
+      geom_bandage_edges() +
+      geom_bandage_genes() +
+      geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
+      coord_fixed(clip = "off") +
+      labs(title = gene, subtitle = region) +
+      theme_void() +
+      theme(plot.title = element_text(face = "italic"), plot.margin = margin(4, 12, 4, 12))
   },
   names(deletions), deletions
 )
-wrap_plots(plots, ncol = 2))",
-    width = 14, height = 5
+wrap_plots(plots, ncol = 1, heights = c(1, 2.5)))",
+    height = 5.2
   ),
   figure(
-    "own_colours", "Your own colours: nodes by length", "chr6:160,653,940-160,654,130",
-    "A short tandem repeat near LPA, cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, nodes coloured by log10 length on viridis, and each node of 5 bp or more labelled with its length",
-    r"(cut <- tempfile(fileext = ".gfa")
-writeLines(
-  bandage_gfa(walks, "chr6:160,653,940-160,654,130", haplotypes = five, context = 0),
-  cut
-)
-g <- bandage_layout(cut, width = 600)
+    "own_colours", "Your own colours: KIV-2 nodes by walk passes", "chr6:160,616,004-160,646,753",
+    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks pass through it, light for once to dark for six",
+    r"(g <- bandage_layout(walks, region = kiv2, haplotypes = five)
 ggplot(g) +
-  geom_bandage_edges(aes(colour = I("grey75"))) +
-  geom_bandage_nodes(aes(colour = log10(length))) +
-  geom_bandage_labels(aes(label = ifelse(length >= 5, paste(length, "bp"), ""))) +
-  scale_colour_viridis_c("log10 bp") +
+  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_nodes(aes(colour = depth)) +
+  scale_colour_viridis_c(
+    "walk passes through node",
+    option = "mako", direction = -1, end = 0.85, breaks = 1:6
+  ) +
   coord_fixed() +
-  theme_void())",
-    height = 7
+  theme_void() +
+  theme(legend.position = "bottom"))",
+    width = 6.5, height = 6.5
   )
 )
 
