@@ -21,7 +21,9 @@ A bar per walk on an axis of bp from the left flank, the walk's label on y
 and its readout past the bar's end. Sequence on the reference's path takes
 the colour of the reference position it covers, so a duplicated stretch of
 the reference shows the same colours wherever it recurs and an inverted
-one shows them reversed; sequence off the path is grey. Ribbons join the
+one shows them reversed. Grey is sequence on nodes the reference does not
+walk, which may still resemble it, as an extra repeat copy does; outlined
+light grey is contig the walk leaves the cut for. Ribbons join the
 graph nodes neighbouring rows share, orange where one row walks them
 backwards. Inside a repeat, the ribbons show one pairing of the copies that
 keeps both rows in order, and a missing ribbon does not mean the rows share

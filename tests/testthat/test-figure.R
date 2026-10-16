@@ -58,6 +58,13 @@ test_that("a bar on the reference's path is coloured by the reference position i
   expect_false(anyNA(on$referenceStart))
   tiles <- bar_tiles(w$runs, max(w$rows$bp) / 600)
   expect_equal(tapply(tiles$xmax, tiles$row, max), tapply(w$runs$xmax, w$runs$row, max))
+  expect_false(anyNA(tiles$position[tiles$kind == "on the reference's path"]))
+
+  backwards <- data.frame(
+    row = 0, xmin = 0, xmax = 100, bp = 100, kind = factor("on the reference's path"),
+    referenceStart = 1000, reversed = TRUE
+  )
+  expect_true(all(diff(bar_tiles(backwards, 10)$position) < 0))
 })
 
 test_that("a walk file cuts the walks under a region", {

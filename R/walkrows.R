@@ -41,8 +41,8 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   runs$xmin <- runs$start
   runs$xmax <- runs$start + runs$bp
   runs$kind <- factor(
-    ifelse(runs$gap, "outside the cut", ifelse(runs$onReference, "on the reference's path", "off it")),
-    levels = c("on the reference's path", "off it", "outside the cut")
+    ifelse(runs$gap, "outside the cut", ifelse(runs$onReference, "on the reference's path", "off the reference's path")),
+    levels = c("on the reference's path", "off the reference's path", "outside the cut")
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
@@ -69,8 +69,9 @@ print.bandage_walk_rows <- function(x, ...) {
 fortify.bandage_walk_rows <- function(model, data, ...) model$runs
 
 # Each bar as tiles `tile` bp wide, about a px, each of the kind covering
-# most of it, and on the reference's path at the mean reference position it
-# covers, so a SNP's allele off the path draws no sliver
+# most of it, so a SNP's allele off the path draws no sliver. A tile on the
+# path takes the reference position of its longest piece: a mean of pieces
+# from far apart would name a position the walk never covers there.
 bar_tiles <- function(runs, tile) {
   first <- floor(runs$xmin / tile)
   n <- pmax(1, ceiling(runs$xmax / tile) - first)
@@ -89,10 +90,9 @@ bar_tiles <- function(runs, tile) {
   cover <- cover[order(cover$row, cover$at, -cover$bp), ]
   tiles <- cover[!duplicated(cover[c("row", "at")]), c("row", "at", "kind")]
   on <- pieces[pieces$kind == "on the reference's path", ]
-  on$weighted <- on$position * on$bp
-  mean <- stats::aggregate(cbind(weighted, bp) ~ row + at, on, sum)
-  tiles <- merge(tiles, mean, all.x = TRUE)
-  tiles$position <- tiles$weighted / tiles$bp
+  on <- on[order(on$row, on$at, -on$bp), ]
+  on <- on[!duplicated(on[c("row", "at")]), c("row", "at", "position")]
+  tiles <- merge(tiles, on, all.x = TRUE)
   ends <- stats::aggregate(xmax ~ row, runs, max)
   tiles$xmin <- tiles$at * tile
   tiles$xmax <- pmin((tiles$at + 1) * tile, ends$xmax[match(tiles$row, ends$row)])
@@ -105,7 +105,9 @@ bar_tiles <- function(runs, tile) {
 #' and its readout past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
 #' the reference shows the same colours wherever it recurs and an inverted
-#' one shows them reversed; sequence off the path is grey. Ribbons join the
+#' one shows them reversed. Grey is sequence on nodes the reference does not
+#' walk, which may still resemble it, as an extra repeat copy does; outlined
+#' light grey is contig the walk leaves the cut for. Ribbons join the
 #' graph nodes neighbouring rows share, orange where one row walks them
 #' backwards. Inside a repeat, the ribbons show one pairing of the copies that
 #' keeps both rows in order, and a missing ribbon does not mean the rows share
@@ -135,10 +137,11 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     xmax = tapply(plain$xmax, stretch, max),
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
-  off <- paste("not aligned to", reference)
-  plain$key <- ifelse(plain$kind == "off it", off, "outside the cut")
-  keys <- c("#8c8c8c", "#e2e2e2", "#d5dae1", "#f2b48e")
-  names(keys) <- c(off, "outside the cut", "same graph nodes", "same nodes, inverted")
+  off <- paste("on nodes", reference, "does not walk")
+  plain$key <- ifelse(plain$kind == "outside the cut", "outside the cut", off)
+  labels <- c(off, "outside the cut", "same graph nodes", "same nodes, inverted")
+  keys <- stats::setNames(c("#8c8c8c", "#f4f4f4", "#d5dae1", "#f2b48e"), labels)
+  outlines <- stats::setNames(c("#8c8c8c", "#a8a8a8", "#d5dae1", "#f2b48e"), labels)
 
   links <- object$links
   if (!ribbons) {
@@ -172,7 +175,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
         xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half,
         colour = key, fill = I(keys[key])
       ),
-      linewidth = 0.1
+      linewidth = 0.25
     ) +
     ggplot2::scale_fill_viridis_c(
       paste(reference, "position, Mb"),
@@ -185,9 +188,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ) +
     ggplot2::scale_colour_manual(
       NULL,
-      values = keys, breaks = shown,
+      values = outlines, breaks = shown,
       guide = ggplot2::guide_legend(
-        order = 2, override.aes = list(fill = unname(keys[shown]), linewidth = 0)
+        order = 2, override.aes = list(fill = unname(keys[shown]), linewidth = 0.25)
       )
     ) +
     ggplot2::scale_y_continuous(
