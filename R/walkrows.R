@@ -44,8 +44,8 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   runs$xmin <- runs$start
   runs$xmax <- runs$start + runs$bp
   runs$kind <- factor(
-    ifelse(runs$gap, "outside the cut", ifelse(runs$onReference, "on the reference's path", "off the reference's path")),
-    levels = c("on the reference's path", "off the reference's path", "outside the cut")
+    ifelse(runs$gap, "outside the extracted subgraph", ifelse(runs$onReference, "on the reference's path", "off the reference's path")),
+    levels = c("on the reference's path", "off the reference's path", "outside the extracted subgraph")
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
@@ -116,13 +116,13 @@ bar_tiles <- function(runs, tile) {
 #' and its readout past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
 #' the reference shows the same colours wherever it recurs and an inverted
-#' one shows them reversed. Light grey is sequence on nodes the reference does
-#' not walk, which may still resemble it, as an extra repeat copy does. A
-#' letter marks a block of those nodes that two or more drawn rows walk, the
-#' same letter wherever the block recurs, and the three largest blocks are
-#' filled. White is contig the walk leaves the cut for. Ribbons join the
-#' graph nodes neighbouring rows share, orange where one row walks them
-#' backwards. Inside a repeat, the ribbons show one pairing of the copies that
+#' one shows them reversed. Light grey is sequence on non-reference nodes,
+#' which may still resemble the reference, as an extra repeat copy does. A
+#' letter marks a block of non-reference nodes that two or more drawn rows
+#' walk, the same letter wherever the block recurs, and the three largest
+#' blocks are filled. White is sequence outside the extracted subgraph: the
+#' walk leaves its nodes and returns. Ribbons join the graph nodes
+#' neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
 #' keeps both rows in order, and a missing ribbon does not mean the rows share
 #' nothing there.
 #' @param object a `bandage_walk_rows`
@@ -150,14 +150,14 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     xmax = tapply(plain$xmax, stretch, max),
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
-  off <- paste("on nodes", reference, "does not walk")
-  plain$key <- ifelse(plain$kind == "outside the cut", "outside the cut", off)
-  labels <- c(off, "outside the cut", "same graph nodes", "same nodes, inverted")
-  keys <- stats::setNames(c("#e8e8e8", "white", "#d5dae1", "#f2b48e"), labels)
-  outlines <- stats::setNames(c("#b5b5b5", "#9a9a9a", "#d5dae1", "#f2b48e"), labels)
+  off <- "non-reference nodes"
+  plain$key <- ifelse(plain$kind == "outside the extracted subgraph", "outside the extracted subgraph", off)
+  labels <- c(off, "outside the extracted subgraph", "shared nodes", "shared nodes, inverted")
+  keys <- stats::setNames(c("#e8e8e8", "white", "#d5dae1", "#b9abdb"), labels)
+  outlines <- stats::setNames(c("#b5b5b5", "#9a9a9a", "#d5dae1", "#b9abdb"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
-  fills <- c("#b2182b", "#1a1a1a", "#f4a6c8")
+  fills <- c("#d4785f", "#d9a94e", "#c98aa3")
   filled <- blocks[blocks$block < length(fills), ]
   filled$letter <- factor(filled$letter, levels = block_letters(seq_along(fills) - 1))
   lettered <- blocks[blocks$bp >= span * 0.012, ]
@@ -166,7 +166,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   if (!ribbons) {
     links <- links[0, ]
   }
-  key <- ifelse(links$b0 > links$b1, "same nodes, inverted", "same graph nodes")
+  key <- ifelse(links$b0 > links$b1, "shared nodes, inverted", "shared nodes")
   shown <- intersect(names(keys), c(plain$key, key))
   p <- ggplot2::ggplot()
   if (nrow(links)) {
@@ -212,12 +212,12 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       data = lettered,
       ggplot2::aes(
         x = (xmin + xmax) / 2, y = y, label = letter,
-        colour = I(ifelse(block < 2, "white", "grey15"))
+        colour = I("grey10")
       ),
       size = 2.6, fontface = "bold", show.legend = FALSE
     ) +
     ggplot2::scale_alpha_manual(
-      paste0("the same off-", reference, " nodes, wherever they recur:"),
+      "shared non-reference nodes:",
       values = rep(1, length(fills)), drop = TRUE,
       guide = ggplot2::guide_legend(
         order = 3, override.aes = list(fill = fills[seq_along(levels(droplevels(filled$letter)))])

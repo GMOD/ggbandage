@@ -21,13 +21,13 @@ A bar per walk on an axis of bp from the left flank, the walk's label on y
 and its readout past the bar's end. Sequence on the reference's path takes
 the colour of the reference position it covers, so a duplicated stretch of
 the reference shows the same colours wherever it recurs and an inverted
-one shows them reversed. Light grey is sequence on nodes the reference does
-not walk, which may still resemble it, as an extra repeat copy does. A
-letter marks a block of those nodes that two or more drawn rows walk, the
-same letter wherever the block recurs, and the three largest blocks are
-filled. White is contig the walk leaves the cut for. Ribbons join the
-graph nodes neighbouring rows share, orange where one row walks them
-backwards. Inside a repeat, the ribbons show one pairing of the copies that
+one shows them reversed. Light grey is sequence on non-reference nodes,
+which may still resemble the reference, as an extra repeat copy does. A
+letter marks a block of non-reference nodes that two or more drawn rows
+walk, the same letter wherever the block recurs, and the three largest
+blocks are filled. White is sequence outside the extracted subgraph: the
+walk leaves its nodes and returns. Ribbons join the graph nodes
+neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
 keeps both rows in order, and a missing ribbon does not mean the rows share
 nothing there.
 }
