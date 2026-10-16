@@ -149,16 +149,15 @@ autoplot(rows)
   splits the block. The three largest blocks are filled. Which rows are drawn
   decides the blocks, and another row can split one
 - **White:** sequence the extracted subgraph does not hold. Its bp count
-  toward the bar's length. A cut from a walk file says why:
-  - **not in the graph** (solid outline): the walk's record ends and the
-    contig's next record starts past the gap
-  - **on nodes filed elsewhere** (dashed): the walk leaves and returns through
-    nodes the file files elsewhere; the readout says where, e.g. `near
-    chr22:20.3 Mb`
-  - **gap, cause unknown** (dotted): the file does not say, as between the
-    records of a format 2 file
-  - From a GFA, the white is **outside the extracted subgraph**: the walk
-    leaves the region's nodes and returns
+  toward the bar's length:
+  - **outside the extracted subgraph** (dashed): graph sequence the walk takes
+    away from the region's nodes. From a walk file, ggbandage names where in
+    the readout, e.g. `34 kb on nodes filed near chr22:20.3 Mb`
+  - **not in the graph** (solid dark, walk files only): the walk's record ends
+    and the contig's next record starts past it
+  - **gap, cause unknown** (dotted, walk files only): the file leaves it open,
+    as between two record breaks with a record the reference never visits
+    between them
 - **Ribbons:** neighbouring rows walk the same graph nodes there, violet where
   one walks them backwards. Shared nodes mean similar sequence, not shared
   ancestry

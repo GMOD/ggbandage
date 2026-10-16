@@ -116,9 +116,13 @@ test_that("a gap in a walk row says what the walk file states of it", {
   gaps <- w$runs[w$runs$gap, ]
   expect_equal(as.character(gaps$kind[gaps$label == "HG003#1"]), "on nodes filed elsewhere")
   expect_match(w$rows$readout[w$rows$label == "HG003#1"], "1.0 kb on nodes filed near chr1:9 kb$")
-  # HG002's records break 500 bp and 800 bp either side of a third, so the
-  # 2 kb between the two in the window is more than the graph lacks
-  expect_equal(as.character(gaps$kind[gaps$label == "HG002#1"]), "gap, cause unknown")
+  # HG002's records break 500 bp and 800 bp either side of a third, which
+  # visits no GRCh38 node, so the 700 bp between the breaks stay open
+  expect_equal(
+    as.character(gaps$kind[gaps$label == "HG002#1"]),
+    c("not in the graph", "gap, cause unknown", "not in the graph")
+  )
+  expect_equal(gaps$bp[gaps$label == "HG002#1"], c(500, 700, 800))
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
 
@@ -133,8 +137,8 @@ test_that("a gap a record break spans is not in the graph, and untagged gaps rea
     f
   }
   tagged <- bandage_walk_rows(gfa(
-    "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:window\twe:Z:break,bp=1000",
-    "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:window"
+    "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:end\twe:Z:break,bp=1000",
+    "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:end"
   ), referencePath = "GRCh38#0#chr1")
   expect_equal(as.character(tagged$runs$kind[tagged$runs$gap]), "not in the graph")
   expect_match(tagged$rows$readout[2], "1.0 kb not in the graph$")

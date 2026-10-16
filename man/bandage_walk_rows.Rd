@@ -45,7 +45,7 @@ a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
 which gets no ribbons or letters; \code{runs}, a row per stretch of a bar, \code{xmin} and \code{xmax}
 in bp from the left flank, with \code{kind} and, on the reference's path,
 \code{referenceStart} and \code{reversed}, and on a gap, the \code{cause} a walk file
-states: \code{missing}, \code{elsewhere} or \code{unknown}, \code{outside} for other sources; and \code{links}, a row per ribbon from row
+states: \code{missing}, \code{elsewhere} or \code{unknown}, else \code{outside}; and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
 lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row
 per stretch of a block of nodes off the reference's path that two or more

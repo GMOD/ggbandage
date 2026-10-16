@@ -16,7 +16,7 @@
 #'   which gets no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
 #'   in bp from the left flank, with `kind` and, on the reference's path,
 #'   `referenceStart` and `reversed`, and on a gap, the `cause` a walk file
-#'   states: `missing`, `elsewhere` or `unknown`, `outside` for other sources; and `links`, a row per ribbon from row
+#'   states: `missing`, `elsewhere` or `unknown`, else `outside`; and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
 #'   per stretch of a block of nodes off the reference's path that two or more
@@ -138,10 +138,10 @@ bar_tiles <- function(runs, tile) {
 #' letter marks a block of non-reference nodes that two or more drawn rows
 #' walk, the same letter wherever the block recurs, and the three largest
 #' blocks are filled. White is sequence the extracted subgraph does not hold:
-#' a cut from a walk file says whether the graph lacks it (solid outline), the
-#' walk spends it on nodes filed elsewhere in the file (dashed), or the file
-#' does not say (dotted); from other sources it is outside the extracted
-#' subgraph. Ribbons join the graph nodes
+#' dashed where the graph holds it outside the subgraph, and for a cut from a
+#' walk file, solid dark where a record break says the graph lacks it and
+#' dotted where the file leaves it open. The readout says where a walk went
+#' on nodes filed elsewhere in the file. Ribbons join the graph nodes
 #' neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
 #' keeps both rows in order, and a missing ribbon does not mean the rows share
 #' nothing there.
@@ -171,15 +171,18 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
   off <- "non-reference nodes"
-  plain$key <- ifelse(plain$kind %in% gap_kinds, plain$kind, off)
-  labels <- c(off, gap_kinds, "shared nodes", "shared nodes, inverted")
-  keys <- stats::setNames(c("#e8e8e8", rep("white", 4), "#d5dae1", "#b9abdb"), labels)
+  # a gap draws by whether the graph holds it, and the readout says where an
+  # elsewhere part went
+  plain$key <- ifelse(
+    plain$kind == gap_kinds[["elsewhere"]], gap_kinds[["outside"]],
+    ifelse(plain$kind %in% gap_kinds, plain$kind, off)
+  )
+  labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], "shared nodes", "shared nodes, inverted")
+  keys <- stats::setNames(c("#e8e8e8", rep("white", 3), "#d5dae1", "#b9abdb"), labels)
   outlines <- stats::setNames(
-    c("#b5b5b5", "#6e6e6e", "#9a9a9a", "#9a9a9a", "#9a9a9a", "#d5dae1", "#b9abdb"), labels
+    c("#b5b5b5", "#9a9a9a", "#6e6e6e", "#9a9a9a", "#d5dae1", "#b9abdb"), labels
   )
-  dashes <- stats::setNames(
-    c("solid", "solid", "22", "12", "solid", "solid", "solid"), labels
-  )
+  dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- c("#d4785f", "#d9a94e", "#c98aa3")

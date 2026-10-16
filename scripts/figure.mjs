@@ -483,9 +483,7 @@ export function walkRows(text, name, spec) {
       complete: all.map(r => r.complete),
       linked: bars.map(bar => bar !== undefined),
       readout: all.map((r, i) =>
-        walkRowReadout(r, order[i] === 0 ? undefined : cut.reference)
-          .replace('outside the cut', 'outside the extracted subgraph')
-          .replace('within the cut', 'within the extracted subgraph'),
+        walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
       ),
     },
     runs: columns(runs, [
