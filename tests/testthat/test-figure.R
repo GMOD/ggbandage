@@ -109,6 +109,43 @@ test_that("a walk file cuts the walks under a region", {
   expect_s3_class(bandage_layout(walk_file, region = region), "bandage_layout")
 })
 
+records <- test_path("testdata", "records.GRCh38.walks.bed.gz")
+
+test_that("a gap in a walk row says what the walk file states of it", {
+  w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
+  gaps <- w$runs[w$runs$gap, ]
+  expect_equal(as.character(gaps$kind[gaps$label == "HG003#1"]), "on nodes filed elsewhere")
+  expect_match(w$rows$readout[w$rows$label == "HG003#1"], "1.0 kb on nodes filed near chr1:9 kb$")
+  # HG002's records break 500 bp and 800 bp either side of a third, so the
+  # 2 kb between the two in the window is more than the graph lacks
+  expect_equal(as.character(gaps$kind[gaps$label == "HG002#1"]), "gap, cause unknown")
+  expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
+})
+
+test_that("a gap a record break spans is not in the graph, and untagged gaps read as before", {
+  gfa <- function(...) {
+    f <- tempfile(fileext = ".gfa")
+    writeLines(c(
+      paste0("S\t", 1:5, "\t*\tLN:i:1000"),
+      paste0("L\t", 1:4, "\t+\t", 2:5, "\t+\t0M"),
+      "W\tGRCh38\t0\tchr1\t0\t5000\t>1>2>3>4>5", ...
+    ), f)
+    f
+  }
+  tagged <- bandage_walk_rows(gfa(
+    "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:window\twe:Z:break,bp=1000",
+    "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:window"
+  ), referencePath = "GRCh38#0#chr1")
+  expect_equal(as.character(tagged$runs$kind[tagged$runs$gap]), "not in the graph")
+  expect_match(tagged$rows$readout[2], "1.0 kb not in the graph$")
+  plain <- bandage_walk_rows(gfa(
+    "W\tHG002\t1\tchr1\t0\t2000\t>1>2",
+    "W\tHG002\t1\tchr1\t3000\t5000\t>4>5"
+  ), referencePath = "GRCh38#0#chr1")
+  expect_equal(as.character(plain$runs$kind[plain$runs$gap]), "outside the extracted subgraph")
+  expect_match(plain$rows$readout[2], "1.0 kb outside the extracted subgraph$")
+})
+
 test_that("a walk the graph lacks warns, naming the ones it has", {
   expect_warning(bandage_layout(pggb, walks = "K12"), "no walk named K12; the graph has K12#1")
 })

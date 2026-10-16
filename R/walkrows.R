@@ -15,7 +15,8 @@
 #'   `bp`, `readout` and `linked`, `FALSE` for a walk measured from one flank,
 #'   which gets no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
 #'   in bp from the left flank, with `kind` and, on the reference's path,
-#'   `referenceStart` and `reversed`; and `links`, a row per ribbon from row
+#'   `referenceStart` and `reversed`, and on a gap, the `cause` a walk file
+#'   states: `missing`, `elsewhere` or `unknown`, `outside` for other sources; and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
 #'   per stretch of a block of nodes off the reference's path that two or more
@@ -44,9 +45,11 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   }))
   runs$xmin <- runs$start
   runs$xmax <- runs$start + runs$bp
+  kind <- ifelse(runs$onReference, "on the reference's path", "off the reference's path")
+  gap_kind <- gap_kinds[ifelse(is.na(runs$cause), "outside", runs$cause)]
   runs$kind <- factor(
-    ifelse(runs$gap, "outside the extracted subgraph", ifelse(runs$onReference, "on the reference's path", "off the reference's path")),
-    levels = c("on the reference's path", "off the reference's path", "outside the extracted subgraph")
+    ifelse(runs$gap, gap_kind, kind),
+    levels = c("on the reference's path", "off the reference's path", gap_kinds)
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
@@ -66,6 +69,15 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
     class = "bandage_walk_rows"
   )
 }
+
+# What a walk file's cut says of a gap between two pieces of a walk, and
+# "outside" for a gap from another source, which says nothing
+gap_kinds <- c(
+  missing = "not in the graph",
+  elsewhere = "on nodes filed elsewhere",
+  unknown = "gap, cause unknown",
+  outside = "outside the extracted subgraph"
+)
 
 block_letters <- function(i) {
   ifelse(i < 26, LETTERS[i %% 26 + 1], paste0(LETTERS[pmax(1, i %/% 26)], LETTERS[i %% 26 + 1]))
@@ -125,8 +137,11 @@ bar_tiles <- function(runs, tile) {
 #' which may still resemble the reference, as an extra repeat copy does. A
 #' letter marks a block of non-reference nodes that two or more drawn rows
 #' walk, the same letter wherever the block recurs, and the three largest
-#' blocks are filled. White is sequence outside the extracted subgraph: the
-#' walk leaves its nodes and returns. Ribbons join the graph nodes
+#' blocks are filled. White is sequence the extracted subgraph does not hold:
+#' a cut from a walk file says whether the graph lacks it (solid outline), the
+#' walk spends it on nodes filed elsewhere in the file (dashed), or the file
+#' does not say (dotted); from other sources it is outside the extracted
+#' subgraph. Ribbons join the graph nodes
 #' neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
 #' keeps both rows in order, and a missing ribbon does not mean the rows share
 #' nothing there.
@@ -156,10 +171,15 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
   off <- "non-reference nodes"
-  plain$key <- ifelse(plain$kind == "outside the extracted subgraph", "outside the extracted subgraph", off)
-  labels <- c(off, "outside the extracted subgraph", "shared nodes", "shared nodes, inverted")
-  keys <- stats::setNames(c("#e8e8e8", "white", "#d5dae1", "#b9abdb"), labels)
-  outlines <- stats::setNames(c("#b5b5b5", "#9a9a9a", "#d5dae1", "#b9abdb"), labels)
+  plain$key <- ifelse(plain$kind %in% gap_kinds, plain$kind, off)
+  labels <- c(off, gap_kinds, "shared nodes", "shared nodes, inverted")
+  keys <- stats::setNames(c("#e8e8e8", rep("white", 4), "#d5dae1", "#b9abdb"), labels)
+  outlines <- stats::setNames(
+    c("#b5b5b5", "#6e6e6e", "#9a9a9a", "#9a9a9a", "#9a9a9a", "#d5dae1", "#b9abdb"), labels
+  )
+  dashes <- stats::setNames(
+    c("solid", "solid", "22", "12", "solid", "solid", "solid"), labels
+  )
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- c("#d4785f", "#d9a94e", "#c98aa3")
@@ -197,7 +217,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       data = plain,
       ggplot2::aes(
         xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half,
-        colour = key, fill = I(keys[key])
+        colour = key, fill = I(keys[key]), linetype = I(dashes[key])
       ),
       linewidth = 0.25
     ) +
@@ -241,7 +261,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       NULL,
       values = outlines, breaks = shown,
       guide = ggplot2::guide_legend(
-        order = 2, override.aes = list(fill = unname(keys[shown]), linewidth = 0.25)
+        order = 2, override.aes = list(
+          fill = unname(keys[shown]), linewidth = 0.25, linetype = unname(dashes[shown])
+        )
       )
     ) +
     ggplot2::scale_y_continuous(

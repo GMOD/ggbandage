@@ -25,8 +25,11 @@ one shows them reversed. Light grey is sequence on non-reference nodes,
 which may still resemble the reference, as an extra repeat copy does. A
 letter marks a block of non-reference nodes that two or more drawn rows
 walk, the same letter wherever the block recurs, and the three largest
-blocks are filled. White is sequence outside the extracted subgraph: the
-walk leaves its nodes and returns. Ribbons join the graph nodes
+blocks are filled. White is sequence the extracted subgraph does not hold:
+a cut from a walk file says whether the graph lacks it (solid outline), the
+walk spends it on nodes filed elsewhere in the file (dashed), or the file
+does not say (dotted); from other sources it is outside the extracted
+subgraph. Ribbons join the graph nodes
 neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
 keeps both rows in order, and a missing ribbon does not mean the rows share
 nothing there.
