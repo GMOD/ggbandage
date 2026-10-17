@@ -21,6 +21,19 @@ test_that("labels name each node once, at a point of its stroke", {
   g <- bandage_layout(pggb)
   d <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_labels())
   expect_setequal(d$label, unique(g$nodes$name))
+  expect_equal(unique(d$colour), "grey15")
+})
+
+test_that("a label's colour can be mapped or set", {
+  g <- bandage_layout(pggb)
+  mapped <- ggplot2::layer_data(
+    ggplot2::ggplot(g) + geom_bandage_labels(ggplot2::aes(colour = depth))
+  )
+  expect_false("grey15" %in% mapped$colour)
+  expect_no_warning(
+    set <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_labels(colour = "red"))
+  )
+  expect_equal(unique(set$colour), "red")
 })
 
 test_that("a gene lands on the backbone nodes under it", {

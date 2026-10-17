@@ -198,9 +198,11 @@ geom_bandage_labels <- function(mapping = NULL, data = NULL,
   ggplot2::layer(
     geom = ggplot2::GeomText, stat = "identity", position = "identity",
     data = table_from(data, label_points),
-    mapping = with_defaults(mapping, ggplot2::aes(x = x, y = y, label = name)),
+    mapping = with_defaults(mapping, ggplot2::aes(
+      x = x, y = y, label = name, colour = I("grey15")
+    )),
     inherit.aes = FALSE, show.legend = FALSE,
-    params = list(check_overlap = check_overlap, size = size, colour = "grey15", ...)
+    params = list(check_overlap = check_overlap, size = size, ...)
   )
 }
 
