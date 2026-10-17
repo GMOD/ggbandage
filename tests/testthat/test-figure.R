@@ -86,6 +86,25 @@ test_that("a walk measured from one flank says it gets no ribbons", {
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w)))
 })
 
+test_that("walk rows with no ribbons or blocks keep their tables' columns", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    "H\tVN:Z:1.1",
+    paste0("S\t", 1:6, "\t", strrep("A", 10)),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t3\t+\t4\t+\t0M", "L\t4\t+\t5\t+\t0M",
+    "L\t2\t+\t6\t+\t0M",
+    "W\tref\t0\tchr\t0\t50\t>1>2>3>4>5",
+    "W\tcut\t1\tc2\t0\t25\t>1>2>6"
+  ), gfa)
+  w <- bandage_walk_rows(gfa, region = "ref#0#chr:21-30")
+  expect_equal(nrow(w$links), 0)
+  expect_named(w$links, c("row", "a0", "a1", "b0", "b1"))
+  expect_equal(nrow(w$blocks), 0)
+  expect_true(all(c("row", "start", "bp", "block", "letter") %in% names(w$blocks)))
+  expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
+})
+
 test_that("a block letter marks the same off-reference nodes in every row, whatever the order", {
   w <- bandage_walk_rows(pggb)
   b <- w$blocks

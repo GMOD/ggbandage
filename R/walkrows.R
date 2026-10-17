@@ -39,31 +39,25 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
     src$text, src$name, spec
   )
   d <- jsonlite::fromJSON(d)
-  rows <- as.data.frame(d$rows, stringsAsFactors = FALSE)
-  runs <- as.data.frame(lapply(d$runs, function(col) {
-    if (is.list(col)) vapply(col, function(v) if (is.null(v)) NA_real_ else v, 0) else col
-  }))
+  rows <- frame(d$rows)
+  runs <- frame(d$runs)
   runs$xmin <- runs$start
   runs$xmax <- runs$start + runs$bp
   kind <- ifelse(runs$onReference, "on the reference's path", "off the reference's path")
-  gap_kind <- gap_kinds[ifelse(is.na(runs$cause), "outside", runs$cause)]
   runs$kind <- factor(
-    ifelse(runs$gap, gap_kind, kind),
+    ifelse(runs$gap, gap_kinds[as.character(runs$cause)], kind),
     levels = c("on the reference's path", "off the reference's path", gap_kinds)
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
   rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "\u00b7 no ribbons"))
-  blocks <- as.data.frame(d$blocks)
-  if (!nrow(blocks)) {
-    blocks <- data.frame(row = numeric(), start = numeric(), bp = numeric(), block = numeric())
-  }
+  blocks <- frame(d$blocks)
   blocks$xmin <- blocks$start
   blocks$xmax <- blocks$start + blocks$bp
   blocks$letter <- block_letters(blocks$block)
   structure(
     list(
-      rows = rows, runs = runs, links = as.data.frame(d$links), blocks = blocks,
+      rows = rows, runs = runs, links = frame(d$links), blocks = blocks,
       origin = d$origin, reference = d$reference
     ),
     class = "bandage_walk_rows"

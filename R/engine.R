@@ -167,13 +167,15 @@ cut_tabix <- function(ctx, index, region) {
   )
 }
 
+# A table the engine sends as columns, keeping the columns of an empty one
+frame <- function(x) {
+  cols <- lapply(x, function(col) if (length(col)) unlist(col) else numeric())
+  as.data.frame(cols, stringsAsFactors = FALSE)
+}
+
 # y down, as on screen, becomes y up, and the panels become a factor in the
 # order the core placed them
 as_bandage_layout <- function(d) {
-  frame <- function(x) {
-    cols <- lapply(x, function(col) if (length(col)) unlist(col) else numeric())
-    as.data.frame(cols, stringsAsFactors = FALSE)
-  }
   panels <- frame(d$panels)
   upright <- function(x, flip = "y") {
     for (col in flip) x[[col]] <- -x[[col]]
