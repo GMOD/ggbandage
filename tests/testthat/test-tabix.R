@@ -55,13 +55,20 @@ test_that("a missing index file is named in the error, and the engine recovers",
   )
 })
 
-test_that("a contig-layout index is refused", {
-  expect_error(
-    bandage_layout(
-      test_path("testdata", "ecoli_contig"),
-      region = "K12#1#chr:1004500-1004961"
-    ),
-    "not anchored"
+test_that("a contig-layout index draws what the anchored one does, one hop out", {
+  region <- "K12#1#chr:1004500-1004961"
+  bare <- function(g) sub("[+-]$", "", unique(g$nodes$node))
+  expect_setequal(
+    bare(bandage_layout(test_path("testdata", "ecoli_contig"), region = region)),
+    bare(bandage_layout(index, region = region))
+  )
+})
+
+test_that("an index with a .csi in place of a .tbi reads the same", {
+  region <- "K12#1#chr:1004500-1004961"
+  expect_equal(
+    bandage_layout(test_path("testdata", "ecoli_pggb_csi"), region = region)$nodes,
+    bandage_layout(index, region = region)$nodes
   )
 })
 

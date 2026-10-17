@@ -9,14 +9,14 @@ wrote. This page explains how the pieces fit.
 ```
 bandage_layout()            R/engine.R
   is_tabix_graph()          R/tabix.R    the input is an index
-  tabix_files()             R/tabix.R    the four files (segs, links and a .tbi each)
+  tabix_files()             R/tabix.R    the four files (segs, links and a .tbi or .csi each)
   parse_region()            R/tabix.R    "chr6:1,001-2,000" to chr6, 1000, 2000
   bandage.cutTabix()        scripts/tabix-cut.mjs, in V8
     @gmod/tabix             asks its filehandles for bytes
       console.r.call()      V8 calls back into R, synchronously
         fetch_range()       R/tabix.R    reads a local file or sends a Range request
-    anchoredCut()           keeps the segments and links under the region
-    formatGfa()             writes them as GFA text
+    rgfaCut()               @jbrowse/graph-walks: the segments and links under
+                            the region, as GFA text
   bandage.gfaFigureData()   bandage-core lays the GFA out, as for any GFA file
 ```
 
@@ -28,20 +28,20 @@ bandage_layout()            R/engine.R
 ## What the index holds
 
 - `<prefix>.segs.bed.gz` has a row per segment, and `<prefix>.links.bed.gz` a
-  row per link, each with a `.tbi`
+  row per link, each with a `.tbi` or `.csi`
 - The default `anchored` layout files every row under the reference interval
   its bubble hangs from, so one query on each file returns the whole graph under
   a region, however deeply alleles nest
-- A `contig` index files rows by the segment's own coordinate and would need a
-  round of queries per link followed. The reader does not do that and raises an
-  error when a segment row has fewer than eight columns
+- A `contig` index files rows by the segment's own coordinate. The cut follows
+  links one hop past the region and reads once more to close each allele it
+  reached, as the JBrowse graph plugin's view does
 - The index [README](https://github.com/GMOD/gfa-to-tabix#readme) lists the
   columns
 
 ## Which links the cut keeps
 
-The link file returns links of neither kind the drawing needs along with those
-it does. `anchoredCut` keeps a link when:
+On an anchored index, the link file returns links of neither kind the drawing
+needs along with those it does. The cut keeps a link when:
 
 - one of its segments came back from the segment file
 - its two ends are backbone on opposite sides of the region, as a deletion
@@ -49,9 +49,9 @@ it does. `anchoredCut` keeps a link when:
 - both its segments are already in the cut
 
 The segments at the far end of a kept link join the cut too, so a window shows
-the neighbour each edge leads to. The code is a port of
-`RgfaTabixAdapter.getSubgraph` in `jbrowse-plugin-graphgenomeviewer`, so the
-two draw the same cut.
+the neighbour each edge leads to. `rgfaCut` in
+[@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) is the code the
+JBrowse graph plugin cuts with, so the two draw the same cut.
 
 ## Why the bytes come from R
 
@@ -128,7 +128,7 @@ connection, with `layout = "auto"`:
 - At the KIV-2 window, htslib's `tabix` returns 27 segment rows and 46 link
   rows. The drawing has those 27 segments plus 2 that links reach, and 42 edge
   curves. The link file also returns links that touch nothing in the cut, and
-  `anchoredCut` drops them
+  the cut drops them
 
 ## Test fixtures
 
@@ -140,26 +140,30 @@ gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 -o ecoli_pggb
 gfa-to-tabix ecoli_rgfa_slice.gfa.gz -o ecoli_rgfa
 ```
 
-`ecoli_pggb.K12.walks.bed.gz` is the pggb GFA's walk file, made with
-gfa-to-tabix 1.0.0:
+`ecoli_pggb.K12.walks.bed.gz` is the pggb GFA's walk file, and `ecoli_contig.*`
+the same graph in the contig layout, made with gfa-to-tabix 1.0.0:
 
 ```console
 gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 -o ecoli_pggb
+gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_contig
 ```
+
+`ecoli_pggb_csi.*` copies `ecoli_pggb`'s two files with a `.csi` in place of
+each `.tbi`, from `tabix -C -p bed`.
 
 ## Walk files
 
 - **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, with
-  its `.tbi`, and a `region`
+  its `.tbi` or `.csi`, and a `region`
 - **Out:** the reference over the region, `context` bp past each end, and the
   walks of the `haplotypes` asked for, as GFA with W lines
-- [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) does the cut, the
-  reader the JBrowse graph plugin and BandageJS use, over the same R byte-range
-  callback
+- [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)' `cutRegion`
+  does the cut, as it does for BandageJS, over the same R byte-range callback.
+  BandageJS caps a cut's bytes and nodes; R asks for one region and waits, so
+  the package sets no cap
 - A cut at KIV-2 with five HPRC haplotypes takes about 3 s from the hosted
   1.2 GB file
 
 ## Not yet
 
-- Contig-layout indexes
 - The coarse tier that `gfa-to-tabix build` writes for wide windows

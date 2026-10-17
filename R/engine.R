@@ -135,13 +135,27 @@ gene_source <- function(genes, gene_names = NULL) {
   }
   format <- if (grepl("\\.bed(\\.gz)?$", genes, ignore.case = TRUE)) "bed" else "gff3"
   names <- if (length(gene_names)) list(refNames = as.list(gene_names))
-  for (ext in c(".tbi", ".csi")) {
-    index <- paste0(genes, ext)
-    if (exists_at(index)) {
-      return(c(list(file = genes, index = index, format = format), names))
-    }
+  index <- index_of(genes)
+  if (!is.null(index)) {
+    return(c(list(file = genes, index = index, format = format), names))
   }
   c(list(text = read_text(genes), format = format), names)
+}
+
+# a bgzipped file's .tbi or .csi index, NULL when it has neither
+index_of <- function(file) {
+  for (ext in c(".tbi", ".csi")) {
+    if (exists_at(paste0(file, ext))) {
+      return(paste0(file, ext))
+    }
+  }
+  NULL
+}
+
+# the index a read needs, named as a .tbi in the error when there is none
+index_or_tbi <- function(file) {
+  index <- index_of(file)
+  if (is.null(index)) paste0(file, ".tbi") else index
 }
 
 unbound_genes <- function(genes, unbound) {
@@ -179,7 +193,7 @@ cut_walks <- function(ctx, file, region, haplotypes, context) {
   ctx$call(
     "bandage.cutWalks",
     c(
-      list(file = file, index = paste0(file, ".tbi"), context = context),
+      list(file = file, index = index_or_tbi(file), context = context),
       if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
       parse_region(region)
     ),

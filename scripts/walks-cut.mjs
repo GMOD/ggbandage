@@ -1,11 +1,12 @@
 import { graphTablesGFA } from '@jbrowse/bandage-core/gfa/graphTables'
-import { WalkReader, walksKept } from '@jbrowse/graph-walks'
+import { WalkReader } from '@jbrowse/graph-walks'
 
 import { openIndexed } from './tabix-cut.mjs'
 
-// Ports BandageJS's cutWalksRegion: the reference over the region with
-// `context` bp either side, and the walks of the haplotypes asked for, every
-// one when none are, as GFA text
+// The reference over the region with `context` bp either side, and the walks
+// of the haplotypes asked for, every one when none are, as GFA text. A browser
+// caps a cut's bytes and nodes; R asks for one region and waits, so this
+// doesn't.
 export async function cutWalks({
   file,
   index,
@@ -15,23 +16,8 @@ export async function cutWalks({
   haplotypes,
   context,
 }) {
-  const reader = new WalkReader(openIndexed(file, index))
-  const header = await reader.header()
-  const sample = header.references[0] ?? ''
-  const anchor = await reader.sequenceFor(sample, refName)
-  if (anchor === undefined) {
-    const names = await reader.referenceSequences()
-    throw new Error(
-      `the walk file has no sequence ${refName} on ${sample}; it holds ${names.slice(0, 5).join(', ')}${names.length > 5 ? ', ...' : ''}`,
-    )
-  }
-  const { graph, kept, fragments } = await reader.cut(
-    anchor,
-    { start, end },
-    { context, keep: walksKept(haplotypes, anchor) },
-  )
-  return {
-    gfa: graphTablesGFA(graph.tables(kept, fragments)),
-    refName: anchor,
-  }
+  const { tables, refName: anchor } = await new WalkReader(
+    openIndexed(file, index),
+  ).cutRegion({ refName, start, end }, { haplotypes, context })
+  return { gfa: graphTablesGFA(tables), refName: anchor }
 }

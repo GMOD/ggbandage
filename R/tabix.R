@@ -25,11 +25,13 @@ index_prefix <- function(x) {
 
 tabix_files <- function(x) {
   prefix <- index_prefix(x)
+  segments <- paste0(prefix, ".segs.bed.gz")
+  links <- paste0(prefix, ".links.bed.gz")
   list(
-    segments = paste0(prefix, ".segs.bed.gz"),
-    segmentsIndex = paste0(prefix, ".segs.bed.gz.tbi"),
-    links = paste0(prefix, ".links.bed.gz"),
-    linksIndex = paste0(prefix, ".links.bed.gz.tbi")
+    segments = segments,
+    segmentsIndex = index_or_tbi(segments),
+    links = links,
+    linksIndex = index_or_tbi(links)
   )
 }
 

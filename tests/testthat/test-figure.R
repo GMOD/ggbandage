@@ -188,6 +188,15 @@ test_that("a walk file cuts the walks under a region", {
   expect_s3_class(bandage_layout(walk_file, region = region), "bandage_layout")
 })
 
+test_that("a walk file cut keeps the haplotypes asked for, and names its sequences for one it lacks", {
+  w <- bandage_walk_rows(walk_file, "chr:1004500-1004961", haplotypes = "IAI39", context = 0)
+  expect_setequal(w$rows$sample, c("K12", "IAI39"))
+  expect_error(
+    bandage_layout(walk_file, region = "chrZ:1-100"),
+    "no sequence chrZ on K12; it holds K12#1#chr"
+  )
+})
+
 test_that("a region is a 1-based locus on a GFA and a walk file alike", {
   expect_equal(
     graph_source(pggb, "K12#1#chr:1004501-1004961", NULL, 0)$region,
