@@ -65,7 +65,7 @@ ggplot(g) +
 ## Gallery
 
 - Every figure runs from the hosted HPRC files behind the
-  [JBrowse HPRC demo](https://jbrowse.org/demos/hprc/), read by range request
+  [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/), read by range request
 - A title links to its code in [docs/gallery.md](docs/gallery.md);
   `scripts/gallery.R` draws them all and writes this table
 
@@ -227,7 +227,7 @@ scripts/update-deps.sh
   ggplot2 layers; reads indexed files into V8 the same way
 - [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer) -
   JBrowse 2 plugin that browses these graphs by locus
-- [BandageJS](https://github.com/cmdcolin/BandageJS) - standalone page for GFA
+- [BandageJS](https://github.com/GMOD/BandageJS) - standalone page for GFA
   and gbz-base graphs
 - [@jbrowse/graph-stress-layout](https://github.com/GMOD/graph-stress-layout) -
   stress layout that keeps the reference straight

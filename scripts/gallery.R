@@ -130,7 +130,7 @@ docs <- function() {
     "# Gallery",
     "",
     "Every figure runs as written after this setup, from the files behind the",
-    "[JBrowse HPRC demo](https://jbrowse.org/demos/hprc/).",
+    "[JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).",
     "`scripts/gallery.R` draws them all.",
     "",
     "```r", setup, "```"

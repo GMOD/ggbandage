@@ -106,8 +106,10 @@ page walks one call through that loop. The two packages differ in the callback:
 
 ## At HPRC scale
 
-The [JBrowse HPRC demo](https://jbrowse.org/demos/hprc/) hosts the release 2.1
-Minigraph-Cactus graph's anchored index: 759,223 segments, an 11 MB segment file,
+jbrowse.org hosts the release 2.1 Minigraph-Cactus graph's anchored index for
+the [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/),
+and a [README.txt](https://jbrowse.org/demos/hprc/README.txt) that records how
+it was built. The index has 759,223 segments, an 11 MB segment file,
 a 20 MB link file and a `.tbi` of about 240 kB for each. Timed on 2026-10-12 over a home
 connection, with `layout = "auto"`:
 
