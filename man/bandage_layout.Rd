@@ -32,9 +32,10 @@ index or walk file needs \code{region}}
 \item{width}{the width in px the drawing is fit to, which decides whether
 strand arrows show}
 
-\item{region}{a locus such as \code{"GRCh38#0#chr6:31,000,000-31,100,000"}. On
-an index or walk file, the part of the graph under it, fetched by range
-request; on a GFA, the region the core crops to}
+\item{region}{a 1-based locus, as a genome browser writes it, such as
+\code{"GRCh38#0#chr6:31,000,001-31,100,000"}. On an index or walk file, the
+part of the graph under it, fetched by range request; on a GFA, the region
+the core crops to}
 
 \item{genes}{path or URL of a GFF3 or BED file of genes on the reference,
 plain, gzipped, or bgzipped with a \code{.tbi} or \code{.csi} index beside it, to

@@ -34,15 +34,23 @@ graph_source <- function(gfa, region, haplotypes, context) {
     ctx <- engine()
     if (is_walk_file(gfa)) {
       cut <- cut_walks(ctx, gfa, region, haplotypes, context)
-      locus <- parse_region(region)
       return(list(
         text = cut$gfa, name = region,
-        region = sprintf("%s:%.0f-%.0f", cut$refName, locus$start + 1, locus$end)
+        region = core_region(region, cut$refName)
       ))
     }
     return(list(text = cut_tabix(ctx, gfa, region), name = region, region = NULL))
   }
-  list(text = read_text(gfa), name = basename(gfa), region = region)
+  list(
+    text = read_text(gfa), name = basename(gfa),
+    region = if (!is.null(region)) core_region(region)
+  )
+}
+
+# The core reads a region as 0-based and half-open
+core_region <- function(region, refName = parse_region(region)$refName) {
+  locus <- parse_region(region)
+  sprintf("%s:%.0f-%.0f", refName, locus$start, locus$end)
 }
 
 #' The GFA a figure is drawn from
@@ -68,9 +76,10 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
-#' @param region a locus such as `"GRCh38#0#chr6:31,000,000-31,100,000"`. On
-#'   an index or walk file, the part of the graph under it, fetched by range
-#'   request; on a GFA, the region the core crops to
+#' @param region a 1-based locus, as a genome browser writes it, such as
+#'   `"GRCh38#0#chr6:31,000,001-31,100,000"`. On an index or walk file, the
+#'   part of the graph under it, fetched by range request; on a GFA, the region
+#'   the core crops to
 #' @param genes path or URL of a GFF3 or BED file of genes on the reference,
 #'   plain, gzipped, or bgzipped with a `.tbi` or `.csi` index beside it, to
 #'   pin on the backbone. [geom_bandage_genes()] draws them

@@ -20,9 +20,10 @@ index (the \code{.graph.json} manifest, a \code{.segs.bed.gz} file, or the prefi
 a local pair); or of a gfa-to-tabix \code{--walks} file (\code{.walks.bed.gz}). An
 index or walk file needs \code{region}}
 
-\item{region}{a locus such as \code{"GRCh38#0#chr6:31,000,000-31,100,000"}. On
-an index or walk file, the part of the graph under it, fetched by range
-request; on a GFA, the region the core crops to}
+\item{region}{a 1-based locus, as a genome browser writes it, such as
+\code{"GRCh38#0#chr6:31,000,001-31,100,000"}. On an index or walk file, the
+part of the graph under it, fetched by range request; on a GFA, the region
+the core crops to}
 
 \item{haplotypes}{on a walk file, the \code{sample#haplotype} walks to cut, every
 one when \code{NULL}}

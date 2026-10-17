@@ -109,6 +109,19 @@ test_that("a walk file cuts the walks under a region", {
   expect_s3_class(bandage_layout(walk_file, region = region), "bandage_layout")
 })
 
+test_that("a region is a 1-based locus on a GFA and a walk file alike", {
+  expect_equal(
+    graph_source(pggb, "K12#1#chr:1004501-1004961", NULL, 0)$region,
+    "K12#1#chr:1004500-1004961"
+  )
+  expect_equal(
+    graph_source(walk_file, "chr:1004501-1004961", NULL, 0)$region,
+    "K12#1#chr:1004500-1004961"
+  )
+  g <- bandage_layout(walk_file, region = "chr:1004600-1004600", context = 50)
+  expect_s3_class(g, "bandage_layout")
+})
+
 records <- test_path("testdata", "records.GRCh38.walks.bed.gz")
 
 test_that("a gap in a walk row says what the walk file states of it", {
