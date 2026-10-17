@@ -262,7 +262,7 @@ function columns(records, keys) {
 export function walkRows(text, name, spec) {
   const region = spec.region ? parseRegion(spec.region) : undefined
   const graph = loadGraph(text, name, { referencePath: spec.referencePath })
-  const cut = cutRows(graph, region)
+  const cut = cutRows(graph, region, undefined, { visits: true })
   if (!cut) {
     throw new Error(
       'walk rows need a reference walk and at least one other walk (P or W lines)',
