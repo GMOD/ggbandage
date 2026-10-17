@@ -1,4 +1,6 @@
+^\.git$
 ^\.github$
+^\.claude$
 ^node_modules$
 ^scripts$
 ^package\.json$
