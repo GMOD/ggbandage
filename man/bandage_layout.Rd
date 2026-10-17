@@ -12,6 +12,7 @@ bandage_layout(
   width = 1000,
   region = NULL,
   genes = NULL,
+  gene_names = NULL,
   haplotypes = NULL,
   context = 1000,
   ...
@@ -40,6 +41,10 @@ the core crops to}
 \item{genes}{path or URL of a GFF3 or BED file of genes on the reference,
 plain, gzipped, or bgzipped with a \code{.tbi} or \code{.csi} index beside it, to
 pin on the backbone. \code{\link[=geom_bandage_genes]{geom_bandage_genes()}} draws them}
+
+\item{gene_names}{the name \code{genes} gives each backbone contig it names
+otherwise, such as \code{c(chr6 = "NC_000006.12")}. A name differing only by a
+\code{chr} prefix needs none}
 
 \item{haplotypes}{on a walk file, the \code{sample#haplotype} walks to cut, every
 one when \code{NULL}}

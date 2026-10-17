@@ -3,201 +3,50 @@ import {
   laidOutGraph,
   walkLayers,
 } from '@jbrowse/bandage-core/figureData'
-import { figureScene } from '@jbrowse/bandage-core/figureScene'
 import { parseRegion } from '@jbrowse/bandage-core/gbzCut'
-import { pathOrigin } from '@jbrowse/bandage-core/pathAnchoring'
-import { genesFromText } from '@jbrowse/bandage-core/genes/geneFiles'
-import { genePins } from '@jbrowse/bandage-core/genes/genePins'
+import { backboneGenes } from '@jbrowse/bandage-core/genes/backboneGenes'
 import { walkRowReadout } from '@jbrowse/bandage-core/layout/walkRowDraw'
 import { walkRows as cutRows } from '@jbrowse/bandage-core/layout/walkRows'
 import { loadGraph } from '@jbrowse/bandage-core/pipeline'
-import {
-  featuresOnBackbone,
-  graphBackbone,
-  refNameBinding,
-} from '@jbrowse/bandage-core/reference'
-import { encodingStops } from '@jbrowse/bandage-core/walkEncoding'
 
 import { openIndexed } from './tabix-cut.mjs'
 
-// What figureData leaves to figureSvg, as tables: each lifted walk's key, the
-// genes pinned on the backbone, and the walks as bars on their own bp
-
-const hex = css =>
-  css.replace(
-    /^rgba?\((\d+),\s*(\d+),\s*(\d+).*\)$/,
-    (_, ...rgb) =>
-      `#${rgb
-        .slice(0, 3)
-        .map(v => (+v).toString(16).padStart(2, '0'))
-        .join('')}`,
-  )
-
-function keyRows(scene) {
-  const { lift, facets, labelOf, keyText } = scene
-  const walks = facets ? facets.panels.map(p => p.walks[0]) : (lift?.walks ?? [])
-  const rows = { panel: [], walk: [], note: [], scale: [], stops: [] }
-  for (const walk of walks) {
-    const text = keyText(walk)
-    rows.panel.push(facets ? labelOf(walk.name) : '')
-    rows.walk.push(labelOf(walk.name))
-    rows.note.push(text.note)
-    rows.scale.push(text.scale ?? '')
-    rows.stops.push(
-      encodingStops(walk.encoding)
-        .map(s => hex(s.color))
-        .join(','),
-    )
+// R sends NULL as {}
+function geneSource({ file, index, ...rest } = {}) {
+  if (index) {
+    return { indexed: openIndexed(file, index), ...rest }
   }
-  return rows
-}
-
-// Ports bandage-figure's readGenes: an indexed file is read over each
-// backbone contig alone
-async function genesOf(genes, graph) {
-  const backbone = graphBackbone(graph)
-  if (!backbone || (!genes?.file && genes?.text === undefined)) {
-    return []
-  }
-  let text = genes.text
-  if (genes.index) {
-    const bind = refNameBinding(
-      backbone.contigs.map(c => c.refName),
-      genes.refNames,
-    )
-    const file = openIndexed(genes.file, genes.index)
-    const names = await file.getReferenceSequenceNames()
-    const lines = []
-    for (const contig of backbone.contigs) {
-      const name = names.find(n => bind(n) === contig.refName)
-      if (name !== undefined) {
-        await file.getLines(name, contig.start, contig.end, {
-          lineCallback: line => lines.push(line),
-        })
-      }
-    }
-    text = lines.join('\n')
-  }
-  return featuresOnBackbone(
-    genesFromText(text, genes.format),
-    backbone,
-    genes.refNames,
-  )
-}
-
-const POINT = /[ML](-?[\d.e-]+),(-?[\d.e-]+)/g
-
-async function pinRows(graph, layout, genes) {
-  const pins = { gene: [], x: [], y: [], covered: [], bp: [] }
-  const exons = { gene: [], node: [], stretch: [], x: [], y: [] }
-  let stretch = 0
-  for (const pin of genePins(
-    graph,
-    await genesOf(genes, graph),
-    layout.nodePositions,
-  )) {
-    pins.gene.push(pin.gene.name)
-    pins.x.push(pin.at.x)
-    pins.y.push(pin.at.y)
-    pins.covered.push(pin.covered)
-    pins.bp.push(pin.gene.end - pin.gene.start)
-    for (const { nodeId, d } of pin.exonsByNode) {
-      for (const part of d.split('M').filter(Boolean)) {
-        stretch++
-        for (const [, x, y] of `M${part}`.matchAll(POINT)) {
-          exons.gene.push(pin.gene.name)
-          exons.node.push(nodeId)
-          exons.stretch.push(stretch)
-          exons.x.push(+x)
-          exons.y.push(+y)
-        }
-      }
-    }
-  }
-  return { pins, exons }
+  return rest.text === undefined ? undefined : rest
 }
 
 export async function figure(text, name, spec, genes) {
   const region = spec.region ? parseRegion(spec.region) : undefined
   const { graph, layout } = await laidOutGraph(text, name, region, spec)
-  const options = { ...spec, region, walks: walkLayers(spec.walks) }
-  const scene = figureScene(graph, layout, options)
+  const source = geneSource(genes)
+  const read = source ? await backboneGenes(graph, source) : { genes: [] }
   return {
-    ...figureData(graph, layout, options),
-    keys: keyRows(scene),
-    walkNames: [...new Set((graph.paths ?? []).map(p => p.name))],
-    ...(await pinRows(graph, layout, genes)),
+    ...figureData(graph, layout, {
+      ...spec,
+      region,
+      walks: walkLayers(spec.walks),
+      genes: read.genes,
+    }),
+    unbound: read.unbound,
   }
 }
 
-// A walk's steps from its pieces in contig order, as cutRows reads them: a
-// node id, or between two pieces the bp of contig the cut does not hold, as a
-// number
-function stepsOf(pieces, lengths) {
-  const out = []
-  let end
-  for (const piece of pieces) {
-    if (end !== undefined && piece.start !== undefined && piece.start > end) {
-      out.push(piece.start - end)
-    }
-    let bp = 0
-    for (const id of piece.nodeIds) {
-      out.push(id)
-      bp += lengths.get(id) ?? 0
-    }
-    end = piece.start === undefined ? undefined : piece.start + bp
-  }
-  return out
-}
-
-// The steps of a row's bar, cut between the reference nodes flanking the
-// region as cutRows cuts a walk that reaches both
-function barSteps(steps, reference, region) {
-  if (!region) {
-    return steps
-  }
-  let i0 = -1
-  let i1 = -1
-  let bestEnd = -Infinity
-  let bestStart = Infinity
-  steps.forEach((id, i) => {
-    const span = typeof id === 'string' ? reference.get(id) : undefined
-    if (span && span.end <= region.start && span.end > bestEnd) {
-      bestEnd = span.end
-      i0 = i
-    }
-    if (span && span.start >= region.end && span.start < bestStart) {
-      bestStart = span.start
-      i1 = i
-    }
-  })
-  if (i0 < 0 || i1 < 0) {
-    return steps
-  }
-  const slice = steps.slice(Math.min(i0, i1) + 1, Math.max(i0, i1))
-  return i0 < i1 ? slice : slice.reverse()
-}
-
-// Each step's bp offset along the bar, and each node's offset at every visit
-function barOf(steps, lengths) {
-  const at = []
+// Each node a row's bar visits, at every bp offset it visits it
+function barOf(row) {
   const offsets = new Map()
-  let bp = 0
-  for (const step of steps) {
-    at.push(bp)
-    if (typeof step === 'number') {
-      bp += step
+  for (const { node, start } of row.visits) {
+    const at = offsets.get(node)
+    if (at) {
+      at.push(start)
     } else {
-      const visits = offsets.get(step)
-      if (visits) {
-        visits.push(bp)
-      } else {
-        offsets.set(step, [bp])
-      }
-      bp += lengths.get(step) ?? 0
+      offsets.set(node, [start])
     }
   }
-  return { steps, at, offsets, bp }
+  return { visits: row.visits, offsets }
 }
 
 function sharedBp(a, b, lengths) {
@@ -252,13 +101,12 @@ function continues(run, b, len, join) {
 function sharedRuns(upper, lower, lengths, join) {
   const runs = []
   let open = []
-  upper.steps.forEach((id, k) => {
-    const visits = lower.offsets.get(id)
-    const len = typeof id === 'string' ? (lengths.get(id) ?? 0) : 0
+  upper.visits.forEach(({ node, start: a }, k) => {
+    const visits = lower.offsets.get(node)
+    const len = lengths.get(node) ?? 0
     if (!visits || len === 0) {
       return
     }
-    const a = upper.at[k]
     open = open.filter(run => a - run.a1 <= join)
     for (const b of visits) {
       let dir = 0
@@ -327,12 +175,12 @@ function rowLinks(upper, lower, lengths, join) {
 // most, so a block has one rank in every row, set by neither the rows' order
 // nor the build order that created its nodes. It leaves out a block under
 // 0.3% of the bp off the path, and returns each row's stretches of each block.
-function offBlocks(bars, names, reference, lengths, join) {
+function offBlocks(bars, names, lengths, join) {
   const carriers = new Map()
   bars.forEach((bar, i) => {
-    for (const id of bar?.offsets.keys() ?? []) {
-      if (!reference.has(id)) {
-        carriers.set(id, (carriers.get(id) ?? new Set()).add(names[i]))
+    for (const { node, onReference } of bar?.visits ?? []) {
+      if (!onReference) {
+        carriers.set(node, (carriers.get(node) ?? new Set()).add(names[i]))
       }
     }
   })
@@ -352,27 +200,27 @@ function offBlocks(bars, names, reference, lengths, join) {
   }
   for (const bar of bars) {
     const last = new Map()
-    bar?.steps.forEach((id, k) => {
+    for (const { node: id, start } of bar?.visits ?? []) {
       const key = setKey.get(id)
       if (key === undefined) {
-        return
+        continue
       }
       const prev = last.get(key)
-      if (prev && bar.at[k] - prev.end <= join) {
+      if (prev && start - prev.end <= join) {
         parent.set(find(id), find(prev.id))
       }
-      last.set(key, { id, end: bar.at[k] + (lengths.get(id) ?? 0) })
-    })
+      last.set(key, { id, end: start + (lengths.get(id) ?? 0) })
+    }
   }
   const total = new Map()
   const least = new Map()
   let offBp = 0
   for (const bar of bars) {
-    for (const [id, visits] of bar?.offsets ?? []) {
-      if (reference.has(id)) {
+    for (const { node: id, onReference } of bar?.visits ?? []) {
+      if (onReference) {
         continue
       }
-      const bp = (lengths.get(id) ?? 0) * visits.length
+      const bp = lengths.get(id) ?? 0
       offBp += bp
       if (setKey.has(id)) {
         const root = find(id)
@@ -388,12 +236,11 @@ function offBlocks(bars, names, reference, lengths, join) {
   const spans = []
   bars.forEach((bar, i) => {
     let last
-    bar?.steps.forEach((id, k) => {
+    for (const { node: id, start } of bar?.visits ?? []) {
       const block = setKey.has(id) ? rank.get(find(id)) : undefined
       if (block === undefined) {
-        return
+        continue
       }
-      const start = bar.at[k]
       const end = start + (lengths.get(id) ?? 0)
       if (last && last.block === block && start - last.end <= join) {
         last.end = end
@@ -401,7 +248,7 @@ function offBlocks(bars, names, reference, lengths, join) {
         last = { row: i, start, end, block }
         spans.push(last)
       }
-    })
+    }
   })
   return spans.map(({ row, start, end, block }) => ({ row, start, bp: end - start, block }))
 }
@@ -410,8 +257,8 @@ function columns(records, keys) {
   return Object.fromEntries(keys.map(k => [k, records.map(r => r[k])]))
 }
 
-// cutRows' rows and runs, and what it leaves out: each node's offset along
-// its bar, so ribbons can join the nodes neighbouring rows share
+// cutRows' rows and runs, with ribbons joining the nodes neighbouring rows
+// share and blocks lettering the stretches off the reference several rows walk
 export function walkRows(text, name, spec) {
   const region = spec.region ? parseRegion(spec.region) : undefined
   const graph = loadGraph(text, name, { referencePath: spec.referencePath })
@@ -423,30 +270,7 @@ export function walkRows(text, name, spec) {
   }
   const cutAll = [cut.reference, ...cut.rows]
   const lengths = new Map(graph.nodes.map(n => [n.id, n.length]))
-  const piecesOf = new Map()
-  for (const path of graph.paths ?? []) {
-    const key = pathOrigin(path.name).name
-    piecesOf.set(key, [...(piecesOf.get(key) ?? []), path])
-  }
-  for (const pieces of piecesOf.values()) {
-    pieces.sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
-  }
-  const reference = new Map()
-  for (const piece of piecesOf.get(pathOrigin(cut.reference.name).name)) {
-    let pos = piece.start ?? 0
-    for (const id of piece.nodeIds) {
-      const len = lengths.get(id) ?? 0
-      if (!reference.has(id)) {
-        reference.set(id, { start: pos, end: pos + len })
-      }
-      pos += len
-    }
-  }
-  const cutBars = cutAll.map(row => {
-    const steps = stepsOf(piecesOf.get(pathOrigin(row.name).name), lengths)
-    const bar = barOf(barSteps(steps, reference, region), lengths)
-    return row.complete && bar.bp === row.bp ? bar : undefined
-  })
+  const cutBars = cutAll.map(row => (row.complete ? barOf(row) : undefined))
   const order =
     spec.order === 'shared'
       ? sharedOrder(cutBars, lengths)
@@ -503,7 +327,7 @@ export function walkRows(text, name, spec) {
     ]),
     links: columns(links, ['row', 'a0', 'a1', 'b0', 'b1']),
     blocks: columns(
-      offBlocks(bars, all.map(r => r.name), reference, lengths, join),
+      offBlocks(bars, all.map(r => r.name), lengths, join),
       ['row', 'start', 'bp', 'block'],
     ),
   }

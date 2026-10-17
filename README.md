@@ -87,6 +87,8 @@ ggplot(g) +
 - `genes` pins a GFF3 or BED on the backbone: `geom_bandage_genes()` outlines
   each exon round its node and names the gene. From an indexed file, the
   package reads only the backbone's span
+- `gene_names` binds a file that calls a contig otherwise:
+  `gene_names = c(chr6 = "NC_000006.12")`
 
 ```r
 index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"

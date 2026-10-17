@@ -43,6 +43,21 @@ test_that("a gene lands on the backbone nodes under it", {
   expect_true(all(g$exons$node %in% g$nodes$node))
 })
 
+test_that("a gene file naming the backbone otherwise warns, and gene_names binds it", {
+  bed <- tempfile(fileext = ".bed")
+  on.exit(unlink(bed))
+  writeLines("NC_000913.3\t994000\t998000\tgeneA\t0\t+", bed)
+  expect_warning(
+    g <- bandage_layout(rgfa, genes = bed),
+    'names chr; it has NC_000913.3. Give gene_names .* c\\("chr" = "NC_000913.3"\\)'
+  )
+  expect_equal(nrow(g$genes), 0)
+  g <- expect_no_warning(
+    bandage_layout(rgfa, genes = bed, gene_names = c(chr = "NC_000913.3"))
+  )
+  expect_equal(g$genes$gene, "geneA")
+})
+
 test_that("walk rows measure each walk on its own bp", {
   w <- bandage_walk_rows(pggb)
   expect_s3_class(w, "bandage_walk_rows")

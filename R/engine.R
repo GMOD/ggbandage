@@ -83,6 +83,9 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @param genes path or URL of a GFF3 or BED file of genes on the reference,
 #'   plain, gzipped, or bgzipped with a `.tbi` or `.csi` index beside it, to
 #'   pin on the backbone. [geom_bandage_genes()] draws them
+#' @param gene_names the name `genes` gives each backbone contig it names
+#'   otherwise, such as `c(chr6 = "NC_000006.12")`. A name differing only by a
+#'   `chr` prefix needs none
 #' @param haplotypes on a walk file, the `sample#haplotype` walks to cut, every
 #'   one when `NULL`
 #' @param context on a walk file, bp of reference kept past each end of `region`
@@ -92,7 +95,8 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, region = NULL, genes = NULL,
-                           haplotypes = NULL, context = 1000, ...) {
+                           gene_names = NULL, haplotypes = NULL,
+                           context = 1000, ...) {
   src <- graph_source(gfa, region, haplotypes, context)
   spec <- c(
     list(layout = layout, width = width),
@@ -103,7 +107,7 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
   )
   json <- engine()$call(
     "(text, name, spec, genes) => bandage.figure(text, name, spec, genes).then(JSON.stringify)",
-    src$text, src$name, spec, gene_source(genes),
+    src$text, src$name, spec, gene_source(genes, gene_names),
     await = TRUE
   )
   d <- jsonlite::fromJSON(json)
@@ -119,21 +123,45 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
       call. = FALSE
     )
   }
+  if (!is.null(d$unbound)) {
+    warning(unbound_genes(genes, d$unbound), call. = FALSE)
+  }
   as_bandage_layout(d)
 }
 
-gene_source <- function(genes) {
+gene_source <- function(genes, gene_names = NULL) {
   if (is.null(genes)) {
     return(NULL)
   }
   format <- if (grepl("\\.bed(\\.gz)?$", genes, ignore.case = TRUE)) "bed" else "gff3"
+  names <- if (length(gene_names)) list(refNames = as.list(gene_names))
   for (ext in c(".tbi", ".csi")) {
     index <- paste0(genes, ext)
     if (exists_at(index)) {
-      return(list(file = genes, index = index, format = format))
+      return(c(list(file = genes, index = index, format = format), names))
     }
   }
-  list(text = read_text(genes), format = format)
+  c(list(text = read_text(genes), format = format), names)
+}
+
+unbound_genes <- function(genes, unbound) {
+  has <- unbound$names
+  sprintf(
+    "no sequence in %s names %s%s. Give gene_names the file's name for each, as c(\"%s\" = \"%s\")",
+    genes,
+    paste(unbound$contigs, collapse = ", "),
+    if (length(has)) {
+      sprintf(
+        "; it has %s%s",
+        paste(utils::head(has, 4), collapse = ", "),
+        if (length(has) > 4) ", ..." else ""
+      )
+    } else {
+      ""
+    },
+    unbound$contigs[1],
+    if (length(has)) has[1] else "NC_000006.12"
+  )
 }
 
 exists_at <- function(location) {
