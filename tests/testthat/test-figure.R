@@ -105,6 +105,38 @@ test_that("walk rows with no ribbons or blocks keep their tables' columns", {
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
 
+test_that("a reference filed in pieces out of order flanks its rows as the core does", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    paste0("S\t", 1:4, "\t", strrep("A", 10)),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t3\t+\t1\t+\t0M", "L\t1\t+\t4\t+\t0M",
+    "W\tref\t0\tchr\t20\t50\t>3>1>4",
+    "W\tref\t0\tchr\t0\t20\t>1>2",
+    "W\thap\t1\tc\t0\t50\t>1>2>3>1>4"
+  ), gfa)
+  w <- bandage_walk_rows(gfa, region = "ref#0#chr:21-30")
+  expect_true(all(w$rows$linked))
+  expect_gt(nrow(w$links), 0)
+})
+
+test_that("a node the graph does not declare leaves the other blocks lettered", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    paste0("S\t", 1:5, "\t", strrep("A", 10)),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t2\t+\t4\t+\t0M", "L\t4\t+\t3\t+\t0M",
+    "L\t3\t+\t5\t+\t0M",
+    "W\tref\t0\tchr\t0\t40\t>1>2>3>5",
+    "W\ta\t1\tc\t0\t50\t>1>2>4>3>5",
+    "W\tb\t1\tc\t0\t50\t>1>2>4>3>5",
+    "W\tc\t1\tc\t0\t60\t>1>2>4>9>3>5"
+  ), gfa)
+  w <- bandage_walk_rows(gfa)
+  expect_setequal(w$rows$label[w$blocks$row + 1], c("a#1", "b#1", "c#1"))
+  expect_equal(unique(w$blocks$letter), "A")
+})
+
 test_that("a block letter marks the same off-reference nodes in every row, whatever the order", {
   w <- bandage_walk_rows(pggb)
   b <- w$blocks

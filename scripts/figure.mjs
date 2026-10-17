@@ -130,12 +130,13 @@ export async function figure(text, name, spec, genes) {
   }
 }
 
-// A walk's steps in contig order, as cutRows reads them: a node id, or between
-// two pieces the bp of contig the cut does not hold, as a number
+// A walk's steps from its pieces in contig order, as cutRows reads them: a
+// node id, or between two pieces the bp of contig the cut does not hold, as a
+// number
 function stepsOf(pieces, lengths) {
   const out = []
   let end
-  for (const piece of [...pieces].sort((a, b) => (a.start ?? 0) - (b.start ?? 0))) {
+  for (const piece of pieces) {
     if (end !== undefined && piece.start !== undefined && piece.start > end) {
       out.push(piece.start - end)
     }
@@ -360,7 +361,7 @@ function offBlocks(bars, names, reference, lengths, join) {
       if (prev && bar.at[k] - prev.end <= join) {
         parent.set(find(id), find(prev.id))
       }
-      last.set(key, { id, end: bar.at[k] + lengths.get(id) })
+      last.set(key, { id, end: bar.at[k] + (lengths.get(id) ?? 0) })
     })
   }
   const total = new Map()
@@ -371,10 +372,11 @@ function offBlocks(bars, names, reference, lengths, join) {
       if (reference.has(id)) {
         continue
       }
-      offBp += lengths.get(id) * visits.length
+      const bp = (lengths.get(id) ?? 0) * visits.length
+      offBp += bp
       if (setKey.has(id)) {
         const root = find(id)
-        total.set(root, (total.get(root) ?? 0) + lengths.get(id) * visits.length)
+        total.set(root, (total.get(root) ?? 0) + bp)
         least.set(root, [least.get(root) ?? id, id].sort()[0])
       }
     }
@@ -392,7 +394,7 @@ function offBlocks(bars, names, reference, lengths, join) {
         return
       }
       const start = bar.at[k]
-      const end = start + lengths.get(id)
+      const end = start + (lengths.get(id) ?? 0)
       if (last && last.block === block && start - last.end <= join) {
         last.end = end
       } else {
@@ -425,6 +427,9 @@ export function walkRows(text, name, spec) {
   for (const path of graph.paths ?? []) {
     const key = pathOrigin(path.name).name
     piecesOf.set(key, [...(piecesOf.get(key) ?? []), path])
+  }
+  for (const pieces of piecesOf.values()) {
+    pieces.sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
   }
   const reference = new Map()
   for (const piece of piecesOf.get(pathOrigin(cut.reference.name).name)) {
