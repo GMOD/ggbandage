@@ -53,7 +53,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$bp
-  rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "· no ribbons"))
+  rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "\u00b7 no ribbons"))
   blocks <- as.data.frame(d$blocks)
   if (!nrow(blocks)) {
     blocks <- data.frame(row = numeric(), start = numeric(), bp = numeric(), block = numeric())
