@@ -34,7 +34,8 @@ index or walk file needs \code{region}}
 strand arrows show}
 
 \item{region}{a 1-based locus, as a genome browser writes it, such as
-\code{"GRCh38#0#chr6:31,000,001-31,100,000"}. On an index or walk file, the
+\code{"GRCh38#0#chr6:31,000,001-31,100,000"}, \code{"chr6:31000001..31100000"} or
+one base, \code{"chr6:31,000,001"}. On an index or walk file, the
 part of the graph under it, fetched by range request; on a GFA, the region
 the core crops to}
 

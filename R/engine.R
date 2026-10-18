@@ -77,7 +77,8 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
 #' @param region a 1-based locus, as a genome browser writes it, such as
-#'   `"GRCh38#0#chr6:31,000,001-31,100,000"`. On an index or walk file, the
+#'   `"GRCh38#0#chr6:31,000,001-31,100,000"`, `"chr6:31000001..31100000"` or
+#'   one base, `"chr6:31,000,001"`. On an index or walk file, the
 #'   part of the graph under it, fetched by range request; on a GFA, the region
 #'   the core crops to
 #' @param genes path or URL of a GFF3 or BED file of genes on the reference,

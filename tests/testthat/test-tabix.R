@@ -119,6 +119,11 @@ test_that("a region parses from the browser's 1-based locus", {
   expect_error(parse_region("chr6:0-100"), "1 <= start <= end")
   expect_error(parse_region("chr6:500-100"), "1 <= start <= end")
   expect_equal(parse_region("chr6:7-7")[c("start", "end")], list(start = 6, end = 7))
+  expect_equal(parse_region("chr6:7")[c("start", "end")], list(start = 6, end = 7))
+  expect_equal(
+    parse_region(" chr6:1,001..2,000 ")[c("start", "end")],
+    list(start = 1000, end = 2000)
+  )
 })
 
 test_that("the bundle's TextDecoder reads long ASCII runs and UTF-8 alike", {

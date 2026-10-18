@@ -40,7 +40,11 @@ tabix_files <- function(x) {
 parse_region <- function(region) {
   m <- regmatches(
     region,
-    regexec("^\\s*([^:\\s]+):([0-9,]+)-([0-9,]+)\\s*$", region, perl = TRUE)
+    regexec(
+      "^\\s*([^:\\s]+):\\s*([0-9,]+)(?:\\s*(?:-|\\.\\.)\\s*([0-9,]+))?\\s*$",
+      region,
+      perl = TRUE
+    )
   )[[1]]
   if (!length(m)) {
     stop(
@@ -50,7 +54,7 @@ parse_region <- function(region) {
   }
   num <- function(s) as.numeric(gsub(",", "", s))
   start <- num(m[[3]])
-  end <- num(m[[4]])
+  end <- if (nzchar(m[[4]])) num(m[[4]]) else start
   if (start < 1 || end < start) {
     stop(
       sprintf("\"%s\" needs 1 <= start <= end, as a 1-based locus", region),
