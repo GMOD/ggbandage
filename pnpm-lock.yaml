@@ -9,14 +9,14 @@ importers:
   .:
     devDependencies:
       '@gmod/tabix':
-        specifier: 3.10.2
-        version: 3.10.2
+        specifier: 3.11.0
+        version: 3.11.0
       '@jbrowse/bandage-core':
         specifier: 11.2.0
         version: 11.2.0
       '@jbrowse/graph-walks':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: 2.1.0
+        version: 2.1.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -179,18 +179,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@gmod/bgzf-filehandle@6.7.0':
-    resolution: {integrity: sha512-ThtHVneb+tASyGFACVL/rMu6d5AY0vWK6poeOJwIIAaJpXYpptrmwvhdk2xk5eoNzL+iN40B3bXytMvQ+e+80Q==}
+  '@gmod/bgzf-filehandle@6.8.0':
+    resolution: {integrity: sha512-AZvtooJr9Pw3ARvypOhSmOb4tWPYwb1HrIxAXUHntRElZ3+dpuczpveD3ZcTrkKhyT9Ct8rVbMLWIdEv8lTdNA==}
 
   '@gmod/gbz-base@7.4.1':
     resolution: {integrity: sha512-Le+Rpj9Jp7GAOpo05XwYFhZbsakhC6TOfaslgW7F72xm2q6Z11dwDZwZFd0S93x2bgbasvO7S3Zr1oL+QBf2SA==}
     hasBin: true
 
-  '@gmod/shared-read-cache@2.0.1':
-    resolution: {integrity: sha512-HXLI9d42+wRhnUx+Iyh5DPTIY4TnuVW9ROF90nGb0vQdOLT8MHq44VdQyc2Zt0HfngJUvhmPxjJRr28YykT05g==}
+  '@gmod/shared-read-cache@2.1.0':
+    resolution: {integrity: sha512-AyiUt0hiEGl7lWc1fuigbXR/RToIw3h72dalaRoSNau9WL9ux9rEfkcsXDYTgSDudehfAEQac1jTvn2zrfnELQ==}
 
-  '@gmod/tabix@3.10.2':
-    resolution: {integrity: sha512-vlHs03ILhRNuVWbqaA01nNQvRZBR+/uXia/1hWVu4wsHoArVfro5bUBCcYAhBo+kes7tdYJRc7xVWxwxT4Jscw==}
+  '@gmod/tabix@3.11.0':
+    resolution: {integrity: sha512-kunAT5jtwMoIx+rnuLLXt0rSI1MtX7sGW9Vn9agTgzz7sLJzZewx6knppvf22Ahr9JRZSnSj/TwKEXS/XeIjYw==}
 
   '@jbrowse/bandage-core@11.2.0':
     resolution: {integrity: sha512-asMAGkmWG4hffKuQGw+zsbuHuVhGQPC2pVYeulmlu02w3qa7hyi4h4up1wlO441TZfRnevp1Z72yeHa8FcyoDg==}
@@ -205,8 +205,8 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-walks@2.0.0':
-    resolution: {integrity: sha512-p00rASWtK6pLwhUv5TMeAG0RVZLvPiRQttguWDP3Huas6hE//Xk+CmNmzgIGksgq7ozNsdPp1kSkSgmYsZ3Oog==}
+  '@jbrowse/graph-walks@2.1.0':
+    resolution: {integrity: sha512-Xm93ZDBhCSaCxnRj0w0g/6j30ZR82oNvLLuYMMHAUEEtIiCHU5NaY3QWURPmiod1RfpEjpTkt/jFTjaecS9Wow==}
     engines: {node: '>=20'}
 
   '@jbrowse/quick-lru@8.0.0':
@@ -307,7 +307,7 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@gmod/bgzf-filehandle@6.7.0':
+  '@gmod/bgzf-filehandle@6.8.0':
     dependencies:
       generic-filehandle2: 2.5.1
       pako-esm2: 2.0.2
@@ -316,19 +316,19 @@ snapshots:
     dependencies:
       generic-filehandle2: 2.5.1
 
-  '@gmod/shared-read-cache@2.0.1': {}
+  '@gmod/shared-read-cache@2.1.0': {}
 
-  '@gmod/tabix@3.10.2':
+  '@gmod/tabix@3.11.0':
     dependencies:
-      '@gmod/bgzf-filehandle': 6.7.0
-      '@gmod/shared-read-cache': 2.0.1
+      '@gmod/bgzf-filehandle': 6.8.0
+      '@gmod/shared-read-cache': 2.1.0
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
   '@jbrowse/bandage-core@11.2.0':
     dependencies:
       '@gmod/gbz-base': 7.4.1
-      '@gmod/tabix': 3.10.2
+      '@gmod/tabix': 3.11.0
       '@jbrowse/graph-fmmm-layout': 1.0.2
       '@jbrowse/graph-stress-layout': 1.0.0
       '@jbrowse/tubemap-core': 2.0.1
@@ -337,7 +337,7 @@ snapshots:
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
-  '@jbrowse/graph-walks@2.0.0': {}
+  '@jbrowse/graph-walks@2.1.0': {}
 
   '@jbrowse/quick-lru@8.0.0': {}
 

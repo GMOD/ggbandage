@@ -7,9 +7,9 @@
     "build": "node scripts/build-js.mjs"
   },
   "devDependencies": {
-    "@gmod/tabix": "3.10.2",
+    "@gmod/tabix": "3.11.0",
     "@jbrowse/bandage-core": "11.2.0",
-    "@jbrowse/graph-walks": "2.0.0",
+    "@jbrowse/graph-walks": "2.1.0",
     "esbuild": "^0.28.2"
   }
 }
