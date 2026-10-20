@@ -26,8 +26,9 @@ one base, \code{"chr6:31,000,001"}. On an index or walk file, the
 part of the graph under it, fetched by range request; on a GFA, the region
 the core crops to}
 
-\item{haplotypes}{on a walk file, the \code{sample#haplotype} walks to cut, every
-one when \code{NULL}}
+\item{haplotypes}{the walks to draw under the reference, by sample or
+\code{sample#haplotype}, every one when \code{NULL}. On a walk file, also the walks
+to cut}
 
 \item{context}{on a walk file, bp of reference kept past each end of \code{region}}
 

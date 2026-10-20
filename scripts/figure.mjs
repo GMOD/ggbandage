@@ -56,7 +56,12 @@ export function walkRows(text, name, spec) {
       'walk rows need a reference walk and at least one other walk (P or W lines)',
     )
   }
-  const cutAll = [cut.reference, ...cut.rows]
+  const picked = spec.haplotypes
+    ? cut.rows.filter(r =>
+        spec.haplotypes.some(h => r.name === h || r.name.startsWith(`${h}#`)),
+      )
+    : cut.rows
+  const cutAll = [cut.reference, ...picked]
   const order =
     spec.order === 'shared' ? sharedRowOrder(cutAll) : cutAll.map((_, i) => i)
   const all = order.map(i => cutAll[i])

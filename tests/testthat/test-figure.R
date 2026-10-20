@@ -67,6 +67,13 @@ test_that("walk rows measure each walk on its own bp", {
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w)))
 })
 
+test_that("haplotypes picks a GFA's rows by sample or sample#haplotype", {
+  w <- bandage_walk_rows(pggb, haplotypes = c("IAI39", "Sakai#1"))
+  expect_setequal(w$rows$label, c("K12", "IAI39", "Sakai"))
+  expect_equal(w$rows$label[1], "K12")
+  expect_true(all(w$links$row < 2))
+})
+
 test_that("ribbons join neighbouring rows inside both bars", {
   w <- bandage_walk_rows(pggb)
   l <- w$links

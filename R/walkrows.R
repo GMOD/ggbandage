@@ -4,6 +4,9 @@
 #' of the sequence it carries between the reference nodes flanking the region.
 #' A repeat expansion reads as bar length, which no node layout shows.
 #' @inheritParams bandage_layout
+#' @param haplotypes the walks to draw under the reference, by sample or
+#'   `sample#haplotype`, every one when `NULL`. On a walk file, also the walks
+#'   to cut
 #' @param referencePath the reference walk, when it is not the one rank-0
 #'   segments name or the first
 #' @param order `"length"` puts the longest first; `"shared"` puts each row
@@ -31,6 +34,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   spec <- c(
     list(order = order),
     if (!is.null(src$region)) list(region = src$region),
+    if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
     if (!is.null(referencePath)) list(referencePath = referencePath),
     if (!is.null(join)) list(join = join)
   )

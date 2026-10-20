@@ -1,6 +1,7 @@
 # Gallery
 
-Every figure runs as written after this setup, from the files behind the
+Every figure runs as written after this setup. All but the syng graph read
+the files behind the
 [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).
 `scripts/gallery.R` draws them all.
 
@@ -134,4 +135,32 @@ ggplot(g) +
   coord_fixed() +
   theme_void() +
   theme(legend.position = "bottom")
+```
+
+## C4 as a syng graph from impg
+
+`chr6:31,972,047-32,055,647`
+
+[impg](https://github.com/pangenome/impg) builds a
+[syng](https://github.com/richarddurbin/syng) graph with no alignment step;
+[build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh)
+in jbrowse-plugin-graphgenomeviewer cuts this one from odgi's C4 test haplotypes.
+
+- A syng branch repeats the reference's sequence on both sides of a variant,
+  so a SNP draws as a dashed loop of about 80 bp, where a pggb graph draws a 1 bp bubble
+- `bandage_hues` colours the rows with the hues Bandage gives the backbone
+
+![Force-directed syng graph of C4 from 90 haplotypes, a ring coloured red to magenta along GRCh38 with dashed loops off it, over walk rows for three samples in the same colours: HG02080's 51 kb haplotype goes round the ring once, GRCh38 twice and HG01978's 116 kb haplotype three times](../gallery/syng_c4.png)
+
+```r
+syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
+g <- bandage_layout(syng)
+rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
+bandage_hues <- scale_fill_gradientn(
+  "grch38 position, Mb",
+  colours = rainbow(7, s = 0.82, v = 0.85, end = 5 / 6),
+  n.breaks = 3, labels = function(x) x / 1e6,
+  guide = guide_colourbar(order = 1, title.position = "top", barwidth = unit(120, "pt"))
+)
+autoplot(g) / (autoplot(rows) + bandage_hues) + plot_layout(heights = c(2.5, 1))
 ```
