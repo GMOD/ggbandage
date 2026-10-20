@@ -179,8 +179,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@gmod/bgzf-filehandle@6.8.0':
-    resolution: {integrity: sha512-AZvtooJr9Pw3ARvypOhSmOb4tWPYwb1HrIxAXUHntRElZ3+dpuczpveD3ZcTrkKhyT9Ct8rVbMLWIdEv8lTdNA==}
+  '@gmod/bgzf-filehandle@6.8.2':
+    resolution: {integrity: sha512-idzdZgoGvgkCgshoibhmeH795wQAm7JXnEvETEMPPdrq4yBCDD6S+LkN1JC6V+wdaRc0LZSKP7A50LqNaJC6sg==}
 
   '@gmod/gbz-base@7.4.1':
     resolution: {integrity: sha512-Le+Rpj9Jp7GAOpo05XwYFhZbsakhC6TOfaslgW7F72xm2q6Z11dwDZwZFd0S93x2bgbasvO7S3Zr1oL+QBf2SA==}
@@ -307,7 +307,7 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@gmod/bgzf-filehandle@6.8.0':
+  '@gmod/bgzf-filehandle@6.8.2':
     dependencies:
       generic-filehandle2: 2.5.1
       pako-esm2: 2.0.2
@@ -320,7 +320,7 @@ snapshots:
 
   '@gmod/tabix@3.11.0':
     dependencies:
-      '@gmod/bgzf-filehandle': 6.8.0
+      '@gmod/bgzf-filehandle': 6.8.2
       '@gmod/shared-read-cache': 2.1.0
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
