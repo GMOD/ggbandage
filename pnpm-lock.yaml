@@ -15,8 +15,8 @@ importers:
         specifier: 11.5.0
         version: 11.5.0
       '@jbrowse/graph-walks':
-        specifier: 2.1.0
-        version: 2.1.0
+        specifier: 3.0.0
+        version: 3.0.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -205,8 +205,8 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-walks@2.1.0':
-    resolution: {integrity: sha512-Xm93ZDBhCSaCxnRj0w0g/6j30ZR82oNvLLuYMMHAUEEtIiCHU5NaY3QWURPmiod1RfpEjpTkt/jFTjaecS9Wow==}
+  '@jbrowse/graph-walks@3.0.0':
+    resolution: {integrity: sha512-e3iG7U5CbvOdAGdeGkXR1dNApflshFTH+lFpP9SQjlI76Po1umzdAQMMieEvzw6EBHzDl7nqBMYC4Zj1TC3T1Q==}
     engines: {node: '>=20'}
 
   '@jbrowse/quick-lru@8.0.0':
@@ -337,7 +337,7 @@ snapshots:
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
-  '@jbrowse/graph-walks@2.1.0': {}
+  '@jbrowse/graph-walks@3.0.0': {}
 
   '@jbrowse/quick-lru@8.0.0': {}
 
