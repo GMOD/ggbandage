@@ -24,7 +24,9 @@
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
 #'   per stretch of a block of nodes off the reference's path that two or more
 #'   rows walk, `letter` A for the block with the most bp over every visit.
-#'   Which rows are drawn decides the blocks: another row can split one.
+#'   A block counts once a stretch of it reaches 1.2% of the longest bar,
+#'   wide enough to draw and letter. Which rows are drawn decides the blocks:
+#'   another row can split one.
 #' @export
 bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
                               context = 1000, referencePath = NULL,
@@ -56,6 +58,9 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   rows$xmax <- rows$bp
   rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "\u00b7 no ribbons"))
   blocks <- frame(d$blocks)
+  big <- sort(unique(blocks$block[blocks$bp >= max(rows$bp) * letter_share]))
+  blocks <- blocks[blocks$block %in% big, ]
+  blocks$block <- match(blocks$block, big) - 1
   blocks$xmin <- blocks$start
   blocks$xmax <- blocks$start + blocks$bp
   blocks$letter <- block_letters(blocks$block)
@@ -76,6 +81,9 @@ gap_kinds <- c(
   unknown = "gap, cause unknown",
   outside = "outside the extracted subgraph"
 )
+
+# the share of the longest bar a block's stretch needs to be drawn and lettered
+letter_share <- 0.012
 
 block_letters <- function(i) {
   ifelse(i < 26, LETTERS[i %% 26 + 1], paste0(LETTERS[pmax(1, i %/% 26)], LETTERS[i %% 26 + 1]))
@@ -131,7 +139,7 @@ bar_tiles <- function(runs, tile) {
 #' and its readout past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
 #' the reference shows the same colours wherever it recurs and an inverted
-#' one shows them reversed. Light grey is sequence on non-reference nodes,
+#' one shows them reversed. Charcoal is sequence on non-reference nodes,
 #' which may still resemble the reference, as an extra repeat copy does. A
 #' letter marks a block of non-reference nodes that two or more drawn rows
 #' walk, the same letter wherever the block recurs, and the three largest
@@ -148,8 +156,13 @@ bar_tiles <- function(runs, tile) {
 #' @param readouts write each bar's length and its difference from the
 #'   reference past its end
 #' @param ribbons join the graph nodes neighbouring rows share
+#' @param hues `"viridis"`, or `"bandage"` for the Bandage view's position
+#'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
+#'   a layout
 #' @exportS3Method ggplot2::autoplot
-autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE) {
+autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
+                                       hues = c("viridis", "bandage")) {
+  hues <- match.arg(hues)
   rows <- object$rows
   reference <- rows$sample[1]
   half <- 0.2
@@ -168,17 +181,19 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     xmax = tapply(plain$xmax, stretch, max),
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
-  off <- "non-reference nodes"
+  off <- paste("off the", reference, "path")
+  ribbon <- "ribbon: next row walks the same nodes"
+  inverted <- "ribbon: next row walks them backwards"
   # a gap draws by whether the graph holds it, and the readout says where an
   # elsewhere part went
   plain$key <- ifelse(
     plain$kind == gap_kinds[["elsewhere"]], gap_kinds[["outside"]],
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
-  labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], "shared nodes", "shared nodes, inverted")
-  keys <- stats::setNames(c("#e8e8e8", rep("white", 3), "#d5dae1", "#b9abdb"), labels)
+  labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted)
+  keys <- stats::setNames(c("#3c4148", rep("white", 3), "#cfe0f2", "#b9abdb"), labels)
   outlines <- stats::setNames(
-    c("#b5b5b5", "#9a9a9a", "#6e6e6e", "#9a9a9a", "#d5dae1", "#b9abdb"), labels
+    c("#3c4148", "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb"), labels
   )
   dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid"), labels)
   blocks <- object$blocks
@@ -186,14 +201,20 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   fills <- c("#d4785f", "#d9a94e", "#c98aa3")
   filled <- blocks[blocks$block < length(fills), ]
   filled$letter <- factor(filled$letter, levels = block_letters(seq_along(fills) - 1))
-  lettered <- blocks[blocks$bp >= span * 0.012, ]
+  lettered <- blocks[blocks$bp >= span * letter_share, ]
 
   links <- object$links
   if (!ribbons) {
     links <- links[0, ]
   }
-  key <- ifelse(links$b0 > links$b1, "shared nodes, inverted", "shared nodes")
+  key <- ifelse(links$b0 > links$b1, inverted, ribbon)
   shown <- intersect(names(keys), c(plain$key, key))
+  title <- paste(reference, "position, Mb")
+  fill <- if (hues == "bandage") {
+    scale_fill_bandage_position(title)
+  } else {
+    position_scale(ggplot2::scale_fill_viridis_c, title)
+  }
   p <- ggplot2::ggplot()
   if (nrow(links)) {
     top <- y[links$row + 1] - half
@@ -243,21 +264,13 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       size = 2.6, fontface = "bold", show.legend = FALSE
     ) +
     ggplot2::scale_alpha_manual(
-      "shared non-reference nodes:",
+      paste("blocks off the", reference, "path that several rows walk:"),
       values = rep(1, length(fills)), drop = TRUE,
       guide = ggplot2::guide_legend(
         order = 3, override.aes = list(fill = fills[seq_along(levels(droplevels(filled$letter)))])
       )
     ) +
-    ggplot2::scale_fill_viridis_c(
-      paste(reference, "position, Mb"),
-      n.breaks = 3,
-      labels = function(x) format(x / 1e6, nsmall = 2, trim = TRUE),
-      guide = ggplot2::guide_colourbar(
-        order = 1, barwidth = grid::unit(120, "pt"), barheight = grid::unit(8, "pt"),
-        title.position = "top"
-      )
-    ) +
+    fill +
     ggplot2::scale_colour_manual(
       NULL,
       values = outlines, breaks = shown,

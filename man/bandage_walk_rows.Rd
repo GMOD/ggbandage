@@ -53,7 +53,9 @@ states: \code{missing}, \code{elsewhere} or \code{unknown}, else \code{outside};
 lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row
 per stretch of a block of nodes off the reference's path that two or more
 rows walk, \code{letter} A for the block with the most bp over every visit.
-Which rows are drawn decides the blocks: another row can split one.
+A block counts once a stretch of it reaches 1.2\% of the longest bar,
+wide enough to draw and letter. Which rows are drawn decides the blocks:
+another row can split one.
 }
 \description{
 The reference walk on the top row and every other walk below it, each a bar

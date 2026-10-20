@@ -25,10 +25,18 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
     p <- p + geom_bandage_keys(text = !faceted)
   }
   p <- p +
+    layout_key(object) +
     ggplot2::theme_void() +
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       plot.margin = ggplot2::margin(8, 8, 8, 8),
+      legend.position = "bottom",
+      legend.justification = "left",
+      legend.margin = ggplot2::margin(l = 20),
+      legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
+      legend.text = ggplot2::element_text(size = 9),
+      plot.caption = ggplot2::element_text(size = 8, colour = "grey30", hjust = 0),
+      plot.caption.position = "plot",
       strip.text = ggplot2::element_text(
         hjust = 0, lineheight = 1.1, margin = ggplot2::margin(b = 4)
       ),
@@ -84,4 +92,61 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
       )
   }
   p
+}
+
+# What the hues, the charcoal and the dashes mean, for a layout coloured by
+# reference position; a lifted walk recolours the drawing and keys itself
+layout_key <- function(object) {
+  m <- object$meta
+  if (!identical(m$colorScheme, "reference-position") || is.null(m$referenceRamp) ||
+    nrow(object$keys)) {
+    return(list())
+  }
+  reference <- if (is.null(m$referenceName)) "the reference" else m$referenceName
+  nodes <- object$nodes
+  ramp <- data.frame(
+    x = nodes$x[1], y = nodes$y[1],
+    position = c(m$referenceRamp$start, m$referenceRamp$end)
+  )
+  inks <- c(
+    if (!all(nodes$backbone)) stats::setNames("#3c4148", paste("off the", reference, "path")),
+    if (isTRUE(m$deletions > 0)) {
+      stats::setNames("#18181c", paste(reference, "sequence a link skips"))
+    }
+  )
+  widths <- c("#3c4148" = 2.5, "#18181c" = 0.8)[inks]
+  lines <- stats::setNames(c("#3c4148" = "solid", "#18181c" = "22")[inks], names(inks))
+  guide <- ggplot2::guide_legend(
+    order = 2, override.aes = list(alpha = 1, linewidth = unname(widths))
+  )
+  revisited <- unique(nodes$node[nodes$referenceVisits > 1])
+  list(
+    ggplot2::geom_point(
+      ggplot2::aes(x = x, y = y, fill = position),
+      data = ramp, inherit.aes = FALSE, alpha = 0
+    ),
+    scale_fill_bandage_position(paste(reference, "position, Mb")),
+    if (length(inks)) {
+      list(
+        ggplot2::geom_path(
+          ggplot2::aes(x = x, y = y, colour = key, linetype = key, group = key),
+          data = data.frame(
+            x = nodes$x[1], y = nodes$y[1], key = rep(names(inks), each = 2)
+          ),
+          inherit.aes = FALSE, alpha = 0
+        ),
+        ggplot2::scale_colour_manual(NULL, values = inks, breaks = names(inks), guide = guide),
+        ggplot2::scale_linetype_manual(
+          NULL,
+          values = lines, breaks = names(inks), guide = ggplot2::guide_legend(order = 2)
+        )
+      )
+    },
+    if (length(revisited)) {
+      ggplot2::labs(caption = sprintf(
+        "%s walks %s nodes more than once. Each takes its first visit's colour, so a node it walks only in a later copy stands out in that copy's",
+        reference, format(length(revisited), big.mark = ",")
+      ))
+    }
+  )
 }

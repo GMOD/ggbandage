@@ -115,27 +115,30 @@ ggplot(g) +
   ),
   figure(
     "syng_c4", "C4 as a syng graph from impg", "chr6:31,972,047-32,055,647",
-    "Force-directed syng graph of C4 from 90 haplotypes, a ring coloured red to magenta along GRCh38 with dashed loops off it, over walk rows for three samples in the same colours: HG02080's 51 kb haplotype goes round the ring once, GRCh38 twice and HG01978's 116 kb haplotype three times",
+    "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype carries one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
     r"(syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
-bandage_hues <- scale_fill_gradientn(
-  "grch38 position, Mb",
-  colours = rainbow(7, s = 0.82, v = 0.85, end = 5 / 6),
-  n.breaks = 3, labels = function(x) x / 1e6,
-  guide = guide_colourbar(order = 1, title.position = "top", barwidth = unit(120, "pt"))
-)
-autoplot(g) / (autoplot(rows) + bandage_hues) + plot_layout(heights = c(2.5, 1)))",
-    width = 9, height = 8,
+(autoplot(g) + guides(fill = "none")) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(2.5, 1)))",
+    width = 9, height = 8.5,
     note = c(
       "[impg](https://github.com/pangenome/impg) builds a",
       "[syng](https://github.com/richarddurbin/syng) graph with no alignment step;",
       "[build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh)",
       "in jbrowse-plugin-graphgenomeviewer cuts this one from odgi's C4 test haplotypes.",
       "",
-      "- A syng branch repeats the reference's sequence on both sides of a variant,",
-      "  so a SNP draws as a dashed loop of about 80 bp, where a pggb graph draws a 1 bp bubble",
-      "- `bandage_hues` colours the rows with the hues Bandage gives the backbone"
+      "- GRCh38 has C4A and C4B, two copies of a 32.7 kb module, and syng puts both on",
+      "  one copy's nodes: GRCh38 walks the ring twice, and a haplotype's copy count is",
+      "  how often it goes round",
+      "- A layout node takes its first visit's colour, so the ring shows C4A's hues. The",
+      "  blue specks are nodes GRCh38 walks only in C4B, where C4B differs from C4A",
+      "- A walk row follows each copy to the GRCh38 copy it continues, and switches where",
+      "  it walks a node only C4A or only C4B holds: HG00735#1's second copy starts on",
+      "  C4A's own sequence, so it takes C4A's hues",
+      "- `hues = \"bandage\"` gives the rows the layout's hues. Ribbons are off, since",
+      "  the rows share almost every node"
     )
   )
 )

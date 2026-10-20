@@ -4,7 +4,13 @@
 \alias{autoplot.bandage_walk_rows}
 \title{Walk rows as the Bandage view draws them}
 \usage{
-\method{autoplot}{bandage_walk_rows}(object, ..., readouts = TRUE, ribbons = TRUE)
+\method{autoplot}{bandage_walk_rows}(
+  object,
+  ...,
+  readouts = TRUE,
+  ribbons = TRUE,
+  hues = c("viridis", "bandage")
+)
 }
 \arguments{
 \item{object}{a \code{bandage_walk_rows}}
@@ -15,13 +21,17 @@
 reference past its end}
 
 \item{ribbons}{join the graph nodes neighbouring rows share}
+
+\item{hues}{\code{"viridis"}, or \code{"bandage"} for the Bandage view's position
+hues, as \code{\link[=scale_fill_bandage_position]{scale_fill_bandage_position()}} draws them, to set walk rows under
+a layout}
 }
 \description{
 A bar per walk on an axis of bp from the left flank, the walk's label on y
 and its readout past the bar's end. Sequence on the reference's path takes
 the colour of the reference position it covers, so a duplicated stretch of
 the reference shows the same colours wherever it recurs and an inverted
-one shows them reversed. Light grey is sequence on non-reference nodes,
+one shows them reversed. Charcoal is sequence on non-reference nodes,
 which may still resemble the reference, as an extra repeat copy does. A
 letter marks a block of non-reference nodes that two or more drawn rows
 walk, the same letter wherever the block recurs, and the three largest

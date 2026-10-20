@@ -159,6 +159,62 @@ test_that("a node the graph does not declare leaves the other blocks lettered", 
   expect_equal(unique(w$blocks$letter), "A")
 })
 
+test_that("a block too narrow to draw gets no letter", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  block <- function(n) {
+    writeLines(c(
+      paste0("S\t", 1:4, "\t", strrep(c("A", "A", "A", "C"), c(1000, 10, 1000, n))),
+      "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t1\t+\t4\t+\t0M", "L\t4\t+\t3\t+\t0M",
+      "P\tref#0#chr\t1+,2+,3+\t*",
+      "P\ta#1#c\t1+,4+,3+\t*",
+      "P\tb#1#c\t1+,4+,3+\t*"
+    ), gfa)
+    bandage_walk_rows(gfa)$blocks
+  }
+  expect_equal(nrow(block(10)), 0)
+  expect_equal(unique(block(200)$letter), "A")
+})
+
+# GRCh38's C4A and C4B as syng folds them: the reference walks 2 and 3 twice
+collapsed_repeat <- function() {
+  gfa <- tempfile(fileext = ".gfa")
+  writeLines(c(
+    paste0("S\t", 1:4, "\t", strrep("A", c(100, 10, 20, 100))),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t3\t+\t2\t+\t0M", "L\t3\t+\t4\t+\t0M",
+    "P\tref#0#chr\t1+,2+,3+,2+,3+,4+\t*",
+    "P\ta#1#c\t1+,2+,3+,2+,3+,2+,3+,4+\t*"
+  ), gfa)
+  gfa
+}
+
+test_that("a reference walking a collapsed repeat twice keeps one smooth row", {
+  gfa <- collapsed_repeat()
+  on.exit(unlink(gfa))
+  w <- bandage_walk_rows(gfa)
+  on <- w$runs[w$runs$row == 0 & w$runs$onReference, ]
+  expect_equal(nrow(on), 1)
+  expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w, hues = "bandage")))
+})
+
+test_that("a layout coloured by position keys its hues, and says which nodes take a first visit's", {
+  gfa <- collapsed_repeat()
+  on.exit(unlink(gfa))
+  p <- ggplot2::autoplot(bandage_layout(gfa))
+  built <- ggplot2::ggplot_build(p)
+  expect_match(p$labels$caption, "walks 2 nodes more than once")
+  expect_false(is.null(built$plot$scales$get_scales("fill")))
+  lifted <- ggplot2::autoplot(bandage_layout(pggb, walks = lifted))
+  expect_null(lifted$labels$caption)
+  expect_null(ggplot2::ggplot_build(lifted)$plot$scales$get_scales("fill"))
+})
+
+test_that("Bandage's position hues run red to magenta at the view's saturation", {
+  hues <- bandage_hues()
+  expect_equal(hues[1], "#D92626")
+  expect_equal(grDevices::col2rgb(hues[length(hues)])[, 1], c(red = 217, green = 38, blue = 217))
+})
+
 test_that("a block letter marks the same off-reference nodes in every row, whatever the order", {
   w <- bandage_walk_rows(pggb)
   b <- w$blocks
