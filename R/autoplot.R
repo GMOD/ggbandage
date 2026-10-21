@@ -144,7 +144,7 @@ layout_key <- function(object) {
     },
     if (length(revisited)) {
       ggplot2::labs(caption = sprintf(
-        "%s walks %s nodes more than once. Each takes its first visit's colour, so a node it walks only in a later copy stands out in that copy's",
+        "%s walks %s nodes more than once, and each takes its first visit's colour.\nA node walked only in a later copy takes that copy's colour",
         reference, format(length(revisited), big.mark = ",")
       ))
     }
