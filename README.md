@@ -227,21 +227,33 @@ scripts/update-deps.sh
 
 ## See also
 
+Helper libraries
+
 - [@jbrowse/bandage-core](https://github.com/GMOD/bandage-core) - Bandage layout
   and drawing engine
-- [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) - indexes a GFA by genome
-  coordinate, for the `region` form of `bandage_layout()`
 - [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) - cuts a region
   out of a walk file
+- [@jbrowse/graph-stress-layout](https://github.com/GMOD/graph-stress-layout) -
+  graph stress layout 
+- [@jbrowse/graph-fmmm-layout](https://github.com/GMOD/graph-fmmm-layout) -
+  FMMM graph layout from bandage
+
+Data format: GFA tabix
+
+- [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) - indexes a GFA by genome
+  coordinate, for the `region` form of `bandage_layout()`
+
+Other R libraries
 - [ggtubemap](https://github.com/GMOD/ggtubemap) - tube maps as ggplot2 layers
 - [ggjbrowse](https://github.com/GMOD/ggjbrowse) - genome browser tracks as
   ggplot2 layers; reads indexed files into V8 the same way
+
+JBrowse 2 plugin and other applications
 - [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer) -
   JBrowse 2 plugin that browses these graphs by locus
 - [BandageJS](https://github.com/GMOD/BandageJS) - standalone page for GFA
   and gbz-base graphs
-- [@jbrowse/graph-stress-layout](https://github.com/GMOD/graph-stress-layout) -
-  stress layout that keeps the reference straight
+
 
 Tutorials on [jbrowse.org](https://jbrowse.org/jb2/docs/tutorials/)
 
