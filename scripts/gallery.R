@@ -49,7 +49,7 @@ ggplot(g) +
   facet = "walk"
 )
 autoplot(g, ncol = 2))",
-    height = 4, readme = TRUE
+    height = 4
   ),
   figure(
     "kiv2_overlay", "Three KIV-2 haplotypes overlaid", "chr6:160,616,004-160,646,753",
@@ -79,14 +79,14 @@ autoplot(g))",
     "Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
     r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
 autoplot(rows))",
-    height = 4.4, readme = TRUE
+    height = 4.4
   ),
   figure(
     "amylase_rows", "Amylase copy number in twelve haplotypes", "chr1:103,540,000-103,780,000",
     "Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, HG00128#1 walks the stretch near 103.72 Mb twice, so its green recurs, five haplotypes walk much of the non-reference block A twice, and HG00097#1 has a 19 kb stretch the graph lacks, drawn as an open box",
     r"(rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = twelve)
 autoplot(rows))",
-    height = 6
+    height = 6, readme = TRUE
   ),
   figure(
     "c4_stress", "C4A and C4B in the stress layout", "chr6:31,978,000-32,040,000",
@@ -220,12 +220,12 @@ anchor <- function(title) {
 readme <- function() {
   cell <- function(f) {
     sprintf(
-      '<td width="50%%"><b><a href="docs/gallery.md#%s">%s</a></b><br><code>%s</code><br><img src="gallery/%s.png" alt="%s" width="100%%"></td>',
-      anchor(f$title), f$title, f$locus, f$id, f$alt
+      '<td width="33%%"><a href="docs/gallery.md#%s"><img src="gallery/%s.png" alt="%s" width="100%%"></a><br>%s</td>',
+      anchor(f$title), f$id, f$alt, f$title
     )
   }
   cards <- Filter(function(f) f$readme, figures)
-  rows <- split(cards, ceiling(seq_along(cards) / 2))
+  rows <- split(cards, ceiling(seq_along(cards) / 3))
   table <- c(
     "<table>",
     vapply(rows, function(r) paste0("<tr>", paste(vapply(r, cell, ""), collapse = ""), "</tr>"), ""),

@@ -4,11 +4,21 @@
   [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) walk file or segment
   index, local or a url
 - **Out:** a ggplot of the graph, laid out as
-  [Bandage](https://rrwick.github.io/Bandage/) lays it out
+  [Bandage](https://github.com/rrwick/Bandage) lays it out
 
 ```r
 remotes::install_github("GMOD/ggbandage")
 ```
+
+## Genome graphs
+
+- A **genome graph** stores DNA as sequence segments (nodes) joined by links
+  (edges). [GFA](https://gfa-spec.github.io/GFA-spec/GFA1.html) is its file
+  format
+- A **pangenome graph** holds many genomes, each haplotype as a **walk**: the
+  segments it passes through. HPRC names a walk `sample#haplotype#contig`,
+  such as `HG00097#1#JBIRDD010000043.1`
+- ggbandage also draws de novo assembly graphs, which have no walks
 
 ## Usage
 
@@ -21,12 +31,17 @@ kiv2 <- "chr6:160,616,004-160,646,753"
 g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = "HG00097#1",
-  walks = c("GRCh38#0#chr6", "HG00097#1#JBIRDD010000043.1"),
+  walks = c("GRCh38", "HG00097#1"),
   facet = "walk"
 )
 autoplot(g, ncol = 2)
-ggplot2::ggsave("kiv2.pdf", width = 10, height = 4)
 ```
+
+![GRCh38 and HG00097#1 at LPA's KIV-2 repeat, a panel each, shaded yellow to red along each walk: HG00097#1 walks a 22 kb loop that GRCh38 skips](gallery/kiv2_walks.png)
+
+GRCh38 and HG00097#1 across LPA's KIV-2 repeat, each walk shaded yellow to
+red along its length. HG00097#1 runs a 22 kb loop of extra repeat copies that
+GRCh38 skips.
 
 - `walks` picks the haplotypes to colour, and `facet = "walk"` gives each one
   a panel
@@ -34,6 +49,23 @@ ggplot2::ggsave("kiv2.pdf", width = 10, height = 4)
   off it, in place of Bandage's force-directed default
 - `genes` pins a GFF3 or BED file onto the reference
 - `?bandage_layout` lists every argument
+
+## Your own pangenome
+
+1. Index the GFA once with gfa-to-tabix, where `--refs` names the genome
+   whose coordinates `region` uses:
+
+   ```console
+   gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph
+   ```
+
+   A graph shipped as `.gbz`, as HPRC's are, converts to GFA first with
+   `vg convert -f graph.gbz > graph.gfa`
+2. Pass `graph.GRCh38.walks.bed.gz`, a path or a url, to `bandage_layout()`
+   with a `region`. From a url, ggbandage fetches the blocks under the region
+   by range request
+
+[Walk files and segment indexes](docs/tabix.md) has the details.
 
 ## Walk rows
 
@@ -46,16 +78,17 @@ rows <- bandage_walk_rows(walks, kiv2, haplotypes = haplotypes)
 autoplot(rows)
 ```
 
-## Gallery
+![Walk rows at KIV-2: GRCh38 spans 31 kb between the flanking reference nodes and HG00133#2 164 kb, the extra copies falling into blocks A, B and C](gallery/kiv2_rows.png)
 
-Each title links to the figure's code in [docs/gallery.md](docs/gallery.md).
+## Gallery
 
 <!-- gallery -->
 <table>
-<tr><td width="50%"><b><a href="docs/gallery.md#kiv-2-against-a-straight-grch38-backbone-with-lpas-exons">KIV-2 against a straight GRCh38 backbone, with LPA's exons</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_stress.png" alt="Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#lpas-kiv-2-repeat-a-panel-per-walk">LPA's KIV-2 repeat, a panel per walk</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_walks.png" alt="Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and the panel titles give HG00097 55 kb and GRCh38 32.8 kb, each span the region plus 1 kb of flank either side" width="100%"></td></tr>
-<tr><td width="50%"><b><a href="docs/gallery.md#three-kiv-2-haplotypes-overlaid">Three KIV-2 haplotypes overlaid</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_overlay.png" alt="Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG00133#1 in orange, 116 kb longer. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below" width="100%"></td><td width="50%"><b><a href="docs/gallery.md#kiv-2-copy-number-as-walk-rows">KIV-2 copy number as walk rows</a></b><br><code>chr6:160,616,004-160,646,753</code><br><img src="gallery/kiv2_rows.png" alt="Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two" width="100%"></td></tr>
+<tr><td width="33%"><a href="docs/gallery.md#kiv-2-against-a-straight-grch38-backbone-with-lpas-exons"><img src="gallery/kiv2_stress.png" alt="Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence" width="100%"></a><br>KIV-2 against a straight GRCh38 backbone, with LPA's exons</td><td width="33%"><a href="docs/gallery.md#three-kiv-2-haplotypes-overlaid"><img src="gallery/kiv2_overlay.png" alt="Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG00133#1 in orange, 116 kb longer. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below" width="100%"></a><br>Three KIV-2 haplotypes overlaid</td><td width="33%"><a href="docs/gallery.md#amylase-copy-number-in-twelve-haplotypes"><img src="gallery/amylase_rows.png" alt="Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, HG00128#1 walks the stretch near 103.72 Mb twice, so its green recurs, five haplotypes walk much of the non-reference block A twice, and HG00097#1 has a 19 kb stretch the graph lacks, drawn as an open box" width="100%"></a><br>Amylase copy number in twelve haplotypes</td></tr>
 </table>
 <!-- /gallery -->
+
+More, with code, in [the gallery](docs/gallery.md).
 
 ## Docs
 
@@ -70,21 +103,30 @@ Each title links to the figure's code in [docs/gallery.md](docs/gallery.md).
 
 ## See also
 
-- [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) writes the walk files
-  and segment indexes
+- [BandageJS](https://github.com/GMOD/BandageJS) and
+  [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer)
+  browse the same graphs in a web browser
 - [ggjbrowse](https://github.com/GMOD/ggjbrowse) draws gene tracks to stack
   above these figures
 - [ggtubemap](https://github.com/GMOD/ggtubemap) draws tube maps from the GFA
   that `bandage_gfa()` returns
-- [BandageJS](https://github.com/GMOD/BandageJS) and
-  [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer)
-  browse the same graphs in a web browser
-- [@jbrowse/bandage-core](https://github.com/GMOD/bandage-core) is the layout
-  engine ggbandage runs
 - The HPRC tutorials on jbrowse.org:
   [graph alleles and haplotypes](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/)
   and [repeat lengths](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc_repeats/)
 
+## Libraries
+
+- [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix): writes walk files and
+  segment indexes
+- [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) (npm): cuts a
+  region out of a walk file
+- [@jbrowse/bandage-core](https://github.com/GMOD/bandage-core) (npm): layout
+  and drawing
+- [@jbrowse/graph-stress-layout](https://github.com/GMOD/graph-stress-layout)
+  (npm): stress layout
+
 ## License
 
-GPL-3.0-or-later, as bandage-core, Bandage and OGDF are.
+GPL-3.0-or-later, as [bandage-core](https://github.com/GMOD/bandage-core),
+[Bandage](https://github.com/rrwick/Bandage) and
+[OGDF](https://www.ogdf.uni-osnabrueck.de/) are.
