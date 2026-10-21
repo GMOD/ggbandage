@@ -153,9 +153,10 @@ More, with code, in [the gallery](docs/gallery.md).
 
 ## See also
 
-- [BandageJS](https://github.com/GMOD/BandageJS) and
-  [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer)
-  browse the same graphs in a web browser
+- [BandageJS](https://github.com/GMOD/BandageJS) browses the same graphs in a
+  web browser
+- [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer)
+  browses them in JBrowse
 - [ggjbrowse](https://github.com/GMOD/ggjbrowse) draws gene tracks to stack
   above these figures
 - [ggtubemap](https://github.com/GMOD/ggtubemap) draws tube maps from the GFA
@@ -164,7 +165,7 @@ More, with code, in [the gallery](docs/gallery.md).
   [graph alleles and haplotypes](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/)
   and [repeat lengths](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc_repeats/)
 
-## Libraries
+### Libraries
 
 - [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix): writes walk files and
   segment indexes
