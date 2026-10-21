@@ -148,9 +148,9 @@ bar_tiles <- function(runs, tile) {
 #' walk file, solid dark where a record break says the graph lacks it and
 #' dotted where the file leaves it open. The readout says where a walk went
 #' on nodes filed elsewhere in the file. Ribbons join the graph nodes
-#' neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
-#' keeps both rows in order, and a missing ribbon does not mean the rows share
-#' nothing there.
+#' neighbouring rows share, violet where one row walks them backwards. Inside
+#' a repeat, the ribbons show one pairing of the copies that keeps both rows in
+#' order, and a missing ribbon does not mean the rows share nothing there.
 #' @param object a `bandage_walk_rows`
 #' @param ... unused
 #' @param readouts write each bar's length and its difference from the
@@ -161,8 +161,9 @@ bar_tiles <- function(runs, tile) {
 #'   a layout coloured by position; or `"walk"` for each row in the flat colour
 #'   `layout` lifts its walk in, lighter off the reference's path, to set rows
 #'   under walks lifted together
-#' @param layout the `bandage_layout` drawn over the rows: each row its walks
-#'   lift in one flat colour gets a swatch of that colour beside its name
+#' @param layout the `bandage_layout` drawn above the rows. A row whose walk
+#'   the layout lifts in one flat colour gets a swatch of that colour beside
+#'   its name, and `hues = "walk"` takes the row's colour from there
 #' @exportS3Method ggplot2::autoplot
 autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
                                        hues = c("viridis", "bandage", "walk"), layout = NULL) {

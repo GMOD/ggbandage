@@ -29,8 +29,9 @@ a layout coloured by position; or \code{"walk"} for each row in the flat colour
 \code{layout} lifts its walk in, lighter off the reference's path, to set rows
 under walks lifted together}
 
-\item{layout}{the \code{bandage_layout} drawn over the rows: each row its walks
-lift in one flat colour gets a swatch of that colour beside its name}
+\item{layout}{the \code{bandage_layout} drawn above the rows. A row whose walk
+the layout lifts in one flat colour gets a swatch of that colour beside
+its name, and \code{hues = "walk"} takes the row's colour from there}
 }
 \description{
 A bar per walk on an axis of bp from the left flank, the walk's label on y
@@ -46,7 +47,7 @@ dashed where the graph holds it outside the subgraph, and for a cut from a
 walk file, solid dark where a record break says the graph lacks it and
 dotted where the file leaves it open. The readout says where a walk went
 on nodes filed elsewhere in the file. Ribbons join the graph nodes
-neighbouring rows share, violet where one row walks them backwards. Inside a repeat, the ribbons show one pairing of the copies that
-keeps both rows in order, and a missing ribbon does not mean the rows share
-nothing there.
+neighbouring rows share, violet where one row walks them backwards. Inside
+a repeat, the ribbons show one pairing of the copies that keeps both rows in
+order, and a missing ribbon does not mean the rows share nothing there.
 }

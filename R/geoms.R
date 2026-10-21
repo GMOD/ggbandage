@@ -356,9 +356,8 @@ makeContent.bandage_keys <- function(x) {
 key_font <- grid::gpar(fontsize = 8.25, col = "grey15")
 
 # Each key's bar and label from the top left, a new line wherever the next
-# would pass `room` px. Without a device to measure on, a label takes 6.5 px
-# a character.
-key_grobs <- function(data, text, room, measure = TRUE) {
+# would pass `room` px
+key_grobs <- function(data, text, room) {
   px <- function(v) grid::unit(v / 96, "inches")
   grobs <- list()
   at <- 6
@@ -377,10 +376,8 @@ key_grobs <- function(data, text, room, measure = TRUE) {
     }
     wide <- bar + if (is.null(label)) {
       0
-    } else if (measure) {
-      5 + grid::convertWidth(grid::grobWidth(label), "inches", valueOnly = TRUE) * 96
     } else {
-      5 + 6.5 * nchar(data$label[i])
+      5 + grid::convertWidth(grid::grobWidth(label), "inches", valueOnly = TRUE) * 96
     }
     if (at > 6 && at + wide > room) {
       at <- 6
@@ -408,18 +405,36 @@ key_grobs <- function(data, text, room, measure = TRUE) {
   list(grobs = do.call(grid::gList, grobs), lines = line + 1)
 }
 
-# The keys as a legend over the plot, `room` px wide, which takes the lines
-# it needs at any size the plot is drawn
-key_guide <- function(model, room = 640) {
+# The plot's margins and the legend's left margin, in px
+KEY_INSET <- (8 + 8 + 20) * 96 / 72
+
+# The keys as a legend over the plot, as wide as the plot and as many lines
+# tall as they take at that width
+key_guide <- function(model) {
   keys <- keys_of(model)
   keys$label <- paste0(keys$walk, keys$note)
-  laid <- key_grobs(keys, TRUE, room, measure = FALSE)
   ggplot2::guides(bandage_keys = ggplot2::guide_custom(
-    grid::gTree(children = laid$grobs),
-    width = grid::unit(room / 96, "inches"),
-    height = grid::unit((6 + 16 * laid$lines) / 96, "inches"),
+    grid::gTree(keys = keys, cl = "bandage_key_guide"),
     position = "top"
   ))
+}
+
+key_room <- function() {
+  max(60, grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96 - KEY_INSET)
+}
+
+#' @exportS3Method grid::widthDetails
+widthDetails.bandage_key_guide <- function(x) grid::unit(key_room() / 96, "inches")
+
+#' @exportS3Method grid::heightDetails
+heightDetails.bandage_key_guide <- function(x) {
+  grid::unit((6 + 16 * key_grobs(x$keys, TRUE, key_room())$lines) / 96, "inches")
+}
+
+#' @exportS3Method grid::makeContent
+makeContent.bandage_key_guide <- function(x) {
+  room <- grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96
+  grid::setChildren(x, key_grobs(x$keys, TRUE, room)$grobs)
 }
 
 #' Each lifted walk's colour bar, as the Bandage view's key draws it

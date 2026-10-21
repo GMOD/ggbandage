@@ -3,16 +3,52 @@ rgfa <- test_path("testdata", "ecoli_rgfa_slice.gfa.gz")
 walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.bed.gz")
 lifted <- c("K12#1#chr:1004500-1004961", "IAI39#1#chr:2249412-2249872")
 
-test_that("each lifted walk gets a key bar, and the rest a faded one", {
+# The key guide's labels top to bottom and left to right, and its height in
+# inches, drawn on a device `width` inches wide
+drawn_keys <- function(plot, width) {
+  grDevices::pdf(NULL, width = width, height = 6)
+  on.exit(grDevices::dev.off())
+  gt <- ggplot2::ggplotGrob(plot)
+  box <- gt$grobs[[which(gt$layout$name == "guide-box-top")]]
+  find <- function(x) {
+    if (inherits(x, "bandage_key_guide")) {
+      return(x)
+    }
+    for (child in c(x$grobs, x$children)) {
+      hit <- find(child)
+      if (!is.null(hit)) {
+        return(hit)
+      }
+    }
+    NULL
+  }
+  key <- find(box)
+  inches <- grid::convertHeight(grid::grobHeight(key), "inches", valueOnly = TRUE)
+  room <- grid::convertWidth(grid::grobWidth(key), "inches", valueOnly = TRUE)
+  grid::pushViewport(grid::viewport(width = grid::unit(room, "inches")))
+  kids <- grid::makeContent(key)$children
+  texts <- Filter(function(k) inherits(k, "text"), kids)
+  y <- vapply(texts, function(k) -grid::convertY(k$y, "inches", valueOnly = TRUE), 0)
+  x <- vapply(texts, function(k) grid::convertX(k$x, "inches", valueOnly = TRUE), 0)
+  list(labels = unname(vapply(texts, function(k) k$label, "")[order(y, x)]), inches = inches, room = room)
+}
+
+test_that("the key names each lifted walk, then what no walk visits", {
   g <- bandage_layout(pggb, walks = lifted)
-  expect_equal(g$keys$walk, c("K12", "IAI39"))
-  expect_match(g$keys$stops, "^#[0-9a-f]{6}(,#[0-9a-f]{6})*$")
-  k <- keys_of(g)
-  expect_equal(k$note[3], "not on these walks")
-  expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(g))))
+  k <- drawn_keys(ggplot2::autoplot(g), 8)
+  expect_equal(k$labels, c(paste0(c("K12", "IAI39"), g$keys$note), "not on these walks"))
 })
 
-test_that("a key that would run past the panel's right edge starts a new line", {
+test_that("the key wraps to the width the plot is drawn at", {
+  g <- bandage_layout(pggb, walks = lifted)
+  narrow <- drawn_keys(ggplot2::autoplot(g), 3)
+  wide <- drawn_keys(ggplot2::autoplot(g), 10)
+  expect_gt(narrow$inches, wide$inches)
+  expect_lt(narrow$room, 3)
+  expect_equal(narrow$labels, wide$labels)
+})
+
+test_that("a panel's key that would run past its right edge starts a new line", {
   k <- data.frame(stops = "#000000", label = strrep("w", 20), alpha = 1)[rep(1, 3), ]
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
@@ -29,16 +65,18 @@ repeat_gfa <- paste(
   sep = "\n"
 )
 
-test_that("a walk passing a node twice draws two threads there, keyed under the walks", {
+test_that("a walk passing a node twice draws two threads there, and the key says so", {
   gfa <- tempfile(fileext = ".gfa")
   writeLines(repeat_gfa, gfa)
   g <- bandage_layout(gfa, walks = c("ref#0#chr", "dup#1#chr"), engine = "stress")
-  expect_equal(keys_of(g)$kind, c("walk", "walk", "faded", "passes"))
-  expect_equal(sort(unique(g$nodes$pass[g$nodes$walk %in% 1])), c(0, 1))
-  n <- nodes_of(g)
-  lane <- n$walk %in% 1
-  expect_true(all(abs(n$slide_x[lane]) + abs(n$slide_y[lane]) > 0))
-  expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(g))))
+  p <- ggplot2::autoplot(g)
+  d <- ggplot2::layer_data(p, 2)
+  v1 <- g$nodes[g$nodes$name == "v1", ]
+  inside <- d$x > min(v1$x) & d$x < max(v1$x)
+  threads <- tapply(d$group[inside], toupper(d$colour[inside]), function(x) length(unique(x)))
+  walks <- toupper(g$keys$color[nzchar(g$keys$color)])
+  expect_equal(as.vector(threads[walks]), c(1, 2))
+  expect_equal(drawn_keys(p, 8)$labels[4], "a thread per pass through a node")
 })
 
 test_that("a walk row lifted in one flat colour gets a swatch of it", {
@@ -50,12 +88,13 @@ test_that("a walk row lifted in one flat colour gets a swatch of it", {
   expect_equal(nrow(row_swatches(rows$rows, NULL)), 0)
 })
 
-test_that("a lane's link slides from the thread it leaves to the one it reaches", {
+test_that("a lane's link draws in its walk's colour, offset like its lane", {
   g <- bandage_layout(pggb, walks = lifted)
-  e <- edges_of(g)
-  lane <- !is.na(e$walk)
-  expect_true(all(is.finite(e$slide_x[lane]) & is.finite(e$slide_y[lane])))
-  expect_true(all(c("nx1", "ny1", "offset1") %in% names(g$edges)))
+  d <- ggplot2::layer_data(ggplot2::autoplot(g), 1)
+  lane <- toupper(d$colour) %in% toupper(g$keys$color)
+  expect_true(any(lane))
+  expect_true(all(is.finite(d$slide_x[lane]) & is.finite(d$slide_y[lane])))
+  expect_true(any(abs(d$slide_x[lane]) + abs(d$slide_y[lane]) > 0))
 })
 
 test_that("walk-hued rows take their walk's flat colour, and need a layout", {
