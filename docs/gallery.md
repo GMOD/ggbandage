@@ -58,10 +58,10 @@ autoplot(g, ncol = 2)
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG005#1 in orange, 88.7 kb longer. HG00097#1 alone runs a small loop at the right, and only HG005#1 runs the large loop below](../gallery/kiv2_overlay.png)
+![Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG00133#1 in orange, 116 kb longer. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below](../gallery/kiv2_overlay.png)
 
 ```r
-haps <- c("HG00097#1", "HG005#1")
+haps <- c("HG00097#1", "HG00133#1")
 g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = haps, walks = c("GRCh38", haps), genes = genes
