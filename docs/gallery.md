@@ -1,9 +1,6 @@
 # Gallery
 
-Every figure runs as written after this setup. All but the syng graphs read
-the files behind the
-[JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).
-`scripts/gallery.R` draws them all.
+Every figure runs as written after this setup. `scripts/gallery.R` draws them all.
 
 ```r
 library(ggbandage)
@@ -21,6 +18,19 @@ twelve <- c(
 )
 syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 ```
+
+## The data files
+
+| Variable | File | How it was made |
+| --- | --- | --- |
+| `walks` | HPRC v2.1 GRCh38 walk file | `vg convert -f graph.gbz > graph.gfa`, then `gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph` |
+| `index` | HPRC v2.1 GRCh38 segment index | `gfa-to-tabix graph.gfa --reference GRCh38 -o graph` |
+| `genes` | UCSC hg38 ncbiRefSeq GFF3, bgzipped and tabix-indexed | Hosted by JBrowse, used as is |
+| `syng` | C4 syng graph from 90 haplotypes | [build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh) runs [impg](https://github.com/pangenome/impg) on odgi's C4 test haplotypes |
+
+The HPRC graphs are the files behind the
+[JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).
+[Your own pangenome](../README.md#your-own-pangenome) has the steps for another graph.
 
 ## KIV-2 against a straight GRCh38 backbone, with LPA's exons
 

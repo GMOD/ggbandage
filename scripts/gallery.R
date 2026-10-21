@@ -19,7 +19,7 @@ twelve <- c(
 syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz")"
 
 figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = NULL,
-                   readme = FALSE) {
+                   readme = TRUE) {
   list(
     id = id, title = title, locus = locus, alt = alt, code = code,
     width = width, height = height, note = note, readme = readme
@@ -195,12 +195,22 @@ docs <- function() {
   out <- c(
     "# Gallery",
     "",
-    "Every figure runs as written after this setup. All but the syng graphs read",
-    "the files behind the",
-    "[JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).",
-    "`scripts/gallery.R` draws them all.",
+    "Every figure runs as written after this setup. `scripts/gallery.R` draws them all.",
     "",
-    "```r", setup, "```"
+    "```r", setup, "```",
+    "",
+    "## The data files",
+    "",
+    "| Variable | File | How it was made |",
+    "| --- | --- | --- |",
+    "| `walks` | HPRC v2.1 GRCh38 walk file | `vg convert -f graph.gbz > graph.gfa`, then `gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph` |",
+    "| `index` | HPRC v2.1 GRCh38 segment index | `gfa-to-tabix graph.gfa --reference GRCh38 -o graph` |",
+    "| `genes` | UCSC hg38 ncbiRefSeq GFF3, bgzipped and tabix-indexed | Hosted by JBrowse, used as is |",
+    "| `syng` | C4 syng graph from 90 haplotypes | [build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh) runs [impg](https://github.com/pangenome/impg) on odgi's C4 test haplotypes |",
+    "",
+    "The HPRC graphs are the files behind the",
+    "[JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).",
+    "[Your own pangenome](../README.md#your-own-pangenome) has the steps for another graph."
   )
   for (f in figures) {
     out <- c(
@@ -220,12 +230,12 @@ anchor <- function(title) {
 readme <- function() {
   cell <- function(f) {
     sprintf(
-      '<td width="33%%"><a href="docs/gallery.md#%s"><img src="gallery/%s.png" alt="%s" width="100%%"></a><br>%s</td>',
+      '<td width="25%%"><a href="docs/gallery.md#%s"><img src="gallery/%s.png" alt="%s" width="100%%"></a><br>%s</td>',
       anchor(f$title), f$id, f$alt, f$title
     )
   }
   cards <- Filter(function(f) f$readme, figures)
-  rows <- split(cards, ceiling(seq_along(cards) / 3))
+  rows <- split(cards, ceiling(seq_along(cards) / 4))
   table <- c(
     "<table>",
     vapply(rows, function(r) paste0("<tr>", paste(vapply(r, cell, ""), collapse = ""), "</tr>"), ""),
