@@ -208,10 +208,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     plain$kind == gap_kinds[["elsewhere"]], gap_kinds[["outside"]],
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
-  more <- paste(
-    if (walk_hued) "outlined: a block off the" else "more blocks off the",
-    reference, "path that several rows walk"
-  )
+  more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
   labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted, more)
   off_fill <- if (walk_hued) {
     first <- c(setdiff(inks$row, 0), inks$row)[1]
@@ -256,7 +253,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       NULL,
       values = outlines, breaks = shown,
       guide = ggplot2::guide_legend(
-        order = 2, override.aes = list(
+        order = 2, nrow = if (length(shown) > 4) 2, byrow = TRUE, override.aes = list(
           fill = unname(keys[shown]), linewidth = 0.25, linetype = unname(dashes[shown])
         )
       )

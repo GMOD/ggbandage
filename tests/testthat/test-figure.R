@@ -187,7 +187,7 @@ test_that("blocks past the three filled ones are keyed", {
   rows <- bandage_walk_rows(gfa)
   expect_equal(sort(unique(rows$blocks$letter)), LETTERS[1:4])
   colours <- ggplot2::ggplot_build(ggplot2::autoplot(rows))$plot$scales$get_scales("colour")
-  expect_true(any(startsWith(colours$get_breaks(), "more blocks off the")))
+  expect_true(any(startsWith(colours$get_breaks(), "more shared blocks")))
 })
 
 test_that("rows a layout lifts take the name its key gives the walk", {

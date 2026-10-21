@@ -12,7 +12,7 @@ reference nodes flanking the region, with the reference on top and the walks
 that reach both flanks below it, longest first. A repeat expansion shows as a
 longer bar, which no node layout shows. The gallery has
 [KIV-2](https://github.com/GMOD/ggbandage/blob/main/docs/gallery.md#kiv-2-copy-number-as-walk-rows) and
-[amylase](https://github.com/GMOD/ggbandage/blob/main/docs/gallery.md#amylase-copy-number-in-twelve-haplotypes) examples.
+[amylase](https://github.com/GMOD/ggbandage/blob/main/docs/gallery.md#amylase-haplotypes-from-146-to-475-kb) examples.
 
 ```{r example, eval = FALSE}
 library(ggbandage)

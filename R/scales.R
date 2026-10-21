@@ -24,7 +24,7 @@ position_scale <- function(scale, name, ...) {
     labels = mb_labels,
     guide = ggplot2::guide_colourbar(
       order = 1, barwidth = grid::unit(120, "pt"), barheight = grid::unit(8, "pt"),
-      title.position = "top"
+      title.position = "top", direction = "horizontal"
     )
   )
 }

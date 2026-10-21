@@ -9,13 +9,6 @@ definitions <- list(
   genes = 'genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"',
   kiv2 = 'kiv2 <- "chr6:160,616,004-160,646,753"',
   five = 'five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")',
-  twelve = paste(
-    'twelve <- c(',
-    '  "CHM13#0",',
-    '  paste0(rep(c("HG00097", "HG00099", "HG00126", "HG00128", "HG00133", "HG002"), each = 2), "#", 1:2)',
-    ')',
-    sep = "\n"
-  ),
   syng = 'syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"'
 )
 
@@ -31,7 +24,7 @@ standalone <- function(code) {
 }
 
 figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = NULL,
-                   readme = TRUE) {
+                   readme = FALSE) {
   list(
     id = id, title = title, locus = locus, alt = alt, code = code,
     width = width, height = height, note = note, readme = readme
@@ -40,16 +33,108 @@ figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = N
 
 figures <- list(
   figure(
-    "kiv2_stress", "KIV-2 against a straight GRCh38 backbone, with LPA's exons", "chr6:160,616,004-160,646,753",
-    "Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence",
-    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
+    "cfh_overlay", "CFHR3 and CFHR1 deleted in one haplotype", "chr1:196,640,001-196,900,000",
+    "Force-directed CFH locus with GRCh38, HG00097 and HG02055 lifted together, each shaded along its own length: GRCh38 grey, HG00097 cyan to blue and HG02055 pink to plum. GRCh38 and HG00097 run the loop through CFHR3 and CFHR1, and HG02055 alone takes the dashed deletion edge under it. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097 260 kb and HG02055 176 kb, and the ribbons from HG00097 down to HG02055 break across the 85 kb HG02055 lacks",
+    r"(cfh <- "chr1:196,640,001-196,900,000"
+haps <- c("HG00097#1", "HG02055#1")
+schemes <- c(GRCh38 = "grey", "HG00097#1" = "blue", "HG02055#1" = "purple")
+progress <- lapply(names(schemes), function(w) list(walk = w, color = list(field = "progress", scheme = schemes[[w]])))
+g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = progress, genes = genes)
+rows <- bandage_walk_rows(walks, cfh, haplotypes = haps)
+autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = c(1, 1.2)))",
+    width = 9, height = 5, readme = TRUE
+  ),
+  figure(
+    "kiv2_rows", "KIV-2 copy number as walk rows", "chr6:160,616,004-160,646,753",
+    "Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
+    r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
+autoplot(rows) +
+  theme(legend.position = "inside", legend.position.inside = c(1, 0), legend.justification.inside = c(1, 0)))",
+    width = 9, height = 5, readme = TRUE
+  ),
+  figure(
+    "amylase_rows", "Amylase haplotypes from 146 to 475 kb", "chr1:103,540,000-103,780,000",
+    "Walk rows over the salivary amylase genes for GRCh38 and seven haplotypes, each bar coloured by the GRCh38 position it covers: against GRCh38's 240 kb the haplotypes span 146 kb to 475 kb. HG00128#1 and HG002#1 walk the non-reference block A twice, CHM13 and HG00097#2 once, HG00099#1 and HG00097#1 walk block C in its place, and HG00097#1 has a 19 kb stretch the graph lacks, drawn as an open box",
+    r"(amylase <- c("HG00128#1", "CHM13#0", "HG00097#2", "HG002#1", "HG00099#1", "HG00097#1", "HG00099#2")
+rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = amylase)
+autoplot(rows))",
+    width = 9, height = 5, readme = TRUE
+  ),
+  figure(
+    "cyp2d6_stress", "CYP2D6 deletion as an arch over the gene", "chr22:42,118,000-42,136,000",
+    "Stress layout of CYP2D6 from the hosted index, GRCh38 drawn straight and coloured by position from NDUFA6-DT to CYP2D7, exons outlined in gold: a dashed arch spans CYP2D6, the route of haplotypes that skip the gene, and non-reference sequence hangs in charcoal loops above and below",
+    r"(g <- bandage_layout(index, region = "chr22:42,118,000-42,136,000", engine = "stress", genes = genes)
+autoplot(g))",
+    width = 9, height = 5, readme = TRUE
+  ),
+  figure(
+    "kiv2_overlay", "KIV-2 expansions as extra loops", "chr6:160,616,004-160,646,753",
+    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 116 kb longer, and HG00097 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097 alone runs the loop at the top, and HG00133 alone runs the large loop below, the small loops at the right and one at the left. Walk rows below, each on its walk's ramp and paler off the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 147 kb and HG00097 53 kb",
+    r"(haps <- c("HG00133#1", "HG00097#1")
+progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
+g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress)
+rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1)))",
+    width = 7, height = 8, readme = TRUE
+  ),
+  figure(
+    "syng_overlay", "C4 copies as threads round a syng ring", "chr6:31,972,047-32,055,647",
+    "The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring, outside in, grch38#chr6 in charcoal draws two threads, HG01978#2 in blue three, its extra C4 copy, and HG01952#1 in orange two. Charcoal and blue threads run round the HERV-K loop at the left, and the orange ones cut across it. Walk rows below, each in its walk's colour, give the lengths: grch38#chr6 84 kb, HG01978#2 116 kb and HG01952#1 71 kb",
+    r"(haps <- c("HG01978#2", "HG01952#1")
+g <- bandage_layout(syng, walks = c("grch38", haps))
+rows <- bandage_walk_rows(syng, haplotypes = haps)
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1)))",
+    width = 7, height = 8, readme = TRUE,
+    note = c(
+      "- The ring holds every C4 copy's sequence once, so a walk with more copies goes",
+      "  round it more often. Each walk draws a thread per pass: grch38 two round the",
+      "  ring, and HG01978 three, its extra 32.7 kb",
+      "- HG01978's row runs 32.7 kb past grch38's for that copy",
+      "- Each row takes its walk's colour in the drawing, a pale tint of it where the",
+      "  walk leaves the grch38 path",
+      "- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.",
+      "  GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it"
+    )
+  ),
+  figure(
+    "syng_rhd", "RHD deletion and duplication in a syng graph", "chr1:25,250,000-25,450,000",
+    "Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106 272 kb, repeating RHD's orange to green hues, and HG01258 132 kb, jumping from orange to green past RHD",
+    r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
+g <- bandage_layout(rhd_syng)
+rows <- bandage_walk_rows(rhd_syng, haplotypes = c("HG01258#2", "HG01106#1"))
+(autoplot(g) + guides(fill = "none", colour = "none", linetype = "none") + labs(caption = NULL)) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(1.6, 1)))",
+    width = 7, height = 7, readme = TRUE,
+    note = c(
+      "The KIV-2, amylase and RHD syng graphs are region-specific pangenomes.",
+      "`scripts/build-syng-region.sh` cuts each region from the HPRC walk file to find",
+      "each haplotype's contig span, fetches those spans from GenBank, and builds the",
+      "graph with [impg](https://github.com/pangenome/impg). ggbandage ships the",
+      "graphs in `inst/extdata`.",
+      "",
+      "- The Rhesus boxes either side of RHD share their nodes, so GRCh38 walks them",
+      "  twice",
+      "- Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and",
+      "  skip RHD, the deletion that most often makes blood RhD-negative",
+      "- HG01106#1 walks the boxes three times and has a second RHD"
+    )
+  ),
+  figure(
+    "own_colours", "Your own colours: KIV-2 nodes by walk visits", "chr6:160,616,004-160,646,753",
+    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks visit it, light for once to dark for six",
+    r"(g <- bandage_layout(walks, region = kiv2, haplotypes = five)
 ggplot(g) +
-  geom_bandage_edges() +
-  geom_bandage_genes() +
-  geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
+  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_nodes(aes(colour = depth)) +
+  scale_colour_viridis_c(
+    "walk visits per node",
+    option = "mako", direction = -1, end = 0.85, breaks = 1:6
+  ) +
   coord_fixed() +
-  theme_void())",
-    width = 8, height = 4.4, readme = TRUE
+  theme_void() +
+  theme(legend.position = "bottom"))",
+    width = 6.5, height = 7, readme = TRUE
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
@@ -64,39 +149,16 @@ autoplot(g, ncol = 2))",
     height = 4
   ),
   figure(
-    "kiv2_overlay", "Three KIV-2 haplotypes overlaid", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with three walks lifted together, each shaded along its own length from light to mid-tone: GRCh38 light to mid grey, HG00133#1 cyan to blue, 116 kb longer, and HG00097#1 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097#1 alone runs the loop at the top, and HG00133#1 alone runs the large loop below, the small loops at the right and one at the left. Walk rows below, each on its walk's ramp and paler off the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133#1 147 kb and HG00097#1 53 kb",
-    r"(haps <- c("HG00133#1", "HG00097#1")
-progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
-g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, genes = genes)
-rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1)))",
-    width = 8, height = 9, readme = TRUE
-  ),
-  figure(
-    "cfh_overlay", "CFHR3 and CFHR1 deleted in one of three walks", "chr1:196,640,001-196,900,000",
-    "Force-directed CFH locus with three walks lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00097#1 cyan to blue and HG02055#1 yellow to red-orange. GRCh38 and HG00097#1 run the loop through CFHR3 and CFHR1, and HG02055#1 alone takes the dashed orange deletion edge under it. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097#1 260 kb and HG02055#1 176 kb, and the ribbons from HG00097#1 down to HG02055#1 break across the 85 kb HG02055#1 lacks",
-    r"(cfh <- "chr1:196,640,001-196,900,000"
-haps <- c("HG00097#1", "HG02055#1")
-progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
-g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = progress, genes = genes)
-rows <- bandage_walk_rows(walks, cfh, haplotypes = haps)
-autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = c(1.5, 1)))",
-    width = 9, height = 5
-  ),
-  figure(
-    "kiv2_rows", "KIV-2 copy number as walk rows", "chr6:160,616,004-160,646,753",
-    "Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
-    r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
-autoplot(rows))",
-    height = 4.4
-  ),
-  figure(
-    "amylase_rows", "Amylase copy number in twelve haplotypes", "chr1:103,540,000-103,780,000",
-    "Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, HG00128#1 walks the stretch near 103.72 Mb twice, so its green recurs, five haplotypes walk much of the non-reference block A twice, and HG00097#1 has a 19 kb stretch the graph lacks, drawn as an open box",
-    r"(rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = twelve)
-autoplot(rows))",
-    height = 6, readme = TRUE
+    "kiv2_stress", "KIV-2 against a straight GRCh38 backbone, with LPA's exons", "chr6:160,616,004-160,646,753",
+    "Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence",
+    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
+ggplot(g) +
+  geom_bandage_edges() +
+  geom_bandage_genes() +
+  geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
+  coord_fixed() +
+  theme_void())",
+    width = 8, height = 4.4
   ),
   figure(
     "c4_stress", "C4A and C4B in the stress layout", "chr6:31,978,000-32,040,000",
@@ -160,28 +222,6 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
     )
   ),
   figure(
-    "syng_overlay", "C4's HERV-K loop in three syng walks", "chr6:31,972,047-32,055,647",
-    "The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring, outside in, grch38 in charcoal draws two threads, HG01978 in blue three, its extra C4 copy, and HG01952 in orange two. Charcoal and blue threads run round the loop at the left, and the orange ones cut across it. Walk rows below, in the key's order, each in its walk's colour and a pale tint of it off the grch38 path, give the lengths: grch38 84 kb, HG01978 116 kb and HG01952 71 kb",
-    r"(haps <- c("HG01978#2", "HG01952#1")
-g <- bandage_layout(syng, walks = c("grch38", haps))
-rows <- bandage_walk_rows(syng, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1)))",
-    width = 7, height = 8.5,
-    note = c(
-      "- The key and rows name the walks as the graph does. grch38 is GRCh38, and",
-      "  HG01978 and HG01952 are HG01978#2 and HG01952#1, which the key tells from",
-      "  their other haplotypes by where each contig starts",
-      "- The ring holds every C4 copy's sequence once, so a walk with more copies goes",
-      "  round it more often. Each walk draws a thread per pass: grch38 two round the",
-      "  ring, and HG01978 three, its extra 32.7 kb",
-      "- HG01978's row runs 32.7 kb past grch38's for that copy",
-      "- Each row takes its walk's colour in the drawing, a pale tint of it where the",
-      "  walk leaves the grch38 path",
-      "- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.",
-      "  GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it"
-    )
-  ),
-  figure(
     "syng_ramp", "C4's HERV-K loop with each walk on a position ramp", "chr6:31,972,047-32,055,647",
     "The syng graph of C4 with grch38, HG01978 and HG01952 lifted together and drawn as a thread per pass through a node, every thread coloured red to magenta by the GRCh38 position its node covers, and walk rows below in the same hues. Every thread shares its node's hue, so the gaps between lanes tell the walks apart. Round the ring seven threads run in groups of two, three and two, the key's order outside in, so HG01978 draws one more than grch38 and HG01952. Five threads run round the loop at the left, the 6.5 kb HERV-K of C4's long form. HG01978's row is 32.7 kb longer than grch38's and HG01952's 12.7 kb shorter",
     r"(haps <- c("HG01978#2", "HG01952#1")
@@ -189,7 +229,7 @@ hued <- lapply(c("grch38", haps), function(w) list(walk = w, color = list(field 
 g <- bandage_layout(syng, walks = hued)
 rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(heights = c(2.5, 1)))",
-    width = 8, height = 8.5, readme = FALSE,
+    width = 8, height = 8.5,
     note = c(
       "- Each thread takes the hue of the GRCh38 position its node covers, as the rows",
       "  below do, so drawing and rows share one scale",
@@ -203,7 +243,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(he
   ),
   figure(
     "syng_kiv2", "KIV-2 copy number in a syng graph", "chr6:160,616,004-160,646,753",
-    "Force-directed syng graph of KIV-2 from 21 HPRC haplotypes: the repeat units fold onto one ring coloured along GRCh38, with dashed grey loops of sequence GRCh38 lacks. Under it, walk rows in the same hues: GRCh38 spans 33 kb, and five haplotypes span 38 kb to 177 kb, each repeating the ring's colours once per extra 5.5 kb unit",
+    "Force-directed syng graph of KIV-2 from 21 HPRC haplotypes: the repeat units fold onto one ring coloured along GRCh38, and three dashed loops are links that skip GRCh38 sequence. Under it, walk rows in the same hues: GRCh38 spans 33 kb, and five haplotypes span 38 kb to 177 kb, each repeating the ring's colours once per extra 5.5 kb unit",
     r"(kiv2_syng <- system.file("extdata", "kiv2.syng.gfa.gz", package = "ggbandage")
 g <- bandage_layout(kiv2_syng)
 rows <- bandage_walk_rows(kiv2_syng, haplotypes = c("HG00658#2", "NA18976#1", "HG02451#1", "NA18970#2", "NA18508#2"))
@@ -212,12 +252,6 @@ rows <- bandage_walk_rows(kiv2_syng, haplotypes = c("HG00658#2", "NA18976#1", "H
   plot_layout(heights = c(2.5, 1)))",
     width = 9, height = 8.5,
     note = c(
-      "The KIV-2, amylase and RHD syng graphs are region-specific pangenomes.",
-      "`scripts/build-syng-region.sh` cuts each region from the HPRC walk file to find",
-      "each haplotype's contig span, fetches those spans from GenBank, and builds the",
-      "graph with [impg](https://github.com/pangenome/impg). ggbandage ships the",
-      "graphs in `inst/extdata`.",
-      "",
       "- Syng folds every KIV-2 unit onto one ring, so a haplotype's copy count is how",
       "  often its walk goes round",
       "- The haplotypes differ in steps of about 5.5 kb, one unit each"
@@ -238,40 +272,6 @@ rows <- bandage_walk_rows(amy_syng, haplotypes = c("HG00706#1", "HG02080#1", "HG
       "  amylase repeat unit each",
       "- HG01106#2 repeats GRCh38's cyan and blue stretch, and HG00706#1 lacks one copy"
     )
-  ),
-  figure(
-    "syng_rhd", "RHD deletion and duplication in a syng graph", "chr1:25,250,000-25,450,000",
-    "Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a grey edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01258#2 132 kb, jumping from red to green, and HG01106#1 272 kb, repeating RHD's orange to green hues",
-    r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
-g <- bandage_layout(rhd_syng)
-rows <- bandage_walk_rows(rhd_syng, haplotypes = c("HG01258#2", "HG02451#2", "HG01106#1"))
-(autoplot(g) + guides(fill = "none")) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(2.5, 1)))",
-    width = 9, height = 8.5,
-    note = c(
-      "- The Rhesus boxes either side of RHD share their nodes, so GRCh38 walks them",
-      "  twice",
-      "- Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and",
-      "  skip RHD, the deletion that most often makes blood RhD-negative",
-      "- HG01106#1 walks the boxes three times and has a second RHD"
-    )
-  ),
-  figure(
-    "own_colours", "Your own colours: KIV-2 nodes by walk passes", "chr6:160,616,004-160,646,753",
-    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks pass through it, light for once to dark for six",
-    r"(g <- bandage_layout(walks, region = kiv2, haplotypes = five)
-ggplot(g) +
-  geom_bandage_edges(aes(colour = I("grey80"))) +
-  geom_bandage_nodes(aes(colour = depth)) +
-  scale_colour_viridis_c(
-    "walk passes through node",
-    option = "mako", direction = -1, end = 0.85, breaks = 1:6
-  ) +
-  coord_fixed() +
-  theme_void() +
-  theme(legend.position = "bottom"))",
-    width = 6.5, height = 6.5
   )
 )
 
@@ -304,9 +304,14 @@ docs <- function() {
     "[JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).",
     "[Region-specific pangenomes](../README.md#region-specific-pangenomes) has the steps for another graph."
   )
+  more <- FALSE
   for (f in figures) {
+    if (!f$readme && !more) {
+      out <- c(out, "", "## More examples", "", "Narrower cases, and other ways to draw the same loci.")
+      more <- TRUE
+    }
     out <- c(
-      out, "", paste("##", f$title), "", paste0("`", f$locus, "`"), "",
+      out, "", paste(if (f$readme) "##" else "###", f$title), "", paste0("`", f$locus, "`"), "",
       if (!is.null(f$note)) c(f$note, ""),
       sprintf("![%s](../gallery/%s.png)", f$alt, f$id), "",
       "```r", standalone(f$code), "```"
