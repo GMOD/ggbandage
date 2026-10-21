@@ -157,7 +157,8 @@ The `bundle` workflow rebuilds from the release `package.json` pins and fails
 on any other bundle, so main must not get one until the core is out:
 
 1. Release bandage-core from the commit the banner names
-2. Bump `@jbrowse/bandage-core` in `package.json` to that release
+2. Bump `@jbrowse/bandage-core` in `package.json` to that release and run
+   `pnpm install`
 3. Rebuild with `pnpm build`, without `BANDAGE_CORE`, and commit the bundle
 
 ### Browser globals the bundle defines
