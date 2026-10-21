@@ -239,6 +239,17 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   } else {
     position_scale(ggplot2::scale_fill_viridis_c, title)
   }
+  outline <- if (length(shown)) {
+    ggplot2::scale_colour_manual(
+      NULL,
+      values = outlines, breaks = shown,
+      guide = ggplot2::guide_legend(
+        order = 2, override.aes = list(
+          fill = unname(keys[shown]), linewidth = 0.25, linetype = unname(dashes[shown])
+        )
+      )
+    )
+  }
   plain$fill <- ifelse(
     walk_hued & plain$key == off, row_ink(plain$row, PALER), keys[plain$key]
   )
@@ -306,15 +317,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       )
     ) +
     fill +
-    ggplot2::scale_colour_manual(
-      NULL,
-      values = outlines, breaks = shown,
-      guide = ggplot2::guide_legend(
-        order = 2, override.aes = list(
-          fill = unname(keys[shown]), linewidth = 0.25, linetype = unname(dashes[shown])
-        )
-      )
-    ) +
+    outline +
     ggplot2::scale_y_continuous(
       breaks = y, labels = rows$label, expand = ggplot2::expansion(add = 0.4)
     ) +

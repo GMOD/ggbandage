@@ -357,6 +357,13 @@ test_that("a reference walking a collapsed repeat twice keeps one smooth row", {
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w, hues = "bandage")))
 })
 
+test_that("rows with nothing off the reference's path and no ribbons draw without a warning", {
+  gfa <- collapsed_repeat()
+  on.exit(unlink(gfa))
+  w <- bandage_walk_rows(gfa)
+  expect_no_warning(ggplot2::ggplot_build(ggplot2::autoplot(w, ribbons = FALSE, hues = "bandage")))
+})
+
 test_that("a layout coloured by position keys its hues, and says which nodes take a first visit's", {
   gfa <- collapsed_repeat()
   on.exit(unlink(gfa))
