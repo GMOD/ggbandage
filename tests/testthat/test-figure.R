@@ -50,6 +50,23 @@ test_that("a walk row lifted in one flat colour gets a swatch of it", {
   expect_equal(nrow(row_swatches(rows$rows, NULL)), 0)
 })
 
+test_that("a lane's link slides from the thread it leaves to the one it reaches", {
+  g <- bandage_layout(pggb, walks = lifted)
+  e <- edges_of(g)
+  lane <- !is.na(e$walk)
+  expect_true(all(is.finite(e$slide_x[lane]) & is.finite(e$slide_y[lane])))
+  expect_true(all(c("nx1", "ny1", "offset1") %in% names(g$edges)))
+})
+
+test_that("walk-hued rows take their walk's flat colour, and need a layout", {
+  g <- bandage_layout(pggb, walks = lifted)
+  rows <- bandage_walk_rows(pggb)
+  b <- ggplot2::ggplot_build(ggplot2::autoplot(rows, hues = "walk", layout = g))
+  fills <- unique(unlist(lapply(b$data, function(d) d$fill)))
+  expect_true(all(toupper(row_swatches(rows$rows, g)$colour) %in% toupper(fills)))
+  expect_error(ggplot2::autoplot(rows, hues = "walk"), "layout")
+})
+
 test_that("faceted, each panel draws its own walk's bar", {
   g <- bandage_layout(pggb, walks = lifted, facet = "walk")
   expect_equal(levels(keys_of(g)$panel), c("K12", "IAI39"))

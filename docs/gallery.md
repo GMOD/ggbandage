@@ -234,12 +234,11 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 - The ring holds every C4 copy's sequence once, so a walk with more copies goes
   round it more often. Each walk draws a thread per pass: GRCh38 two round the
   ring, and HG01978#2 three, its extra 32.7 kb. The rows show that as a longer bar
-- A thread breaks where a walk's copies part round a bubble for more than a few px
-- The swatch beside each row's name is its walk's colour in the drawing
+- Each row takes its walk's colour in the drawing, paler where it leaves the GRCh38 path
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring GRCh38 in charcoal draws two threads, HG01952#1 in blue two, and HG01978#2 in orange three, its extra C4 copy. Only HG01952#1 skips the loop at the left. Walk rows below, each with a swatch of its walk's colour, give the lengths: GRCh38 84 kb, HG01952#1 71 kb and HG01978#2 116 kb](../gallery/syng_overlay.png)
+![The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring GRCh38 in charcoal draws two threads, HG01952#1 in blue two, and HG01978#2 in orange three, its extra C4 copy. Only HG01952#1 skips the loop at the left. Walk rows below, each in its walk's colour and paler off the GRCh38 path, give the lengths: GRCh38 84 kb, HG01952#1 71 kb and HG01978#2 116 kb](../gallery/syng_overlay.png)
 
 ```r
 library(ggbandage)
@@ -250,7 +249,7 @@ syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer
 haps <- c("HG01952#1", "HG01978#2")
 g <- bandage_layout(syng, walks = c("grch38", haps))
 rows <- bandage_walk_rows(syng, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, layout = g) + plot_layout(heights = c(2.5, 1))
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1))
 ```
 
 ## C4's HERV-K loop with each walk on a position ramp

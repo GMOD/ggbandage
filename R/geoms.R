@@ -55,26 +55,31 @@ nodes_of <- function(model, background = "white") {
 }
 
 edges_of <- function(model, background = "white") {
-  e <- slid_back(model$edges, model$meta, c("x0", "y0", "cx0", "cy0", "cx1", "cy1", "x1", "y1"))
+  e <- slid_back(model$edges, model$meta, c("x0", "y0", "cx0", "cy0"))
+  e <- slid_back(e, model$meta, c("cx1", "cy1", "x1", "y1"), end = TRUE)
   e <- bezier_points(e, model$meta$scaleX)
   e$ink <- ink(e$color, e$alpha, background)
   in_draw_order(e, "curve")
 }
 
 # A lifted walk's lane back on its node's line, with the px it was slid off
-# that line, so it slides the same px at whatever size the plot is drawn
-slid_back <- function(d, meta, xy) {
-  if (is.null(d$offset)) {
-    d$slide_x <- d$slide_y <- numeric(nrow(d))
+# that line, so it slides the same px at whatever size the plot is drawn. A
+# link's curve slides by (nx, ny, offset) where it starts and, `end`, by
+# (nx1, ny1, offset1) where it ends
+slid_back <- function(d, meta, xy, end = FALSE) {
+  cols <- if (end) c("nx1", "ny1", "offset1", "slide_x1", "slide_y1") else c("nx", "ny", "offset", "slide_x", "slide_y")
+  if (is.null(d[[cols[3]]])) {
+    d[[cols[4]]] <- if (end) d$slide_x else numeric(nrow(d))
+    d[[cols[5]]] <- if (end) d$slide_y else numeric(nrow(d))
     return(d)
   }
-  d$slide_x <- d$nx * d$offset
-  d$slide_y <- d$ny * d$offset
+  d[[cols[4]]] <- d[[cols[1]]] * d[[cols[3]]]
+  d[[cols[5]]] <- d[[cols[2]]] * d[[cols[3]]]
   for (col in xy) {
     d[[col]] <- d[[col]] - if (startsWith(col, "x") || startsWith(col, "cx")) {
-      d$slide_x / meta$scaleX
+      d[[cols[4]]] / meta$scaleX
     } else {
-      d$slide_y / meta$scaleY
+      d[[cols[5]]] / meta$scaleY
     }
   }
   d
@@ -99,6 +104,8 @@ bezier_points <- function(e, scale) {
   out <- e[i, setdiff(names(e), c("x0", "y0", "cx0", "cy0", "cx1", "cy1", "x1", "y1"))]
   out$x <- b0 * e$x0[i] + b1 * e$cx0[i] + b2 * e$cx1[i] + b3 * e$x1[i]
   out$y <- b0 * e$y0[i] + b1 * e$cy0[i] + b2 * e$cy1[i] + b3 * e$y1[i]
+  out$slide_x <- (b0 + b1) * e$slide_x[i] + (b2 + b3) * e$slide_x1[i]
+  out$slide_y <- (b0 + b1) * e$slide_y[i] + (b2 + b3) * e$slide_y1[i]
   out
 }
 

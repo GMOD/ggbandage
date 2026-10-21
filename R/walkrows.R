@@ -156,15 +156,22 @@ bar_tiles <- function(runs, tile) {
 #' @param readouts write each bar's length and its difference from the
 #'   reference past its end
 #' @param ribbons join the graph nodes neighbouring rows share
-#' @param hues `"viridis"`, or `"bandage"` for the Bandage view's position
+#' @param hues `"viridis"`; `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
-#'   a layout
+#'   a layout coloured by position; or `"walk"` for each row in the flat colour
+#'   `layout` lifts its walk in, lighter off the reference's path, to set rows
+#'   under walks lifted together
 #' @param layout the `bandage_layout` drawn over the rows: each row its walks
 #'   lift in one flat colour gets a swatch of that colour beside its name
 #' @exportS3Method ggplot2::autoplot
 autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
-                                       hues = c("viridis", "bandage"), layout = NULL) {
+                                       hues = c("viridis", "bandage", "walk"), layout = NULL) {
   hues <- match.arg(hues)
+  swatches <- row_swatches(object$rows, layout)
+  walk_hued <- hues == "walk"
+  if (walk_hued && !nrow(swatches)) {
+    stop('hues = "walk" needs a `layout` that lifts the rows\' walks in flat colours', call. = FALSE)
+  }
   rows <- object$rows
   reference <- rows$sample[1]
   half <- 0.2
@@ -178,12 +185,13 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   breaks <- diff(which(!on)) != 1 | diff(plain$row) != 0 | diff(as.integer(plain$kind)) != 0
   stretch <- cumsum(c(TRUE, breaks))[seq_len(nrow(plain))]
   plain <- data.frame(
+    row = tapply(plain$row, stretch, `[`, 1),
     y = tapply(plain$y, stretch, `[`, 1),
     xmin = tapply(plain$xmin, stretch, min),
     xmax = tapply(plain$xmax, stretch, max),
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
-  off <- paste("off the", reference, "path")
+  off <- paste(if (walk_hued) "paler: off the" else "off the", reference, "path")
   ribbon <- "ribbon: next row walks the same nodes"
   inverted <- "ribbon: next row walks them backwards"
   # a gap draws by whether the graph holds it, and the readout says where an
@@ -193,10 +201,18 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
   labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted)
-  keys <- stats::setNames(c("#3c4148", rep("white", 3), "#cfe0f2", "#b9abdb"), labels)
+  off_ink <- if (walk_hued) "#c9c9c9" else "#3c4148"
+  keys <- stats::setNames(c(off_ink, rep("white", 3), "#cfe0f2", "#b9abdb"), labels)
   outlines <- stats::setNames(
-    c("#3c4148", "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb"), labels
+    c(off_ink, "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb"), labels
   )
+  row_ink <- function(row, light = 0) {
+    ink <- swatches$colour[match(row, swatches$row)]
+    ink[is.na(ink)] <- "#9a9a9a"
+    rgb <- grDevices::col2rgb(ink) / 255
+    rgb <- rgb + (1 - rgb) * light
+    grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ])
+  }
   dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
@@ -212,12 +228,20 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   key <- ifelse(links$b0 > links$b1, inverted, ribbon)
   shown <- intersect(names(keys), c(plain$key, key))
   title <- paste(reference, "position, Mb")
-  fill <- if (hues == "bandage") {
+  fill <- if (walk_hued) {
+    NULL
+  } else if (hues == "bandage") {
     scale_fill_bandage_position(title)
   } else {
     position_scale(ggplot2::scale_fill_viridis_c, title)
   }
-  swatches <- row_swatches(rows, layout)
+  plain$fill <- ifelse(
+    walk_hued & plain$key == off, row_ink(plain$row, 0.6), keys[plain$key]
+  )
+  if (walk_hued) {
+    tiles$fill <- row_ink(tiles$row)
+    swatches <- swatches[0, ]
+  }
   p <- ggplot2::ggplot()
   if (nrow(links)) {
     top <- y[links$row + 1] - half
@@ -236,13 +260,17 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   p <- p +
     ggplot2::geom_rect(
       data = tiles,
-      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, fill = position)
+      if (walk_hued) {
+        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, fill = I(fill))
+      } else {
+        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, fill = position)
+      }
     ) +
     ggplot2::geom_rect(
       data = plain,
       ggplot2::aes(
         xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half,
-        colour = key, fill = I(keys[key]), linetype = I(dashes[key])
+        colour = key, fill = I(fill), linetype = I(dashes[key])
       ),
       linewidth = 0.25
     ) +

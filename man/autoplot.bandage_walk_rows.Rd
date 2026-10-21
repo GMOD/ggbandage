@@ -9,7 +9,7 @@
   ...,
   readouts = TRUE,
   ribbons = TRUE,
-  hues = c("viridis", "bandage"),
+  hues = c("viridis", "bandage", "walk"),
   layout = NULL
 )
 }
@@ -23,9 +23,11 @@ reference past its end}
 
 \item{ribbons}{join the graph nodes neighbouring rows share}
 
-\item{hues}{\code{"viridis"}, or \code{"bandage"} for the Bandage view's position
+\item{hues}{\code{"viridis"}; \code{"bandage"} for the Bandage view's position
 hues, as \code{\link[=scale_fill_bandage_position]{scale_fill_bandage_position()}} draws them, to set walk rows under
-a layout}
+a layout coloured by position; or \code{"walk"} for each row in the flat colour
+\code{layout} lifts its walk in, lighter off the reference's path, to set rows
+under walks lifted together}
 
 \item{layout}{the \code{bandage_layout} drawn over the rows: each row its walks
 lift in one flat colour gets a swatch of that colour beside its name}

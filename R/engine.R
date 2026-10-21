@@ -235,7 +235,7 @@ as_bandage_layout <- function(d) {
   extra <- setdiff(names(info), "node")
   nodes[extra] <- info[match(nodes$node, info$node), extra]
 
-  edges <- upright(frame(d$edges), c("y0", "cy0", "cy1", "y1", "ny"))
+  edges <- upright(frame(d$edges), c("y0", "cy0", "cy1", "y1", "ny", "ny1"))
   arrows <- upright(frame(d$arrows), c("y", "angle"))
   rows <- upright(frame(d$rowLabels))
   keys <- frame(d$keys)
