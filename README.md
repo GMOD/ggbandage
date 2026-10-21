@@ -39,11 +39,12 @@ autoplot(g, ncol = 2)
 
 ![GRCh38 and HG00097#1 at LPA's KIV-2 repeat, a panel each, shaded yellow to red along each walk: HG00097#1 walks a 22 kb loop that GRCh38 skips](gallery/kiv2_walks.png)
 
-The walk file comes from HPRC's v2.1 graph:
+The walk file comes from HPRC's v2.1 graph, prepared as in JBrowse's
+[Hosting your own graph](https://jbrowse.org/jb2/docs/tutorials/pangenome_prepare_graph/):
 
 ```console
-vg convert -f hprc-v2.1-mc-grch38-f5.gbz > hprc-v2.1-mc-grch38-f5.gfa
-gfa-to-tabix hprc-v2.1-mc-grch38-f5.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f5
+vg convert -f hprc-v2.1-mc-grch38.gbz > hprc-v2.1-mc-grch38.gfa
+gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38
 ```
 
 [Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
@@ -82,8 +83,8 @@ More, with code, in [the gallery](docs/gallery.md).
   colours and stacking loci with patchwork
 - [Walk rows](vignettes/walk-rows.Rmd): `bandage_walk_rows()` and how to read its
   bars
-- [Developing](docs/developing.md): for contributors: the file readers, the
-  engine bundle, the gallery and the test fixtures
+- [Developing](docs/developing.md): for contributors, with the file readers,
+  the engine bundle, the gallery and the test fixtures
 
 ## See also
 
