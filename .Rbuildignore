@@ -10,3 +10,4 @@
 ^.*\.Rproj$
 ^docs$
 ^gallery$
+^agent-docs$
