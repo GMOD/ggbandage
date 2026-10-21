@@ -12,6 +12,16 @@ test_that("each lifted walk gets a key bar, and the rest a faded one", {
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(g))))
 })
 
+test_that("a key that would run past the panel's right edge starts a new line", {
+  k <- data.frame(stops = "#000000", label = strrep("w", 20), alpha = 1)[rep(1, 3), ]
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  grid::pushViewport(grid::viewport(width = grid::unit(3, "inches")))
+  g <- grid::makeContent(grid::gTree(keys = k, text = TRUE, cl = "bandage_keys"))
+  bars <- Filter(function(c) inherits(c, "rect"), g$children)
+  expect_length(unique(vapply(bars, function(b) as.character(b$y), "")), 3)
+})
+
 test_that("faceted, each panel draws its own walk's bar", {
   g <- bandage_layout(pggb, walks = lifted, facet = "walk")
   expect_equal(levels(keys_of(g)$panel), c("K12", "IAI39"))
@@ -315,7 +325,7 @@ test_that("a gap a record break spans is not in the graph, and untagged gaps rea
 })
 
 test_that("a walk the graph lacks warns, naming the ones it has", {
-  expect_warning(bandage_layout(pggb, walks = "K12"), "no walk named K12; the graph has K12#1")
+  expect_warning(bandage_layout(pggb, walks = "K1"), "no walk named K1; the graph has K12#1")
 })
 
 test_that("the stress engine lays the graph out", {

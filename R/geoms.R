@@ -301,37 +301,55 @@ GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
     if (!nrow(data)) {
       return(grid::nullGrob())
     }
-    px <- function(v) grid::unit(v / 96, "inches")
-    font <- grid::gpar(fontsize = 8.25, col = "grey15")
-    grobs <- list()
-    at <- 6
-    for (i in seq_len(nrow(data))) {
-      colours <- strsplit(data$stops[i], ",", fixed = TRUE)[[1]]
-      bar <- if (length(colours) > 1) 48 else 18
-      fill <- if (length(colours) > 1) {
-        grid::linearGradient(colours, x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5)
-      } else {
-        ggplot2::alpha(colours, data$alpha[i])
-      }
-      top <- grid::unit(1, "npc") - px(6)
-      grobs[[length(grobs) + 1]] <- grid::rectGrob(
-        x = px(at), y = top, width = px(bar), height = px(8),
-        just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
-      )
-      at <- at + bar + 5
-      if (text && nzchar(data$label[i])) {
-        grobs[[length(grobs) + 1]] <- grid::textGrob(
-          data$label[i], x = px(at), y = top - px(4), just = "left", gp = font
-        )
-        at <- at + grid::convertWidth(
-          grid::grobWidth(grobs[[length(grobs)]]), "inches", valueOnly = TRUE
-        ) * 96
-      }
-      at <- at + 16
-    }
-    do.call(grid::grobTree, grobs)
+    grid::gTree(keys = data, text = text, cl = "bandage_keys")
   }
 )
+
+# Laid out at draw time, when the panel's width is known, so a key that would
+# run past the right edge starts a new line
+#' @exportS3Method grid::makeContent
+makeContent.bandage_keys <- function(x) {
+  data <- x$keys
+  px <- function(v) grid::unit(v / 96, "inches")
+  font <- grid::gpar(fontsize = 8.25, col = "grey15")
+  room <- grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96
+  grobs <- list()
+  at <- 6
+  line <- 0
+  for (i in seq_len(nrow(data))) {
+    colours <- strsplit(data$stops[i], ",", fixed = TRUE)[[1]]
+    bar <- if (length(colours) > 1) 48 else 18
+    fill <- if (length(colours) > 1) {
+      grid::linearGradient(colours, x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5)
+    } else {
+      ggplot2::alpha(colours, data$alpha[i])
+    }
+    label <- if (x$text && nzchar(data$label[i])) {
+      grid::textGrob(data$label[i], just = "left", gp = font)
+    }
+    wide <- bar + if (is.null(label)) {
+      0
+    } else {
+      5 + grid::convertWidth(grid::grobWidth(label), "inches", valueOnly = TRUE) * 96
+    }
+    if (at > 6 && at + wide > room) {
+      at <- 6
+      line <- line + 1
+    }
+    top <- grid::unit(1, "npc") - px(6 + 16 * line)
+    grobs[[length(grobs) + 1]] <- grid::rectGrob(
+      x = px(at), y = top, width = px(bar), height = px(8),
+      just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
+    )
+    if (!is.null(label)) {
+      grobs[[length(grobs) + 1]] <- grid::editGrob(
+        label, x = px(at + bar + 5), y = top - px(4)
+      )
+    }
+    at <- at + wide + 16
+  }
+  grid::setChildren(x, do.call(grid::gList, grobs))
+}
 
 #' Each lifted walk's colour bar, as the Bandage view's key draws it
 #'
