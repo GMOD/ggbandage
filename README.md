@@ -39,20 +39,21 @@ autoplot(g, ncol = 2)
 
 ![GRCh38 and HG00097#1 at LPA's KIV-2 repeat, a panel each, shaded yellow to red along each walk: HG00097#1 walks a 22 kb loop that GRCh38 skips](gallery/kiv2_walks.png)
 
-GRCh38 and HG00097#1 across LPA's KIV-2 repeat, each walk shaded yellow to
-red along its length. HG00097#1 runs a 22 kb loop of extra repeat copies that
-GRCh38 skips.
+The walk file comes from HPRC's v2.1 graph:
 
-- The walk file is HPRC's v2.1 GRCh38 graph, prepared with
-  `vg convert -f hprc-v2.1-mc-grch38-f5.gbz > hprc-v2.1-mc-grch38-f5.gfa`,
-  then `gfa-to-tabix hprc-v2.1-mc-grch38-f5.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f5`
-  ([steps](#your-own-pangenome))
-- `walks = ` picks the haplotypes to colour, and `facet = "walk"` gives each
-  one a panel
-- `engine = "stress"` draws the reference straight, with each variant hanging
-  off it, in place of Bandage's force-directed default
-- `genes` pins a GFF3 or BED file onto the reference
-- `?bandage_layout` lists every argument
+```console
+vg convert -f hprc-v2.1-mc-grch38-f5.gbz > hprc-v2.1-mc-grch38-f5.gfa
+gfa-to-tabix hprc-v2.1-mc-grch38-f5.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f5
+```
+
+| Argument | Effect |
+| --- | --- |
+| `walks` | Haplotypes to colour |
+| `facet = "walk"` | One panel per walk |
+| `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
+| `genes` | A GFF3 or BED file pinned onto the reference |
+
+`?bandage_layout` lists every argument.
 
 ## Your own pangenome
 
