@@ -71,11 +71,8 @@ ggplot2::ggsave("kiv2.pdf", width = 10, height = 4)
 
 ## Walk rows
 
-`bandage_walk_rows()` takes the same inputs and draws each walk as a bar of
-the bp it has between the reference nodes flanking the region, so a repeat
-expansion shows as bar length.
-[Reading walk rows](docs/walk-rows.md) explains each colour, letter and
-ribbon.
+`bandage_walk_rows()` draws each haplotype as a bar, so a repeat expansion
+shows as a longer bar. See [Reading walk rows](docs/walk-rows.md).
 
 ```r
 haplotypes <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
