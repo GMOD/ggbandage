@@ -44,8 +44,10 @@ The walk file comes from HPRC's v2.1 graph, prepared as in JBrowse's
 
 ```console
 vg convert -f hprc-v2.1-mc-grch38.gbz > hprc-v2.1-mc-grch38.gfa
-gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38
+gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38-f5
 ```
+
+`f5` is the walk file format, gfa-to-tabix's format 5.
 
 [Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
 `engine` and `genes`.
