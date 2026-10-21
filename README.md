@@ -53,8 +53,6 @@ gfa-to-tabix hprc-v2.1-mc-grch38-f5.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-gr
 | `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
 | `genes` | A GFF3 or BED file pinned onto the reference |
 
-`?bandage_layout` lists every argument.
-
 ## Your own pangenome
 
 1. Index the GFA once with gfa-to-tabix, where `--refs` names the genome
