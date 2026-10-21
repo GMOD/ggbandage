@@ -49,7 +49,6 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
     p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX)
   }
   if (faceted && !nrow(object$rows)) {
-    # room over each panel for its key bar, 24 px at the width it was fit to
     p <- p + ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(mult = 0.05, add = c(0, 24 / m$scaleY))
     )
@@ -94,6 +93,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
         )
       )
   }
+  class(p) <- c("bandage_plot", class(p))
   p
 }
 
@@ -152,4 +152,37 @@ layout_key <- function(object) {
       ))
     }
   )
+}
+
+#' @exportS3Method ggplot2::ggplot_build
+ggplot_build.bandage_plot <- function(plot, ...) {
+  built <- NextMethod()
+  class(built) <- c("bandage_built", class(built))
+  built
+}
+
+#' @exportS3Method ggplot2::ggplot_gtable
+ggplot_gtable.bandage_built <- function(data) pinned_top_left(NextMethod())
+
+#' @exportS3Method patchwork::plot_table
+plot_table.bandage_plot <- function(x, guides) {
+  class(x) <- setdiff(class(x), "bandage_plot")
+  NextMethod()
+}
+
+pinned_top_left <- function(gt) {
+  if (!isTRUE(gt$respect)) {
+    return(gt)
+  }
+  panels <- gt$layout[startsWith(gt$layout$name, "panel"), ]
+  around <- gt$layout$l < min(panels$l) & gt$layout$r > max(panels$r)
+  gt <- gtable::gtable_add_cols(gt, grid::unit(1e-6, "null"), 1)
+  gt <- gtable::gtable_add_cols(gt, grid::unit(1e-6, "null"), ncol(gt) - 1)
+  gt <- gtable::gtable_add_rows(gt, grid::unit(1e-6, "null"), nrow(gt) - 1)
+  gt$layout$l[around] <- pmin(gt$layout$l[around], 2)
+  gt$layout$r[around] <- pmax(gt$layout$r[around], ncol(gt) - 1)
+  respect <- matrix(0L, nrow(gt), ncol(gt))
+  respect[cbind(panels$t, panels$l + 1)] <- 1L
+  gt$respect <- respect
+  gt
 }

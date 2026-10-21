@@ -62,10 +62,6 @@ edges_of <- function(model, background = "white") {
   in_draw_order(e, "curve")
 }
 
-# A lifted walk's lane back on its node's line, with the px it was slid off
-# that line, so it slides the same px at whatever size the plot is drawn. A
-# link's curve slides by (nx, ny, offset) where it starts and, `end`, by
-# (nx1, ny1, offset1) where it ends
 slid_back <- function(d, meta, xy, end = FALSE) {
   cols <- if (end) c("nx1", "ny1", "offset1", "slide_x1", "slide_y1") else c("nx", "ny", "offset", "slide_x", "slide_y")
   if (is.null(d[[cols[3]]])) {
@@ -306,31 +302,35 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
 
 FADED <- "#a0a0a0"
 
-# Each lifted walk's key, and unfaceted, a faded swatch for what no walk
-# visits, then the key to the threads where walks draw a thread per pass
 keys_of <- function(model) {
   k <- model$keys
   if (!nrow(k)) {
     return(k)
   }
-  if (is.null(k$kind)) {
-    k$kind <- "walk"
-  }
+  k$kind <- "walk"
   k$alpha <- 1
-  if (nrow(model$panels) == 1) {
-    k$panel <- NULL
-    walks <- k[k$kind == "walk", ]
-    faded <- walks[1, ]
-    faded[] <- ""
-    faded$kind <- "faded"
-    faded$stops <- FADED
-    faded$alpha <- 0.3
-    faded$note <- paste("not on", if (nrow(walks) == 1) walks$walk else "these walks")
-    k <- rbind(walks, faded, k[k$kind != "walk", ])
-  } else {
+  if (nrow(model$panels) > 1) {
     k$panel <- factor(k$panel, levels = model$panels$panel)
+    return(k)
   }
-  k
+  k$panel <- NULL
+  extra <- function(kind, note, stops = "", alpha = 1) {
+    if (!length(note)) {
+      return(NULL)
+    }
+    row <- k[rep(1, length(note)), ]
+    row[] <- ""
+    row$kind <- kind
+    row$note <- note
+    row$stops <- stops
+    row$alpha <- alpha
+    row
+  }
+  faded <- extra(
+    "faded", paste("not on", if (nrow(k) == 1) k$walk else "these walks"),
+    FADED, 0.3
+  )
+  rbind(k, faded, extra("passes", as.character(model$threads$note)))
 }
 
 GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
@@ -345,8 +345,6 @@ GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
   }
 )
 
-# Laid out at draw time, when the panel's width is known, so a key that would
-# run past the right edge starts a new line
 #' @exportS3Method grid::makeContent
 makeContent.bandage_keys <- function(x) {
   room <- grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96
@@ -355,8 +353,6 @@ makeContent.bandage_keys <- function(x) {
 
 key_font <- grid::gpar(fontsize = 8.25, col = "grey15")
 
-# Each key's bar and label from the top left, a new line wherever the next
-# would pass `room` px
 key_grobs <- function(data, text, room) {
   px <- function(v) grid::unit(v / 96, "inches")
   grobs <- list()
@@ -405,11 +401,8 @@ key_grobs <- function(data, text, room) {
   list(grobs = do.call(grid::gList, grobs), lines = line + 1)
 }
 
-# The plot's margins and the legend's left margin, in px
 KEY_INSET <- (8 + 8 + 20) * 96 / 72
 
-# The keys as a legend over the plot, as wide as the plot and as many lines
-# tall as they take at that width
 key_guide <- function(model) {
   keys <- keys_of(model)
   keys$label <- paste0(keys$walk, keys$note)

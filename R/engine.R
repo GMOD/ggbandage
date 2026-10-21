@@ -239,13 +239,14 @@ as_bandage_layout <- function(d) {
   arrows <- upright(frame(d$arrows), c("y", "angle"))
   rows <- upright(frame(d$rowLabels))
   keys <- frame(d$keys)
+  threads <- frame(d$threadKeys)
   genes <- upright(frame(d$pins))
   exons <- upright(frame(d$exons))
 
   structure(
     list(
       nodes = nodes, edges = edges, arrows = arrows, rows = rows,
-      panels = panels, keys = keys, genes = genes, exons = exons,
+      panels = panels, keys = keys, threads = threads, genes = genes, exons = exons,
       meta = d$meta
     ),
     class = "bandage_layout"

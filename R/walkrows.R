@@ -195,18 +195,11 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   off <- paste(if (walk_hued) "paler: off the" else "off the", reference, "path")
   ribbon <- "ribbon: next row walks the same nodes"
   inverted <- "ribbon: next row walks them backwards"
-  # a gap draws by whether the graph holds it, and the readout says where an
-  # elsewhere part went
   plain$key <- ifelse(
     plain$kind == gap_kinds[["elsewhere"]], gap_kinds[["outside"]],
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
   labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted)
-  off_ink <- if (walk_hued) "#c9c9c9" else "#3c4148"
-  keys <- stats::setNames(c(off_ink, rep("white", 3), "#cfe0f2", "#b9abdb"), labels)
-  outlines <- stats::setNames(
-    c(off_ink, "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb"), labels
-  )
   row_ink <- function(row, light = 0) {
     ink <- swatches$colour[match(row, swatches$row)]
     ink[is.na(ink)] <- "#9a9a9a"
@@ -214,6 +207,16 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     rgb <- rgb + (1 - rgb) * light
     grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ])
   }
+  off_fill <- if (walk_hued) {
+    row_ink(c(setdiff(swatches$row, 0), swatches$row)[1], PALER)
+  } else {
+    "#3c4148"
+  }
+  off_ink <- if (walk_hued) NA else "#3c4148"
+  keys <- stats::setNames(c(off_fill, rep("white", 3), "#cfe0f2", "#b9abdb"), labels)
+  outlines <- stats::setNames(
+    c(off_ink, "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb"), labels
+  )
   dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
@@ -237,7 +240,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     position_scale(ggplot2::scale_fill_viridis_c, title)
   }
   plain$fill <- ifelse(
-    walk_hued & plain$key == off, row_ink(plain$row, 0.6), keys[plain$key]
+    walk_hued & plain$key == off, row_ink(plain$row, PALER), keys[plain$key]
   )
   if (walk_hued) {
     tiles$fill <- row_ink(tiles$row)
@@ -356,8 +359,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   p
 }
 
-# The flat colour `layout` lifts each row's walk in, by name or by the walk
-# the name's range was cut from
+PALER <- 0.6
+
 row_swatches <- function(rows, layout) {
   keys <- layout$keys
   if (is.null(keys$color)) {

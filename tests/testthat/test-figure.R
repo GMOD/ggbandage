@@ -3,8 +3,6 @@ rgfa <- test_path("testdata", "ecoli_rgfa_slice.gfa.gz")
 walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.bed.gz")
 lifted <- c("K12#1#chr:1004500-1004961", "IAI39#1#chr:2249412-2249872")
 
-# The key guide's labels top to bottom and left to right, and its height in
-# inches, drawn on a device `width` inches wide
 drawn_keys <- function(plot, width) {
   grDevices::pdf(NULL, width = width, height = 6)
   on.exit(grDevices::dev.off())
@@ -79,6 +77,55 @@ test_that("a walk passing a node twice draws two threads there, and the key says
   expect_equal(drawn_keys(p, 8)$labels[4], "a thread per pass through a node")
 })
 
+placed_keys <- function(plot, width, height) {
+  grDevices::pdf(NULL, width = width, height = height)
+  on.exit(grDevices::dev.off())
+  print(plot)
+  grid::grid.force()
+  found <- grid::grid.ls(print = FALSE, view = TRUE, fullNames = TRUE)
+  names_of <- function(path) {
+    sub("^[a-zA-Z]+\\[(.*)\\]$", "\\1", strsplit(path, "::", fixed = TRUE)[[1]])
+  }
+  at <- which(startsWith(found$name, "text[") & grepl("guide-box-top", found$gPath))
+  do.call(rbind, lapply(at, function(i) {
+    text <- grid::grid.get(do.call(grid::gPath, as.list(c(names_of(found$gPath[i]), names_of(found$name[i])))))
+    grid::seekViewport(do.call(grid::vpPath, as.list(names_of(found$vpPath[i])[-1])))
+    at <- grid::deviceLoc(text$x, text$y, valueOnly = TRUE)
+    wide <- grid::convertWidth(grid::grobWidth(text), "inches", valueOnly = TRUE)
+    data.frame(label = text$label, left = at$x, right = at$x + wide, y = at$y)
+  }))
+}
+
+test_that("the key sits at the plot's top left and wraps inside it at any size", {
+  gfa <- tempfile(fileext = ".gfa")
+  writeLines(paste(repeat_gfa, "W\tthird\t1\tchr\t0\t9\t>v1>v2>v3", sep = "\n"), gfa)
+  three <- bandage_layout(gfa, walks = c("ref#0#chr", "dup#1#chr", "third#1#chr"), engine = "stress")
+  one <- bandage_layout(pggb, walks = lifted[1])
+  for (g in list(one, three)) {
+    want <- c(paste0(g$keys$walk, g$keys$note), keys_of(g)$note[-seq_len(nrow(g$keys))])
+    for (width in c(4, 9, 12)) {
+      for (height in c(3, 6)) {
+        k <- placed_keys(ggplot2::autoplot(g), width, height)
+        expect_setequal(k$label, want)
+        expect_lt(min(k$left), 1.1)
+        expect_lte(max(k$right), width)
+        expect_gt(max(k$y), height - 0.3)
+      }
+    }
+  }
+  expect_gt(length(unique(placed_keys(ggplot2::autoplot(three), 4, 3)$y)), 1)
+})
+
+test_that("a plot in a patchwork keeps its own layout", {
+  skip_if_not_installed("patchwork")
+  p <- ggplot2::autoplot(bandage_layout(pggb, walks = lifted))
+  expect_s3_class(p, "bandage_plot")
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_true(isTRUE(patchwork:::plot_table(p, "auto")$respect))
+  expect_true(is.matrix(ggplot2::ggplotGrob(p)$respect))
+})
+
 test_that("a walk row lifted in one flat colour gets a swatch of it", {
   g <- bandage_layout(pggb, walks = lifted)
   rows <- bandage_walk_rows(pggb)
@@ -104,6 +151,24 @@ test_that("walk-hued rows take their walk's flat colour, and need a layout", {
   fills <- unique(unlist(lapply(b$data, function(d) d$fill)))
   expect_true(all(toupper(row_swatches(rows$rows, g)$colour) %in% toupper(fills)))
   expect_error(ggplot2::autoplot(rows, hues = "walk"), "layout")
+})
+
+test_that("walk-hued rows draw off-path stretches as unoutlined tints of the walk, and key one", {
+  g <- bandage_layout(pggb, walks = lifted)
+  rows <- bandage_walk_rows(pggb)
+  p <- ggplot2::autoplot(rows, hues = "walk", layout = g)
+  at <- which(vapply(p$layers, function(l) all(c("key", "xmin") %in% names(l$data)), TRUE))
+  plain <- p$layers[[at]]$data
+  drawn <- ggplot2::layer_data(p, at)
+  swatch <- row_swatches(rows$rows, g)
+  off <- startsWith(plain$key, "paler") & plain$row %in% swatch$row
+  expect_true(any(off))
+  expect_true(all(is.na(drawn$colour[off])))
+  rgb <- grDevices::col2rgb(swatch$colour[match(plain$row[off], swatch$row)]) / 255
+  tint <- grDevices::rgb(t(rgb + (1 - rgb) * PALER))
+  expect_equal(toupper(as.character(drawn$fill[off])), toupper(tint))
+  legend <- p$scales$get_scales("colour")$guide$params$override.aes$fill
+  expect_true(toupper(legend[1]) %in% toupper(tint))
 })
 
 test_that("faceted, each panel draws its own walk's bar", {

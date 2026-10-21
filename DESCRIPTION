@@ -13,6 +13,7 @@ Imports:
     ggplot2 (>= 3.5.0),
     grDevices,
     grid,
+    gtable,
     curl,
     jsonlite,
     stats,
@@ -20,6 +21,7 @@ Imports:
     V8
 Suggests:
     knitr,
+    patchwork,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
