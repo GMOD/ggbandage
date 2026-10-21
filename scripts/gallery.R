@@ -65,26 +65,26 @@ autoplot(g, ncol = 2))",
   ),
   figure(
     "kiv2_overlay", "Three KIV-2 haplotypes overlaid", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG00133#1 in orange, 116 kb longer. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below",
+    "Force-directed KIV-2 array of GRCh38, HG00097#1 and HG00133#1 coloured red to magenta along GRCh38, non-reference nodes in charcoal, with a walk row per haplotype below in the same hues: GRCh38 is one 31 kb gradient, HG00097#1 adds a 22 kb non-reference stretch, and HG00133#1 adds 116 kb, the large loop",
     r"(haps <- c("HG00097#1", "HG00133#1")
-g <- bandage_layout(
-  walks,
-  region = kiv2, haplotypes = haps, walks = c("GRCh38", haps), genes = genes
-)
-autoplot(g))",
-    width = 8, height = 7, readme = TRUE
+g <- bandage_layout(walks, region = kiv2, haplotypes = haps, genes = genes)
+rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
+(autoplot(g) + guides(fill = "none")) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(2.5, 1)))",
+    width = 8, height = 9, readme = TRUE
   ),
   figure(
     "cfh_overlay", "CFHR3 and CFHR1 deleted in one of three walks", "chr1:196,640,001-196,900,000",
-    "Force-directed CFH locus with three walks lifted together: GRCh38 in charcoal and HG00097#1 in blue run the loop through CFHR3 and CFHR1, and HG02055#1 in orange, 84.5 kb shorter, takes the dashed deletion edge under it",
-    r"(haps <- c("HG00097#1", "HG02055#1")
-g <- bandage_layout(
-  walks,
-  region = "chr1:196,640,001-196,900,000",
-  haplotypes = haps, walks = c("GRCh38", haps), genes = genes
-)
-autoplot(g))",
-    width = 9, height = 3
+    "Force-directed CFH locus coloured red to magenta along GRCh38, with a walk row per haplotype below in the same hues: GRCh38 and HG00097#1 run the loop through CFHR3 and CFHR1, and HG02055#1, 84.5 kb shorter, skips from green to blue along the dashed deletion edge",
+    r"(cfh <- "chr1:196,640,001-196,900,000"
+haps <- c("HG00097#1", "HG02055#1")
+g <- bandage_layout(walks, region = cfh, haplotypes = haps, genes = genes)
+rows <- bandage_walk_rows(walks, cfh, haplotypes = haps)
+(autoplot(g) + guides(fill = "none")) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(1.5, 1)))",
+    width = 9, height = 5
   ),
   figure(
     "kiv2_rows", "KIV-2 copy number as walk rows", "chr6:160,616,004-160,646,753",
