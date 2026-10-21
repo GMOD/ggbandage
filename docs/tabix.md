@@ -145,7 +145,3 @@ connection, with `layout = "auto"`:
   rows. The drawing has those 27 segments plus 2 that links reach, and 42 edge
   curves. The query on the link file also returns links that touch nothing in
   the cut, and the cut drops them
-
-## Not yet
-
-- The coarse tier that `gfa-to-tabix build` writes for wide windows

@@ -1,7 +1,5 @@
 # ggbandage
 
-Pangenome graph figures as ggplot2 layers.
-
 ```r
 remotes::install_github("GMOD/ggbandage")
 ```
