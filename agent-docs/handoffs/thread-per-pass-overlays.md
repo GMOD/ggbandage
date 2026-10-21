@@ -5,6 +5,7 @@
 **Request:** the gallery's "Three KIV-2 haplotypes overlaid" figure, then the CFHR3/CFHR1 and C4 overlays, should use gradients, with walk rows below. The C4 extra copy was invisible because every copy shares nodes.
 
 **Gallery**
+- The README shows eight figures, four wide then four tall: `cfh_overlay`, `kiv2_rows`, `amylase_rows`, `cyp2d6_stress`, `kiv2_overlay`, `syng_overlay`, `syng_rhd` and `own_colours`. `docs/gallery.md` shows them first and the other eight under "More examples". `readme = TRUE` in `scripts/gallery.R` marks the core set.
 - `kiv2_overlay`, `cfh_overlay` and `syng_overlay` sit above walk rows.
 - In `kiv2_overlay` and `cfh_overlay` each walk has a separate colour ramp, and each row repeats its walk's ramp along the bar, paler off the GRCh38 path. `cfh_overlay`'s ribbons break across the 85 kb HG02055#1 lacks.
 - `syng_overlay` lifts each walk in one flat colour with a thread per pass, and its rows take those colours. `syng_ramp` is the position-ramp version, in `docs/gallery.md` only.
@@ -19,14 +20,19 @@
 - `966c5cc`: lifts with no repeats lane along the walk's smoothed normals. The per-node normals sprayed stray dots off clusters of short nodes.
 - `12d957a`: flat lanes past the fourth walk take each family at 0.85, then 0.2, so twelve walks get twelve colours.
 - `dcc3df7`: thread placement uses slot centres in place of closures, with identical output.
-- `d2f2310`: `figureSvg` wraps its key onto more lines.
+- `d2f2310`, `1166fa8`: `figureSvg` wraps its key onto more lines, the walk-rows key entry by entry.
+- `a2b03e3`: a lane run that no earlier run overlaps takes its sign from the direction it reads its nodes in, so a backward walk keeps its side through a bubble only it takes.
+- `326986c`: `pathLegend` tries sample#haplotype before an offset, so syng walks key as `HG01978#2`.
+- `0ba03af`: walk rows widen P-line labels to sample#haplotype where two would match.
 
 **ggbandage (branch `overlay-followups`)**
-- `hues = "walk"` takes progress ramps as well as flat colours, and outlines blocks so their fills leave the walk colours visible.
+- `hues = "walk"` takes progress ramps as well as flat colours, runs a ramp from the bar's end where the row reads its walk backwards, and outlines blocks so their fills leave the walk colours visible.
+- Rows a passed `layout` lifts take the key's names, and blocks past the three filled ones are keyed.
+- `autoplot.bandage_layout` draws with `clip = "off"`, and the position colourbar lays out horizontally wherever its legend sits.
 - The rows' outline scale is skipped when nothing takes an outline, which fixes the "No shared levels found" warning.
-- `inst/js/bandage.js` is bundled from core `d2f2310`.
+- `inst/js/bandage.js` is bundled from core `0ba03af`.
 
-**Tests:** core 852 pass, with tsc, eslint and prettier clean, and every R test passes.
+**Tests:** core 856 pass, with tsc, eslint and prettier clean. Every R test passes, R CMD check gives no notes, and the four findings of an independent review are fixed.
 
 ## Rebuild
 
