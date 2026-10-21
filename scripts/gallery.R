@@ -3,20 +3,32 @@
 #   Rscript scripts/gallery.R            every figure
 #   Rscript scripts/gallery.R c4_stress  one figure, and the docs
 
-setup <- r"(library(ggbandage)
-library(ggplot2)
-library(patchwork)
-
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
-index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
-genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
-kiv2 <- "chr6:160,616,004-160,646,753"
-five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
-twelve <- c(
-  "CHM13#0",
-  paste0(rep(c("HG00097", "HG00099", "HG00126", "HG00128", "HG00133", "HG002"), each = 2), "#", 1:2)
+definitions <- list(
+  walks = 'walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"',
+  index = 'index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"',
+  genes = 'genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"',
+  kiv2 = 'kiv2 <- "chr6:160,616,004-160,646,753"',
+  five = 'five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")',
+  twelve = paste(
+    'twelve <- c(',
+    '  "CHM13#0",',
+    '  paste0(rep(c("HG00097", "HG00099", "HG00126", "HG00128", "HG00133", "HG002"), each = 2), "#", 1:2)',
+    ')',
+    sep = "\n"
+  ),
+  syng = 'syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"'
 )
-syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz")"
+
+standalone <- function(code) {
+  uses <- function(pattern) grepl(pattern, code, perl = TRUE)
+  needed <- Filter(function(name) uses(sprintf("\\b%s\\b(?!\\s*=)", name)), names(definitions))
+  libraries <- c(
+    "library(ggbandage)",
+    if (uses("ggplot|guides\\(|element_text|margin\\(|scale_|coord_|theme")) "library(ggplot2)",
+    if (uses("wrap_plots|plot_layout|\\) / ")) "library(patchwork)"
+  )
+  paste(c(libraries, "", unlist(definitions[needed]), if (length(needed)) "", code), collapse = "\n")
+}
 
 figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = NULL,
                    readme = TRUE) {
@@ -181,9 +193,9 @@ ggplot(g) +
   )
 )
 
-draw <- function(f, env) {
+draw <- function(f) {
   started <- Sys.time()
-  p <- eval(parse(text = f$code), new.env(parent = env))
+  p <- eval(parse(text = standalone(f$code)), new.env())
   ggplot2::ggsave(
     file.path("gallery", paste0(f$id, ".png")), p,
     width = f$width, height = f$height, dpi = 150, bg = "white"
@@ -195,9 +207,7 @@ docs <- function() {
   out <- c(
     "# Gallery",
     "",
-    "Every figure runs as written after this setup. `scripts/gallery.R` draws them all.",
-    "",
-    "```r", setup, "```",
+    "Every snippet runs on its own. `scripts/gallery.R` draws them all.",
     "",
     "## The data files",
     "",
@@ -217,7 +227,7 @@ docs <- function() {
       out, "", paste("##", f$title), "", paste0("`", f$locus, "`"), "",
       if (!is.null(f$note)) c(f$note, ""),
       sprintf("![%s](../gallery/%s.png)", f$alt, f$id), "",
-      "```r", f$code, "```"
+      "```r", standalone(f$code), "```"
     )
   }
   writeLines(out, file.path("docs", "gallery.md"))
@@ -248,12 +258,10 @@ readme <- function() {
 }
 
 devtools::load_all(quiet = TRUE)
-env <- new.env()
-eval(parse(text = sub("library(ggbandage)\n", "", setup, fixed = TRUE)), env)
 dir.create("gallery", showWarnings = FALSE)
 wanted <- commandArgs(TRUE)
 for (f in figures) {
-  if (!length(wanted) || f$id %in% wanted) draw(f, env)
+  if (!length(wanted) || f$id %in% wanted) draw(f)
 }
 docs()
 readme()

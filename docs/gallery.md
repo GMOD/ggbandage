@@ -1,23 +1,6 @@
 # Gallery
 
-Every figure runs as written after this setup. `scripts/gallery.R` draws them all.
-
-```r
-library(ggbandage)
-library(ggplot2)
-library(patchwork)
-
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
-index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
-genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
-kiv2 <- "chr6:160,616,004-160,646,753"
-five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
-twelve <- c(
-  "CHM13#0",
-  paste0(rep(c("HG00097", "HG00099", "HG00126", "HG00128", "HG00133", "HG002"), each = 2), "#", 1:2)
-)
-syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
-```
+Every snippet runs on its own. `scripts/gallery.R` draws them all.
 
 ## The data files
 
@@ -39,6 +22,13 @@ The HPRC graphs are the files behind the
 ![Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence](../gallery/kiv2_stress.png)
 
 ```r
+library(ggbandage)
+library(ggplot2)
+
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+kiv2 <- "chr6:160,616,004-160,646,753"
+
 g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
 ggplot(g) +
   geom_bandage_edges() +
@@ -55,6 +45,11 @@ ggplot(g) +
 ![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and the panel titles give HG00097 55 kb and GRCh38 32.8 kb, each span the region plus 1 kb of flank either side](../gallery/kiv2_walks.png)
 
 ```r
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+kiv2 <- "chr6:160,616,004-160,646,753"
+
 g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = "HG00097#1",
@@ -71,6 +66,12 @@ autoplot(g, ncol = 2)
 ![Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG00133#1 in orange, 116 kb longer. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below](../gallery/kiv2_overlay.png)
 
 ```r
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+kiv2 <- "chr6:160,616,004-160,646,753"
+
 haps <- c("HG00097#1", "HG00133#1")
 g <- bandage_layout(
   walks,
@@ -86,6 +87,11 @@ autoplot(g)
 ![Force-directed CFH locus with three walks lifted together: GRCh38 in charcoal and HG00097#1 in blue run the loop through CFHR3 and CFHR1, and HG02055#1 in orange, 84.5 kb shorter, takes the dashed deletion edge under it](../gallery/cfh_overlay.png)
 
 ```r
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+
 haps <- c("HG00097#1", "HG02055#1")
 g <- bandage_layout(
   walks,
@@ -102,6 +108,12 @@ autoplot(g)
 ![Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two](../gallery/kiv2_rows.png)
 
 ```r
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+kiv2 <- "chr6:160,616,004-160,646,753"
+five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
+
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
 autoplot(rows)
 ```
@@ -113,6 +125,14 @@ autoplot(rows)
 ![Walk rows over the salivary amylase genes, each bar coloured by the GRCh38 position it covers: the haplotypes span 146 kb to 475 kb, HG00128#1 walks the stretch near 103.72 Mb twice, so its green recurs, five haplotypes walk much of the non-reference block A twice, and HG00097#1 has a 19 kb stretch the graph lacks, drawn as an open box](../gallery/amylase_rows.png)
 
 ```r
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+twelve <- c(
+  "CHM13#0",
+  paste0(rep(c("HG00097", "HG00099", "HG00126", "HG00128", "HG00133", "HG002"), each = 2), "#", 1:2)
+)
+
 rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = twelve)
 autoplot(rows)
 ```
@@ -124,6 +144,11 @@ autoplot(rows)
 ![Stress layout of the complement C4 genes in the MHC, GRCh38 drawn straight, its C4A and C4B the long forms: non-reference sequence hangs in loops below C4A and C4B, and a dashed arch from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA](../gallery/c4_stress.png)
 
 ```r
+library(ggbandage)
+
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+
 g <- bandage_layout(
   index,
   region = "chr6:31,978,000-32,040,000", engine = "stress", genes = genes
@@ -138,6 +163,13 @@ autoplot(g)
 ![RHD and CYP2D6 in the stress layout, one above the other, GRCh38 straight and genes named: in each, a dashed arch spans the whole gene, the route of haplotypes that skip it, and non-reference sequence hangs in grey](../gallery/deletions.png)
 
 ```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+
 deletions <- c(
   RHD = "chr1:25,250,000-25,450,000",
   CYP2D6 = "chr22:42,118,000-42,136,000"
@@ -182,6 +214,12 @@ in jbrowse-plugin-graphgenomeviewer cuts this one from odgi's C4 test haplotypes
 ![Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype has one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues](../gallery/syng_c4.png)
 
 ```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
+
 g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 (autoplot(g) + guides(fill = "none")) /
@@ -202,6 +240,10 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 ![The syng graph of C4 with three walks lifted together, one flat colour each: GRCh38 in charcoal, HG01952#1 in blue, 12.7 kb shorter, and HG01978#2 in orange, 32.7 kb longer. All three run the ring every C4 copy shares, and only HG01952#1 skips the loop at the left, the 6.5 kb HERV-K of C4's long form](../gallery/syng_overlay.png)
 
 ```r
+library(ggbandage)
+
+syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
+
 g <- bandage_layout(syng, walks = c("grch38", "HG01952#1", "HG01978#2"))
 autoplot(g)
 ```
@@ -213,6 +255,13 @@ autoplot(g)
 ![The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks pass through it, light for once to dark for six](../gallery/own_colours.png)
 
 ```r
+library(ggbandage)
+library(ggplot2)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+kiv2 <- "chr6:160,616,004-160,646,753"
+five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
+
 g <- bandage_layout(walks, region = kiv2, haplotypes = five)
 ggplot(g) +
   geom_bandage_edges(aes(colour = I("grey80"))) +
