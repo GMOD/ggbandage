@@ -154,6 +154,23 @@ test_that("walk-hued rows take their walk's flat colour, and need a layout", {
   expect_error(ggplot2::autoplot(rows, hues = "walk"), "layout")
 })
 
+test_that("walk-hued rows run a walk's progress ramp from the bar's start to its end", {
+  progress <- lapply(lifted, function(w) list(walk = w, color = list(field = "progress")))
+  g <- bandage_layout(pggb, walks = progress)
+  rows <- bandage_walk_rows(pggb)
+  inks <- walk_inks(rows$rows, g)
+  expect_length(inks$row, 2)
+  expect_equal(nrow(row_swatches(rows$rows, g)), 0)
+  p <- ggplot2::autoplot(rows, hues = "walk", layout = g)
+  at <- which(vapply(p$layers, function(l) "position" %in% names(l$data), TRUE))
+  bar <- p$layers[[at]]$data
+  bar <- bar[bar$row == 0, ]
+  stops <- strsplit(inks$stops[inks$row == 0], ",")[[1]]
+  near <- function(a, b) max(abs(grDevices::col2rgb(a) - grDevices::col2rgb(b))) < 8
+  expect_true(near(bar$fill[1], stops[1]))
+  expect_true(near(bar$fill[nrow(bar)], stops[length(stops)]))
+})
+
 test_that("walk-hued rows draw off-path stretches as unoutlined tints of the walk, and key one", {
   g <- bandage_layout(pggb, walks = lifted)
   rows <- bandage_walk_rows(pggb)
@@ -165,9 +182,12 @@ test_that("walk-hued rows draw off-path stretches as unoutlined tints of the wal
   off <- startsWith(plain$key, "paler") & plain$row %in% swatch$row
   expect_true(any(off))
   expect_true(all(is.na(drawn$colour[off])))
-  rgb <- grDevices::col2rgb(swatch$colour[match(plain$row[off], swatch$row)]) / 255
+  bar <- p$layers[[which(vapply(p$layers, function(l) "position" %in% names(l$data), TRUE))]]$data
+  tinted <- bar$kind == "off the reference's path" & bar$row %in% swatch$row
+  expect_true(any(tinted))
+  rgb <- grDevices::col2rgb(swatch$colour[match(bar$row[tinted], swatch$row)]) / 255
   tint <- grDevices::rgb(t(rgb + (1 - rgb) * PALER))
-  expect_equal(toupper(as.character(drawn$fill[off])), toupper(tint))
+  expect_equal(toupper(bar$fill[tinted]), toupper(tint))
   legend <- p$scales$get_scales("colour")$guide$params$override.aes$fill
   expect_true(toupper(legend[1]) %in% toupper(tint))
 })

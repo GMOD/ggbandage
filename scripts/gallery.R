@@ -65,23 +65,23 @@ autoplot(g, ncol = 2))",
   ),
   figure(
     "kiv2_overlay", "Three KIV-2 haplotypes overlaid", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with three walks lifted together, each shaded along its own length from light to mid-tone: GRCh38 light to mid grey, HG00133#1 cyan to blue, 116 kb longer, and HG00097#1 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097#1 alone runs the loop at the top, and HG00133#1 alone runs the large loop below and the small loops at the right. Walk rows below give each haplotype's length",
+    "Force-directed KIV-2 array with three walks lifted together, each shaded along its own length from light to mid-tone: GRCh38 light to mid grey, HG00133#1 cyan to blue, 116 kb longer, and HG00097#1 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097#1 alone runs the loop at the top, and HG00133#1 alone runs the large loop below, the small loops at the right and one at the left. Walk rows below, each on its walk's ramp and paler off the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133#1 147 kb and HG00097#1 53 kb",
     r"(haps <- c("HG00133#1", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
 g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, genes = genes)
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1)))",
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1)))",
     width = 8, height = 9, readme = TRUE
   ),
   figure(
     "cfh_overlay", "CFHR3 and CFHR1 deleted in one of three walks", "chr1:196,640,001-196,900,000",
-    "Force-directed CFH locus with GRCh38, HG00097#1 and HG02055#1 lifted together, each coloured red to magenta by GRCh38 position, and walk rows below in the same hues. The three walks share each position's hue, so their lanes read as one band. HG02055#1, 84.5 kb shorter, takes the dashed deletion edge under the loop through CFHR3 and CFHR1, and its row jumps from green to blue there",
+    "Force-directed CFH locus with three walks lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00097#1 cyan to blue and HG02055#1 yellow to red-orange. GRCh38 and HG00097#1 run the loop through CFHR3 and CFHR1, and HG02055#1 alone takes the dashed orange deletion edge under it. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097#1 260 kb and HG02055#1 176 kb, and the ribbons from HG00097#1 down to HG02055#1 break across the 85 kb HG02055#1 lacks",
     r"(cfh <- "chr1:196,640,001-196,900,000"
 haps <- c("HG00097#1", "HG02055#1")
-hued <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "reference", scheme = "rainbow")))
-g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = hued, genes = genes)
+progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
+g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = progress, genes = genes)
 rows <- bandage_walk_rows(walks, cfh, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(heights = c(1.5, 1)))",
+autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = c(1.5, 1)))",
     width = 9, height = 5
   ),
   figure(

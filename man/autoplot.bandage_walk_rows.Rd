@@ -25,13 +25,14 @@ reference past its end}
 
 \item{hues}{\code{"viridis"}; \code{"bandage"} for the Bandage view's position
 hues, as \code{\link[=scale_fill_bandage_position]{scale_fill_bandage_position()}} draws them, to set walk rows under
-a layout coloured by position; or \code{"walk"} for each row in the flat colour
+a layout coloured by position; or \code{"walk"} for each row in the colours
 \code{layout} lifts its walk in, lighter off the reference's path, to set rows
-under walks lifted together}
+under walks lifted together: a flat colour, or a progress ramp run from
+the bar's start to its end}
 
 \item{layout}{the \code{bandage_layout} drawn above the rows. A row whose walk
 the layout lifts in one flat colour gets a swatch of that colour beside
-its name, and \code{hues = "walk"} takes the row's colour from there}
+its name, and \code{hues = "walk"} takes the row's colours from there}
 }
 \description{
 A bar per walk on an axis of bp from the left flank, the walk's label on y

@@ -158,20 +158,25 @@ bar_tiles <- function(runs, tile) {
 #' @param ribbons join the graph nodes neighbouring rows share
 #' @param hues `"viridis"`; `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
-#'   a layout coloured by position; or `"walk"` for each row in the flat colour
+#'   a layout coloured by position; or `"walk"` for each row in the colours
 #'   `layout` lifts its walk in, lighter off the reference's path, to set rows
-#'   under walks lifted together
+#'   under walks lifted together: a flat colour, or a progress ramp run from
+#'   the bar's start to its end
 #' @param layout the `bandage_layout` drawn above the rows. A row whose walk
 #'   the layout lifts in one flat colour gets a swatch of that colour beside
-#'   its name, and `hues = "walk"` takes the row's colour from there
+#'   its name, and `hues = "walk"` takes the row's colours from there
 #' @exportS3Method ggplot2::autoplot
 autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
                                        hues = c("viridis", "bandage", "walk"), layout = NULL) {
   hues <- match.arg(hues)
-  swatches <- row_swatches(object$rows, layout)
+  inks <- walk_inks(object$rows, layout)
+  swatches <- inks[nzchar(inks$colour), c("row", "colour")]
   walk_hued <- hues == "walk"
-  if (walk_hued && !nrow(swatches)) {
-    stop('hues = "walk" needs a `layout` that lifts the rows\' walks in flat colours', call. = FALSE)
+  if (walk_hued && !nrow(inks)) {
+    stop(
+      'hues = "walk" needs a `layout` that lifts the rows\' walks in flat colours or progress ramps',
+      call. = FALSE
+    )
   }
   rows <- object$rows
   reference <- rows$sample[1]
@@ -181,7 +186,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   all <- bar_tiles(object$runs, span / 600)
   all$y <- y[all$row + 1]
   on <- all$kind == "on the reference's path"
-  tiles <- all[on, ]
+  tiles <- all[on | (walk_hued & all$kind == "off the reference's path"), ]
   plain <- all[!on, ]
   breaks <- diff(which(!on)) != 1 | diff(plain$row) != 0 | diff(as.integer(plain$kind)) != 0
   stretch <- cumsum(c(TRUE, breaks))[seq_len(nrow(plain))]
@@ -200,15 +205,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
   labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted)
-  row_ink <- function(row, light = 0) {
-    ink <- swatches$colour[match(row, swatches$row)]
-    ink[is.na(ink)] <- "#9a9a9a"
-    rgb <- grDevices::col2rgb(ink) / 255
-    rgb <- rgb + (1 - rgb) * light
-    grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ])
-  }
   off_fill <- if (walk_hued) {
-    row_ink(c(setdiff(swatches$row, 0), swatches$row)[1], PALER)
+    first <- c(setdiff(inks$row, 0), inks$row)[1]
+    walk_fill(inks, rows, first, rows$bp[first + 1] / 2, PALER)
   } else {
     "#3c4148"
   }
@@ -250,11 +249,12 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       )
     )
   }
-  plain$fill <- ifelse(
-    walk_hued & plain$key == off, row_ink(plain$row, PALER), keys[plain$key]
-  )
+  plain$fill <- ifelse(walk_hued & plain$key == off, NA, keys[plain$key])
   if (walk_hued) {
-    tiles$fill <- row_ink(tiles$row)
+    tiles$fill <- walk_fill(
+      inks, rows, tiles$row, (tiles$xmin + tiles$xmax) / 2,
+      ifelse(tiles$kind == "on the reference's path", 0, PALER)
+    )
     swatches <- swatches[0, ]
   }
   p <- ggplot2::ggplot()
@@ -364,14 +364,39 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
 
 PALER <- 0.6
 
-row_swatches <- function(rows, layout) {
+# Each row's walk as `layout` lifts it: a flat `colour`, or the `stops` of a
+# progress ramp with no colour
+walk_inks <- function(rows, layout) {
   keys <- layout$keys
   if (is.null(keys$color)) {
-    return(data.frame(row = integer(), colour = character()))
+    return(data.frame(row = integer(), colour = character(), stops = character()))
   }
-  keys <- keys[nzchar(keys$color), ]
+  keys <- keys[nzchar(keys$color) | keys$field == "progress", ]
   origin <- function(name) sub(":[0-9]+-[0-9]+$", "", name)
   at <- match(rows$name, keys$name)
   at[is.na(at)] <- match(origin(rows$name), origin(keys$name))[is.na(at)]
-  data.frame(row = rows$row, colour = keys$color[at])[!is.na(at), ]
+  data.frame(row = rows$row, colour = keys$color[at], stops = keys$stops[at])[!is.na(at), ]
+}
+
+row_swatches <- function(rows, layout) {
+  inks <- walk_inks(rows, layout)
+  inks[nzchar(inks$colour), c("row", "colour")]
+}
+
+# A row's colour `x` bp along its bar, `light` of the way to white
+walk_fill <- function(inks, rows, row, x, light = 0) {
+  rgb <- matrix(0x9a, length(row), 3)
+  for (r in intersect(unique(row), inks$row)) {
+    k <- match(r, inks$row)
+    here <- row == r
+    rgb[here, ] <- if (nzchar(inks$colour[k])) {
+      matrix(grDevices::col2rgb(inks$colour[k]), sum(here), 3, byrow = TRUE)
+    } else {
+      ramp <- grDevices::colorRamp(strsplit(inks$stops[k], ",")[[1]], space = "Lab")
+      ramp(pmin(1, pmax(0, x[here] / rows$bp[r + 1])))
+    }
+  }
+  rgb <- rgb / 255
+  rgb <- rgb + (1 - rgb) * light
+  grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3])
 }
