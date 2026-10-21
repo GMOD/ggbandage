@@ -144,8 +144,8 @@ bar_tiles <- function(runs, tile) {
 #' which may still resemble the reference, as an extra repeat copy does. A
 #' letter marks a block of non-reference nodes that two or more drawn rows
 #' walk, the same letter wherever the block recurs, and the three largest
-#' blocks are filled, except under `hues = "walk"`, which outlines them. White
-#' is sequence the extracted subgraph does not hold:
+#' blocks are filled and the rest grey, except under `hues = "walk"`, which
+#' outlines every block. White is sequence the extracted subgraph does not hold:
 #' dashed where the graph holds it outside the subgraph, and for a cut from a
 #' walk file, solid dark where a record break says the graph lacks it and
 #' dotted where the file leaves it open. The readout says where a walk went
@@ -165,8 +165,9 @@ bar_tiles <- function(runs, tile) {
 #'   under walks lifted together: a flat colour, or a progress ramp run from
 #'   the bar's start to its end
 #' @param layout the `bandage_layout` drawn above the rows. A row whose walk
-#'   the layout lifts in one flat colour gets a swatch of that colour beside
-#'   its name, and `hues = "walk"` takes the row's colours from there
+#'   the layout lifts takes the name the layout's key gives it, and a swatch
+#'   beside it where the walk is one flat colour; `hues = "walk"` takes the
+#'   row's colours from there
 #' @exportS3Method ggplot2::autoplot
 autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
                                        hues = c("viridis", "bandage", "walk"), layout = NULL) {
@@ -181,6 +182,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     )
   }
   rows <- object$rows
+  rows$label <- key_labels(rows, layout)
   reference <- rows$sample[1]
   half <- 0.2
   y <- nrow(rows) - rows$row
@@ -206,7 +208,11 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     plain$kind == gap_kinds[["elsewhere"]], gap_kinds[["outside"]],
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
-  labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted)
+  more <- paste(
+    if (walk_hued) "outlined: a block off the" else "more blocks off the",
+    reference, "path that several rows walk"
+  )
+  labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted, more)
   off_fill <- if (walk_hued) {
     first <- c(setdiff(inks$row, 0), inks$row)[1]
     walk_fill(inks, rows, first, rows$bp[first + 1] / 2, PALER)
@@ -214,16 +220,21 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     "#3c4148"
   }
   off_ink <- if (walk_hued) NA else "#3c4148"
-  keys <- stats::setNames(c(off_fill, rep("white", 3), "#cfe0f2", "#b9abdb"), labels)
-  outlines <- stats::setNames(
-    c(off_ink, "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb"), labels
+  block_fill <- if (walk_hued) NA else "#e8e8e8"
+  keys <- stats::setNames(
+    c(off_fill, rep("white", 3), "#cfe0f2", "#b9abdb", block_fill), labels
   )
-  dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid"), labels)
+  outlines <- stats::setNames(
+    c(off_ink, "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb", "#7a7a7a"), labels
+  )
+  dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- if (walk_hued) character() else c("#d4785f", "#d9a94e", "#c98aa3")
   filled <- blocks[blocks$block < length(fills), ]
   filled$letter <- factor(filled$letter, levels = block_letters(seq_along(fills) - 1))
+  others <- blocks[blocks$block >= length(fills), ]
+  others$key <- rep(more, nrow(others))
   lettered <- blocks[blocks$bp >= span * letter_share, ]
 
   links <- object$links
@@ -231,7 +242,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     links <- links[0, ]
   }
   key <- ifelse(links$b0 > links$b1, inverted, ribbon)
-  shown <- intersect(names(keys), c(plain$key, key))
+  shown <- intersect(names(keys), c(plain$key, key, others$key))
   title <- paste(reference, "position, Mb")
   fill <- if (walk_hued) {
     NULL
@@ -292,9 +303,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       linewidth = 0.25
     ) +
     ggplot2::geom_rect(
-      data = blocks[blocks$block >= length(fills), ],
-      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half),
-      fill = if (walk_hued) NA else "#e8e8e8", colour = "#7a7a7a", linewidth = 0.25
+      data = others,
+      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, colour = key),
+      fill = block_fill, linewidth = 0.25
     ) +
     ggplot2::geom_rect(
       data = filled,
@@ -366,6 +377,24 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
 
 PALER <- 0.6
 
+# Which key, if any, names each walk, by its full name or the name without
+# the cut's range
+key_index <- function(names, keys) {
+  origin <- function(name) sub(":[0-9]+-[0-9]+$", "", name)
+  at <- match(names, keys$name)
+  at[is.na(at)] <- match(origin(names), origin(keys$name))[is.na(at)]
+  at
+}
+
+# Each row's label, or the name the layout's key gives the walk
+key_labels <- function(rows, layout) {
+  if (is.null(layout$keys$walk)) {
+    return(rows$label)
+  }
+  at <- key_index(rows$name, layout$keys)
+  ifelse(is.na(at), rows$label, layout$keys$walk[at])
+}
+
 # Each row's walk as `layout` lifts it: a flat `colour`, or the `stops` of a
 # progress ramp with no colour
 walk_inks <- function(rows, layout) {
@@ -374,9 +403,7 @@ walk_inks <- function(rows, layout) {
     return(data.frame(row = integer(), colour = character(), stops = character()))
   }
   keys <- keys[nzchar(keys$color) | keys$field == "progress", ]
-  origin <- function(name) sub(":[0-9]+-[0-9]+$", "", name)
-  at <- match(rows$name, keys$name)
-  at[is.na(at)] <- match(origin(rows$name), origin(keys$name))[is.na(at)]
+  at <- key_index(rows$name, keys)
   data.frame(row = rows$row, colour = keys$color[at], stops = keys$stops[at])[!is.na(at), ]
 }
 

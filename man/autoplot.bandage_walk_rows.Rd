@@ -31,8 +31,9 @@ under walks lifted together: a flat colour, or a progress ramp run from
 the bar's start to its end}
 
 \item{layout}{the \code{bandage_layout} drawn above the rows. A row whose walk
-the layout lifts in one flat colour gets a swatch of that colour beside
-its name, and \code{hues = "walk"} takes the row's colours from there}
+the layout lifts takes the name the layout's key gives it, and a swatch
+beside it where the walk is one flat colour; \code{hues = "walk"} takes the
+row's colours from there}
 }
 \description{
 A bar per walk on an axis of bp from the left flank, the walk's label on y
@@ -43,8 +44,8 @@ one shows them reversed. Charcoal is sequence on non-reference nodes,
 which may still resemble the reference, as an extra repeat copy does. A
 letter marks a block of non-reference nodes that two or more drawn rows
 walk, the same letter wherever the block recurs, and the three largest
-blocks are filled, except under \code{hues = "walk"}, which outlines them. White
-is sequence the extracted subgraph does not hold:
+blocks are filled and the rest grey, except under \code{hues = "walk"}, which
+outlines every block. White is sequence the extracted subgraph does not hold:
 dashed where the graph holds it outside the subgraph, and for a cut from a
 walk file, solid dark where a record break says the graph lacks it and
 dotted where the file leaves it open. The readout says where a walk went

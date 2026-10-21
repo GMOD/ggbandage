@@ -46,7 +46,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
     p <- p + ggplot2::theme(legend.location = "plot")
   }
   if (!m$pixelRows) {
-    p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX)
+    p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX, clip = "off")
   }
   if (faceted && !nrow(object$rows)) {
     p <- p + ggplot2::scale_y_continuous(

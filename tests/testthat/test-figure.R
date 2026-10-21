@@ -171,6 +171,31 @@ test_that("walk-hued rows run a walk's progress ramp from the bar's start to its
   expect_true(near(bar$fill[nrow(bar)], stops[length(stops)]))
 })
 
+test_that("blocks past the three filled ones are keyed", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  ref <- paste0("r", 0:4)
+  writeLines(c(
+    paste0("S\t", ref, "\t", strrep("A", 1000)),
+    paste0("S\ts", 1:4, "\t", strrep("C", 10)),
+    paste0("S\tt", 1:4, "\t", strrep("G", 200)),
+    paste0("L\tr", 0:3, "\t+\ts", 1:4, "\t+\t0M"), paste0("L\ts", 1:4, "\t+\tr", 1:4, "\t+\t0M"),
+    paste0("L\tr", 0:3, "\t+\tt", 1:4, "\t+\t0M"), paste0("L\tt", 1:4, "\t+\tr", 1:4, "\t+\t0M"),
+    paste0("P\tref#0#chr\t", paste0(c(rbind(ref[1:4], paste0("s", 1:4))), "+", collapse = ","), ",r4+\t*"),
+    paste0("P\t", c("a#1#c", "b#1#c"), "\t", paste0(c(rbind(ref[1:4], paste0("t", 1:4))), "+", collapse = ","), ",r4+\t*")
+  ), gfa)
+  rows <- bandage_walk_rows(gfa)
+  expect_equal(sort(unique(rows$blocks$letter)), LETTERS[1:4])
+  colours <- ggplot2::ggplot_build(ggplot2::autoplot(rows))$plot$scales$get_scales("colour")
+  expect_true(any(startsWith(colours$get_breaks(), "more blocks off the")))
+})
+
+test_that("rows a layout lifts take the name its key gives the walk", {
+  rows <- data.frame(name = c("a#1#c:0-10", "b#1#c"), label = c("a#1", "b#1"))
+  expect_equal(key_labels(rows, list(keys = data.frame(name = "a#1#c:5-9", walk = "a"))), c("a", "b#1"))
+  expect_equal(key_labels(rows, NULL), rows$label)
+})
+
 ramp_rows <- function(walk) {
   gfa <- tempfile(fileext = ".gfa")
   writeLines(c(
@@ -221,7 +246,7 @@ test_that("walk-hued rows draw off-path stretches as unoutlined tints of the wal
   g <- bandage_layout(pggb, walks = lifted)
   rows <- bandage_walk_rows(pggb)
   p <- ggplot2::autoplot(rows, hues = "walk", layout = g)
-  at <- which(vapply(p$layers, function(l) all(c("key", "xmin") %in% names(l$data)), TRUE))
+  at <- which(vapply(p$layers, function(l) all(c("key", "kind", "xmin") %in% names(l$data)), TRUE))
   plain <- p$layers[[at]]$data
   drawn <- ggplot2::layer_data(p, at)
   swatch <- row_swatches(rows$rows, g)
