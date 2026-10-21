@@ -59,15 +59,14 @@ g <- bandage_layout(
 autoplot(g, ncol = 2)
 ```
 
-## Three KIV-2 haplotypes by reference position
+## Three KIV-2 haplotypes overlaid
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed KIV-2 array of GRCh38, HG00097#1 and HG00133#1 coloured red to magenta along GRCh38, non-reference nodes in charcoal, with a walk row per haplotype below in the same hues: GRCh38 is one 31 kb gradient, HG00097#1 adds a 22 kb non-reference stretch, and HG00133#1 adds 116 kb, the large loop](../gallery/kiv2_overlay.png)
+![Force-directed KIV-2 array with three walks lifted together, each shaded along its own length: GRCh38 grey to black, HG00097#1 cyan to navy, 22.2 kb longer, and HG00133#1 yellow to red, 116 kb longer. Walk rows below show each haplotype's length. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below](../gallery/kiv2_overlay.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 library(patchwork)
 
 walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
@@ -75,22 +74,20 @@ genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 haps <- c("HG00097#1", "HG00133#1")
-g <- bandage_layout(walks, region = kiv2, haplotypes = haps, genes = genes)
+progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
+g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, genes = genes)
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
-(autoplot(g) + guides(fill = "none")) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(2.5, 1))
+autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1))
 ```
 
 ## CFHR3 and CFHR1 deleted in one of three walks
 
 `chr1:196,640,001-196,900,000`
 
-![Force-directed CFH locus coloured red to magenta along GRCh38, with a walk row per haplotype below in the same hues: GRCh38 and HG00097#1 run the loop through CFHR3 and CFHR1, and HG02055#1, 84.5 kb shorter, skips from green to blue along the dashed deletion edge](../gallery/cfh_overlay.png)
+![Force-directed CFH locus with three walks lifted together, each shaded along its own length: GRCh38 grey to black, HG00097#1 cyan to navy, and HG02055#1 yellow to red, 84.5 kb shorter, which takes the dashed deletion edge under the loop through CFHR3 and CFHR1. Walk rows below show each haplotype's length](../gallery/cfh_overlay.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 library(patchwork)
 
 walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
@@ -98,11 +95,10 @@ genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 cfh <- "chr1:196,640,001-196,900,000"
 haps <- c("HG00097#1", "HG02055#1")
-g <- bandage_layout(walks, region = cfh, haplotypes = haps, genes = genes)
+progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
+g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = progress, genes = genes)
 rows <- bandage_walk_rows(walks, cfh, haplotypes = haps)
-(autoplot(g) + guides(fill = "none")) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(1.5, 1))
+autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(1.5, 1))
 ```
 
 ## KIV-2 copy number as walk rows
@@ -235,26 +231,25 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 
 `chr6:31,972,047-32,055,647`
 
-- The rows show which stretches each walk visits and its copy count: HG01978#2 has
-  one 32.7 kb copy more than GRCh38
+- Each walk is shaded along its own length, so a walk that goes round the ring
+  twice runs its gradient twice. The rows below give each haplotype's length:
+  HG01978#2 has one 32.7 kb copy more than GRCh38
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 coloured red to magenta along GRCh38, with a walk row per haplotype below in the same hues: GRCh38 is one 84 kb gradient, HG01952#1 is 12.7 kb shorter and HG01978#2 32.7 kb longer. All three run the ring every C4 copy shares, and only HG01952#1 skips the loop at the left, the 6.5 kb HERV-K of C4's long form](../gallery/syng_overlay.png)
+![The syng graph of C4 with three walks lifted together, each shaded along its own length: GRCh38 grey to black, HG01952#1 cyan to navy, 12.7 kb shorter, and HG01978#2 yellow to red, 32.7 kb longer. Walk rows below show each haplotype's length. Only HG01952#1 skips the loop at the left, the 6.5 kb HERV-K of C4's long form](../gallery/syng_overlay.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 library(patchwork)
 
 syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 
 haps <- c("HG01952#1", "HG01978#2")
-g <- bandage_layout(syng)
+progress <- lapply(c("grch38", haps), function(w) list(walk = w, color = list(field = "progress")))
+g <- bandage_layout(syng, walks = progress)
 rows <- bandage_walk_rows(syng, haplotypes = haps)
-(autoplot(g) + guides(fill = "none")) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(2.5, 1))
+autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1))
 ```
 
 ## Your own colours: KIV-2 nodes by walk passes
