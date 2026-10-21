@@ -82,7 +82,7 @@ More, with code, in [the gallery](docs/gallery.md).
 
 - [Gallery](docs/gallery.md): every figure with its code, including your own
   colours and stacking loci with patchwork
-- [Walk rows](docs/walk-rows.md): `bandage_walk_rows()` and how to read its
+- [Walk rows](vignettes/walk-rows.Rmd): `bandage_walk_rows()` and how to read its
   bars
 - [Developing](docs/developing.md): for contributors: the file readers, the
   engine bundle, the gallery and the test fixtures

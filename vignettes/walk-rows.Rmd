@@ -1,19 +1,30 @@
-# Walk rows
+---
+title: "Walk rows"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Walk rows}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
 `bandage_walk_rows()` draws each walk as a bar of the bp it has between the
 reference nodes flanking the region, with the reference on top and the walks
-that reach both flanks below it, longest first. A repeat expansion shows as a longer bar,
-which no node layout shows. The gallery has
-[KIV-2](gallery.md#kiv-2-copy-number-as-walk-rows) and
-[amylase](gallery.md#amylase-copy-number-in-twelve-haplotypes) examples.
+that reach both flanks below it, longest first. A repeat expansion shows as a
+longer bar, which no node layout shows. The gallery has
+[KIV-2](https://github.com/GMOD/ggbandage/blob/main/docs/gallery.md#kiv-2-copy-number-as-walk-rows) and
+[amylase](https://github.com/GMOD/ggbandage/blob/main/docs/gallery.md#amylase-copy-number-in-twelve-haplotypes) examples.
 
-```r
+```{r example, eval = FALSE}
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+kiv2 <- "chr6:160,616,004-160,646,753"
 haplotypes <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haplotypes)
 autoplot(rows)
 ```
 
-![Walk rows at KIV-2: GRCh38 spans 31 kb between the flanking reference nodes and HG00133#2 164 kb, the extra copies falling into blocks A, B and C](../gallery/kiv2_rows.png)
+![Walk rows at KIV-2: GRCh38 spans 31 kb between the flanking reference nodes and HG00133#2 164 kb, the extra copies falling into blocks A, B and C](kiv2_rows.png)
 
 ## Reading walk rows
 
