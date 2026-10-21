@@ -161,14 +161,16 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
   ),
   figure(
     "syng_overlay", "C4's HERV-K loop in three syng walks", "chr6:31,972,047-32,055,647",
-    "The syng graph of C4 with three walks lifted together, one flat colour each: GRCh38 in charcoal, HG01952#1 in blue, 12.7 kb shorter, and HG01978#2 in orange, 32.7 kb longer. All three run the ring every C4 copy shares, and only HG01952#1 skips the loop at the left, the 6.5 kb HERV-K of C4's long form",
-    r"(g <- bandage_layout(syng, walks = c("grch38", "HG01952#1", "HG01978#2"))
-autoplot(g))",
-    width = 7, height = 7,
+    "The syng graph of C4 with three walks lifted together, one flat colour each: GRCh38 in charcoal, HG01952#1 in blue and HG01978#2 in orange, all on the same ring with a loop at the left that only HG01952#1 skips. Walk rows below give the lengths the ring cannot: GRCh38 84 kb, HG01952#1 71 kb and HG01978#2 116 kb",
+    r"(haps <- c("HG01952#1", "HG01978#2")
+g <- bandage_layout(syng, walks = c("grch38", haps))
+rows <- bandage_walk_rows(syng, haplotypes = haps)
+autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1)))",
+    width = 7, height = 8.5,
     note = c(
-      "- Each walk runs the ring once per C4 copy, so the lanes show which nodes a walk",
-      "  visits and the key's lengths show its copies: HG01978#2 has one 32.7 kb copy",
-      "  more than GRCh38",
+      "- The ring holds every C4 copy's sequence once, so a walk with more copies draws",
+      "  over the same nodes: HG01978#2 goes round the ring more often than GRCh38 and",
+      "  looks identical there. The rows show the extra 32.7 kb as a longer bar",
       "- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.",
       "  GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it"
     )
