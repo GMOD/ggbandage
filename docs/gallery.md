@@ -1,6 +1,6 @@
 # Gallery
 
-Every figure runs as written after this setup. All but the syng graph read
+Every figure runs as written after this setup. All but the syng graphs read
 the files behind the
 [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).
 `scripts/gallery.R` draws them all.
@@ -19,6 +19,7 @@ twelve <- c(
   "CHM13#0",
   paste0(rep(c("HG00097", "HG00099", "HG00126", "HG00128", "HG00133", "HG002"), each = 2), "#", 1:2)
 )
+syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 ```
 
 ## KIV-2 against a straight GRCh38 backbone, with LPA's exons
@@ -47,7 +48,7 @@ ggplot(g) +
 g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = "HG00097#1",
-  walks = c("GRCh38#0#chr6", "HG00097#1#JBIRDD010000043.1"),
+  walks = c("GRCh38", "HG00097#1"),
   facet = "walk"
 )
 autoplot(g, ncol = 2)
@@ -60,11 +61,10 @@ autoplot(g, ncol = 2)
 ![Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG005#1 in orange, 88.7 kb longer. HG00097#1 alone runs a small loop at the right, and only HG005#1 runs the large loop below](../gallery/kiv2_overlay.png)
 
 ```r
+haps <- c("HG00097#1", "HG005#1")
 g <- bandage_layout(
   walks,
-  region = kiv2, haplotypes = c("HG00097#1", "HG005#1"),
-  walks = c("GRCh38#0#chr6", "HG00097#1#JBIRDD010000043.1", "HG005#1#CM099986.1"),
-  genes = genes
+  region = kiv2, haplotypes = haps, walks = c("GRCh38", haps), genes = genes
 )
 autoplot(g)
 ```
@@ -76,11 +76,11 @@ autoplot(g)
 ![Force-directed CFH locus with three walks lifted together: GRCh38 in charcoal and HG00097#1 in blue run the loop through CFHR3 and CFHR1, and HG02055#1 in orange, 84.5 kb shorter, takes the dashed deletion edge under it](../gallery/cfh_overlay.png)
 
 ```r
+haps <- c("HG00097#1", "HG02055#1")
 g <- bandage_layout(
   walks,
-  region = "chr1:196,640,001-196,900,000", haplotypes = c("HG00097#1", "HG02055#1"),
-  walks = c("GRCh38#0#chr1", "HG00097#1#CM094060.1", "HG02055#1#CM092205.1"),
-  genes = genes
+  region = "chr1:196,640,001-196,900,000",
+  haplotypes = haps, walks = c("GRCh38", haps), genes = genes
 )
 autoplot(g)
 ```
@@ -149,26 +149,6 @@ plots <- Map(
 wrap_plots(plots, ncol = 1, heights = c(1, 2.5))
 ```
 
-## Your own colours: KIV-2 nodes by walk passes
-
-`chr6:160,616,004-160,646,753`
-
-![The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks pass through it, light for once to dark for six](../gallery/own_colours.png)
-
-```r
-g <- bandage_layout(walks, region = kiv2, haplotypes = five)
-ggplot(g) +
-  geom_bandage_edges(aes(colour = I("grey80"))) +
-  geom_bandage_nodes(aes(colour = depth)) +
-  scale_colour_viridis_c(
-    "walk passes through node",
-    option = "mako", direction = -1, end = 0.85, breaks = 1:6
-  ) +
-  coord_fixed() +
-  theme_void() +
-  theme(legend.position = "bottom")
-```
-
 ## C4 as a syng graph from impg
 
 `chr6:31,972,047-32,055,647`
@@ -192,10 +172,46 @@ in jbrowse-plugin-graphgenomeviewer cuts this one from odgi's C4 test haplotypes
 ![Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype carries one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues](../gallery/syng_c4.png)
 
 ```r
-syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 (autoplot(g) + guides(fill = "none")) /
   autoplot(rows, ribbons = FALSE, hues = "bandage") +
   plot_layout(heights = c(2.5, 1))
+```
+
+## C4's HERV-K loop in three syng walks
+
+`chr6:31,972,047-32,055,647`
+
+- Each walk runs the ring once per C4 copy, so the lanes show which nodes a walk
+  visits and the key's lengths show its copies: HG01978#2 has one 32.7 kb copy
+  more than GRCh38
+- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
+  GRCh38's C4A and C4B both carry it, and both of HG01952#1's copies lack it
+
+![The syng graph of C4 with three walks lifted together, one flat colour each: GRCh38 in charcoal, HG01952#1 in blue, 12.7 kb shorter, and HG01978#2 in orange, 32.7 kb longer. All three run the ring every C4 copy shares, and only HG01952#1 skips the loop at the left, the 6.5 kb HERV-K of C4's long form](../gallery/syng_overlay.png)
+
+```r
+g <- bandage_layout(syng, walks = c("grch38", "HG01952#1", "HG01978#2"))
+autoplot(g)
+```
+
+## Your own colours: KIV-2 nodes by walk passes
+
+`chr6:160,616,004-160,646,753`
+
+![The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks pass through it, light for once to dark for six](../gallery/own_colours.png)
+
+```r
+g <- bandage_layout(walks, region = kiv2, haplotypes = five)
+ggplot(g) +
+  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_nodes(aes(colour = depth)) +
+  scale_colour_viridis_c(
+    "walk passes through node",
+    option = "mako", direction = -1, end = 0.85, breaks = 1:6
+  ) +
+  coord_fixed() +
+  theme_void() +
+  theme(legend.position = "bottom")
 ```
