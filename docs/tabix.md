@@ -1,14 +1,30 @@
-# Drawing from a gfa-to-tabix index
+# Reading gfa-to-tabix files through V8
 
-`bandage_layout(index, region = ...)` draws the part of a pangenome graph under
-a region, reading an index that [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix)
-wrote. This page explains how the pieces fit.
+`bandage_layout()`, `bandage_walk_rows()` and `bandage_gfa()` read the part of
+a [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) walk file or segment
+index under a `region`. JavaScript in V8 cuts the graph to GFA text, and R
+fetches every byte it reads.
 
-## The flow
+## Walk files
+
+- **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, with
+  its `.tbi` or `.csi`, and a `region`
+- **Out:** the reference over the region, `context` bp past each end, and the
+  walks of the `haplotypes` asked for, as GFA with W lines
+- `cutWalks` in `scripts/walks-cut.mjs` calls
+  [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)' `cutRegion`,
+  as BandageJS does, over the R byte-range callback below
+- BandageJS caps a cut's bytes and nodes and draws an abridged walk as a
+  block. R asks for one region and waits, so ggbandage sets no cap and reads
+  every abridged walk in full
+- A cut at KIV-2 with five HPRC haplotypes takes about 3 s from the hosted
+  1.2 GB file
+
+## Segment indexes
 
 ```
 bandage_layout()            R/engine.R
-  is_tabix_graph()          R/tabix.R    the input is an index
+  is_tabix_graph()          R/tabix.R    the input is a segment index
   tabix_files()             R/tabix.R    the four files (segs, links and a .tbi or .csi each)
   parse_region()            R/tabix.R    "chr6:1,001-2,000" to chr6, 1000, 2000
   bandage.cutTabix()        scripts/tabix-cut.mjs, in V8
@@ -17,16 +33,14 @@ bandage_layout()            R/engine.R
         fetch_range()       R/tabix.R    reads a local file or sends a Range request
     rgfaCut()               @jbrowse/graph-walks: the segments and links under
                             the region, as GFA text
-  bandage.gfaFigureData()   bandage-core lays the GFA out, as for any GFA file
+  bandage.figure()          scripts/figure.mjs: bandage-core lays the GFA out,
+                            as for any GFA file
 ```
 
 - The cut ends as GFA text, so the layout, the tables and the geoms are the
   ones a GFA file uses
 - The cut gives each segment `LN`, `SN`, `SO` and `SR` tags and `SM` where the
   index has it; the `auto` layout anchors on the reference through them
-
-## What the index holds
-
 - `<prefix>.segs.bed.gz` has a row per segment, and `<prefix>.links.bed.gz` a
   row per link, each with a `.tbi` or `.csi`
 - The default `anchored` layout files every row under the reference interval
@@ -38,26 +52,27 @@ bandage_layout()            R/engine.R
 - The index [README](https://github.com/GMOD/gfa-to-tabix#readme) lists the
   columns
 
-## Which links the cut keeps
+### Which links the cut keeps
 
-On an anchored index, the link file returns links of neither kind the drawing
-needs along with those it does. The cut keeps a link when:
+On an anchored index, a query on the link file returns links the drawing does
+not need along with those it does. The cut keeps a link when:
 
 - one of its segments came back from the segment file
 - its two ends are backbone on opposite sides of the region, as a deletion
   spanning the region is
 - both its segments are already in the cut
 
-The segments at the far end of a kept link join the cut too, so a window shows
-the neighbour each edge leads to. `rgfaCut` in
+The cut also adds the segments at the far end of each kept link, so a window
+shows the neighbour each edge leads to. `rgfaCut` in
 [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) is the code the
 JBrowse graph plugin cuts with, so the two draw the same cut.
 
 ## Why the bytes come from R
 
-V8 has no file system or network. `@gmod/tabix` takes a filehandle with
-`read(length, position)`, so `rangeFile` in `tabix-cut.mjs` implements one that
-calls `ggbandage:::fetch_range` through `console.r.call`.
+V8 has no file system or network access, so `rangeFile` in `tabix-cut.mjs`
+gives `@gmod/tabix` a filehandle whose `read(length, position)` calls
+`ggbandage:::fetch_range` through `console.r.call`. Walk files and segment
+indexes both read through it.
 
 - `console.r.call` is synchronous, so the tabix promises settle without an event
   loop
@@ -83,9 +98,10 @@ files into V8 the same way, through `read_range()` in its `R/engine.R`. Its
 page walks one call through that loop. The two packages differ in the callback:
 
 - ggjbrowse returns a status, the file size and the bytes, which the JBrowse
-  adapters check. The tabix reader needs only the bytes
-- ggjbrowse defers the engine's warnings until the V8 call returns. This
-  package defers nothing: an error in `fetch_range` ends the call
+  adapters check. ggbandage returns the bytes alone, which is all the tabix
+  reader needs
+- ggjbrowse defers the engine's warnings until the V8 call returns. ggbandage
+  defers nothing, so an error in `fetch_range` ends the call
 
 ## What the bundle defines for tabix
 
@@ -104,7 +120,7 @@ page walks one call through that loop. The two packages differ in the callback:
 - The build stubs `fs/promises`, which `generic-filehandle2` imports for a
   local file class nothing opens
 
-## At HPRC scale
+## A segment index at HPRC scale
 
 jbrowse.org hosts the release 2.1 Minigraph-Cactus graph's anchored index for
 the [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/),
@@ -127,42 +143,8 @@ connection, with `layout = "auto"`:
   fetch and the cut, not a layout of that many nodes
 - At the KIV-2 window, htslib's `tabix` returns 27 segment rows and 46 link
   rows. The drawing has those 27 segments plus 2 that links reach, and 42 edge
-  curves. The link file also returns links that touch nothing in the cut, and
-  the cut drops them
-
-## Test fixtures
-
-`tests/testthat/testdata/ecoli_pggb.*` and `ecoli_rgfa.*` are indexes of the
-two test GFAs, made with gfa-to-tabix 0.12.1:
-
-```console
-gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 -o ecoli_pggb
-gfa-to-tabix ecoli_rgfa_slice.gfa.gz -o ecoli_rgfa
-```
-
-`ecoli_pggb.K12.walks.bed.gz` is the pggb GFA's walk file, and `ecoli_contig.*`
-the same graph in the contig layout, made with gfa-to-tabix 1.0.0:
-
-```console
-gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 -o ecoli_pggb
-gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_contig
-```
-
-`ecoli_pggb_csi.*` copies `ecoli_pggb`'s two files with a `.csi` in place of
-each `.tbi`, from `tabix -C -p bed`.
-
-## Walk files
-
-- **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, with
-  its `.tbi` or `.csi`, and a `region`
-- **Out:** the reference over the region, `context` bp past each end, and the
-  walks of the `haplotypes` asked for, as GFA with W lines
-- [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)' `cutRegion`
-  does the cut, as it does for BandageJS, over the same R byte-range callback.
-  BandageJS caps a cut's bytes and nodes; R asks for one region and waits, so
-  the package sets no cap
-- A cut at KIV-2 with five HPRC haplotypes takes about 3 s from the hosted
-  1.2 GB file
+  curves. The query on the link file also returns links that touch nothing in
+  the cut, and the cut drops them
 
 ## Not yet
 
