@@ -91,6 +91,33 @@ home connection, with `layout = "auto"`:
   rows. The drawing has those 27 segments plus 2 that links reach, and 42 edge
   curves, because the cut drops the links that touch nothing in it
 
+## Walk row details
+
+Edge cases of the [walk rows](../README.md#reading-walk-rows) key.
+
+- **Readout vs layout:** a layout's walk key counts the whole cut, `context`
+  bp past each end of the region included, and reads 32.8 kb for the GRCh38
+  walk the rows plot reads as 31 kb
+- **A colour for a paralogue:** a copy the graph threads through a different
+  reference paralogue takes that paralogue's colours
+- **A reference that walks nodes twice:** a syng or pggb graph can fold the
+  reference's own duplication onto one copy's nodes. Each copy takes the
+  colours of the reference copy it continues, and switches where the row walks
+  a node only one reference copy holds. The reference's own row stays a smooth
+  gradient
+- **Letters:** the same letter marks a block wherever it recurs. A letter
+  twice in one row means the row walks some of those nodes twice, or other
+  sequence splits the block. A block counts once a stretch of it reaches 1.2%
+  of the longest bar. Which rows are drawn decides the blocks, and another row
+  can split one
+- **Ribbons in a repeat:** they show one pairing of the copies, the one that
+  keeps both rows in order. A missing ribbon there does not mean the rows
+  share nothing
+- **One-flank walks:** a walk measured from one flank gets no ribbons or
+  letters, and its readout ends `· no ribbons`
+- **Dotted gaps:** the file leaves the gap open, as between two record breaks
+  with a record the reference never visits between them
+
 ## Why the bytes come from R
 
 V8 has no file system or network access, so `rangeFile` in `tabix-cut.mjs`

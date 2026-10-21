@@ -89,50 +89,28 @@ autoplot(rows)
 
 - **x:** bp from the left flank, counted along each walk, not reference
   coordinates
-- **Readout:** a bar's bp between the flanks, so GRCh38 reads 31 kb at KIV-2.
-  A layout's walk key counts the whole cut instead, `context` bp past each end
-  of the region included, and reads 32.8 kb for the same GRCh38 walk
-- **Colour:** sequence on the reference's path takes the colour of the
-  reference position it covers. A duplicated reference stretch repeats its
-  colours, and an inverted one runs them backwards. A copy the graph threads
-  through a different reference paralogue takes that paralogue's colours
-- **A reference that walks nodes twice:** a syng or pggb graph can fold the
-  reference's own duplication onto one copy's nodes. Each copy then takes the
-  colours of the reference copy it continues, and switches where the row walks
-  a node only one reference copy holds. The reference's own row stays a smooth
-  gradient
-- **Charcoal:** sequence on non-reference nodes. Such sequence can still
-  resemble the reference, as an extra repeat copy does, but the graph holds it
-  on separate nodes
-- **Letters:** a block of non-reference nodes that two or more drawn rows
-  walk, the same letter wherever it recurs, A for the most bp. A letter twice
-  in one row means the row walks some of those nodes twice, or other sequence
-  splits the block. A block counts once a stretch of it reaches 1.2% of the
-  longest bar, and `autoplot()` fills the three largest. Which rows are drawn
-  decides the blocks, and another row can split one
-- **White:** sequence missing from the extracted subgraph, counted in the
-  bar's length:
-  - **outside the extracted subgraph** (dashed): graph sequence the walk takes
-    away from the region's nodes. From a walk file, the readout names where,
-    e.g. `34 kb on nodes filed near chr22:20.3 Mb`
-  - **not in the graph** (solid dark, walk files only): the walk's record ends
-    and the contig's next record starts past it
-  - **gap, cause unknown** (dotted, walk files only): the file leaves it open,
-    as between two record breaks with a record the reference never visits
-    between them
-- **Ribbons:** pale blue where neighbouring rows walk the same graph nodes,
-  violet where one walks them backwards. Shared nodes mean similar sequence,
-  not shared ancestry. `autoplot(rows, ribbons = FALSE)` leaves them out, as
-  for rows that share almost every node
-- Inside a repeat, the ribbons show one pairing of the copies, the one that
-  keeps both rows in order. A missing ribbon there does not mean the rows
-  share nothing
-- A walk measured from one flank gets no ribbons or letters, and its readout
-  ends `· no ribbons`
+- **Readout:** a bar's bp between the flanks, so GRCh38 reads 31 kb at KIV-2
+
+| Mark | Meaning |
+| --- | --- |
+| Gradient colour | Sequence on the reference's path, coloured by the reference position it covers. A duplicated stretch repeats its colours, an inverted one runs them backwards |
+| Charcoal | Sequence on non-reference nodes. It can still resemble the reference, as an extra repeat copy does |
+| Letter | A block of non-reference nodes that two or more drawn rows walk. A is the block with the most bp; `autoplot()` fills the three largest |
+| White, dashed | Graph sequence outside the extracted subgraph. From a walk file, the readout names where, e.g. `34 kb on nodes filed near chr22:20.3 Mb` |
+| White, solid dark | Not in the graph: the walk's record ends and the contig's next record starts past it. Walk files only |
+| White, dotted | Gap of unknown cause. Walk files only |
+| Pale blue ribbon | Neighbouring rows walk the same graph nodes |
+| Violet ribbon | Neighbouring rows walk the same graph nodes backwards |
+
+- Shared nodes mean similar sequence, not shared ancestry
+- `autoplot(rows, ribbons = FALSE)` drops the ribbons, as for rows that share
+  almost every node
 - `order = "shared"` puts each row under the row it shares the most nodes
   with. The order is a layout aid and does not show relatedness
 - `rows$rows` has each walk's `bp` and readout, `rows$runs` each stretch of
   each bar, `rows$links` each ribbon and `rows$blocks` each stretch of a block
+
+[Developing](docs/developing.md#walk-row-details) has the edge cases.
 
 ## Gallery
 
