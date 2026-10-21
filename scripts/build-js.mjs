@@ -6,10 +6,8 @@ import { build } from 'esbuild'
 
 // The engine the R package runs: bandage-core's gfaFigureData and the tabix cut
 // as one script V8 can evaluate, with no modules, file system or network, and
-// FMMM's WASM inlined. The banner names the core it was built from, so a committed bundle
-// says what it is.
-// BANDAGE_CORE=<checkout> bundles a bandage-core checkout's sources in place of
-// the npm package, and the banner names that checkout's commit
+// FMMM's WASM inlined. The banner names the core it was built from, so a
+// committed bundle says what it is.
 const local = process.env.BANDAGE_CORE
 const { version } = JSON.parse(
   readFileSync(
@@ -212,7 +210,10 @@ const banner = [
   dataFetch,
 ].join('\n')
 
-const js = base64Wasm(outputFiles[0].text)
+const js = base64Wasm(outputFiles[0].text).replace(
+  /"[^"\n]*?node_modules\/(?=\.pnpm\/)/g,
+  '"node_modules/',
+)
 if (/[^\x09\x0a\x0d\x20-\x7e]/.test(js)) {
   throw new Error('the bundle is not printable ASCII')
 }

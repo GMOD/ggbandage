@@ -147,8 +147,18 @@ scripts/update-deps.sh
 - `@jbrowse` releases go in the day they come out. Others wait three days,
   the `minimumReleaseAge` in `pnpm-workspace.yaml`
 - `BANDAGE_CORE=<bandage-core checkout> pnpm build` bundles that checkout's
-  sources in place of the pinned release, and the banner names its commit.
-  The `bundle` workflow fails on such a bundle until the core releases it
+  sources in place of the pinned release, and the banner names its commit,
+  such as `11.7.3+65218ad`. The bundle comes out the same from any checkout
+  path
+
+### Before pushing a bundle built from a checkout
+
+The `bundle` workflow rebuilds from the release `package.json` pins and fails
+on any other bundle, so main must not get one until the core is out:
+
+1. Release bandage-core from the commit the banner names
+2. Bump `@jbrowse/bandage-core` in `package.json` to that release
+3. Rebuild with `pnpm build`, without `BANDAGE_CORE`, and commit the bundle
 
 ### Browser globals the bundle defines
 
