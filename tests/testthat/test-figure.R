@@ -171,6 +171,36 @@ test_that("walk-hued rows run a walk's progress ramp from the bar's start to its
   expect_true(near(bar$fill[nrow(bar)], stops[length(stops)]))
 })
 
+ramp_rows <- function(walk) {
+  gfa <- tempfile(fileext = ".gfa")
+  writeLines(c(
+    paste0("S\t", 1:4, "\t", strrep(c("A", "C", "G", "T"), c(10, 500, 500, 10))),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t3\t+\t4\t+\t0M", "L\t1\t+\t4\t+\t0M",
+    "P\tref#0#chr\t1+,2+,3+,4+\t*", paste0("P\ta#1#c\t", walk, "\t*")
+  ), gfa)
+  progress <- lapply(c("ref#0#chr", "a#1#c"), function(w) list(walk = w, color = list(field = "progress")))
+  g <- bandage_layout(gfa, walks = progress, engine = "stress")
+  rows <- bandage_walk_rows(gfa, region = "chr:20-1000")
+  unlink(gfa)
+  list(rows = rows, plot = ggplot2::autoplot(rows, hues = "walk", layout = g))
+}
+
+test_that("walk-hued rows run the ramp from the bar's end for a walk read backwards", {
+  r <- ramp_rows("4-,3-,2-,1-")
+  expect_true(r$rows$rows$backward[r$rows$rows$name == "a#1#c"])
+  at <- which(vapply(r$plot$layers, function(l) "position" %in% names(l$data), TRUE))
+  bar <- r$plot$layers[[at]]$data
+  bar <- bar[bar$row == r$rows$rows$row[r$rows$rows$name == "a#1#c"], ]
+  lightness <- function(colour) sum(grDevices::col2rgb(colour))
+  expect_lt(lightness(bar$fill[1]), lightness(bar$fill[nrow(bar)]))
+})
+
+test_that("walk-hued rows draw a progress ramp for a walk with no bp in the region", {
+  r <- ramp_rows("1+,4+")
+  expect_equal(r$rows$rows$bp[r$rows$rows$name == "a#1#c"], 0)
+  expect_no_error(ggplot2::ggplot_build(r$plot))
+})
+
 test_that("walk-hued rows outline blocks and leave their fill to the walk", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))

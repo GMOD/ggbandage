@@ -15,8 +15,9 @@
 #' @param join bp of unshared sequence a ribbon runs across; `NULL` for 1/2000
 #'   of the longest bar
 #' @return a `bandage_walk_rows`: `rows`, a row per walk with its `label`,
-#'   `bp`, `readout` and `linked`, `FALSE` for a walk measured from one flank,
-#'   which gets no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
+#'   `bp`, `readout`, `backward`, `TRUE` where the bar reads the walk from its
+#'   end, and `linked`, `FALSE` for a walk measured from one flank, which gets
+#'   no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
 #'   in bp from the left flank, with `kind` and, on the reference's path,
 #'   `referenceStart` and `reversed`, and on a gap, the `cause` a walk file
 #'   states: `missing`, `elsewhere` or `unknown`, else `outside`; and `links`, a row per ribbon from row
@@ -394,7 +395,8 @@ walk_fill <- function(inks, rows, row, x, light = 0) {
       matrix(grDevices::col2rgb(inks$colour[k]), sum(here), 3, byrow = TRUE)
     } else {
       ramp <- grDevices::colorRamp(strsplit(inks$stops[k], ",")[[1]], space = "Lab")
-      ramp(pmin(1, pmax(0, x[here] / rows$bp[r + 1])))
+      along <- if (rows$bp[r + 1] > 0) pmin(1, pmax(0, x[here] / rows$bp[r + 1])) else 0
+      ramp(if (isTRUE(rows$backward[r + 1])) 1 - along else along)
     }
   }
   rgb <- rgb / 255

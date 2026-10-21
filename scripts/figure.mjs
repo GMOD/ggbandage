@@ -112,6 +112,7 @@ export function walkRows(text, name, spec) {
       offReferenceBp: all.map(r => r.offReferenceBp),
       complete: all.map(r => r.complete),
       linked: all.map(r => r.complete),
+      backward: all.map(r => !!r.axis?.reversed),
       readout: all.map((r, i) =>
         walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
       ),

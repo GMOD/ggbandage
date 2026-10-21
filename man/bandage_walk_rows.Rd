@@ -44,8 +44,9 @@ of the longest bar}
 }
 \value{
 a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
-\code{bp}, \code{readout} and \code{linked}, \code{FALSE} for a walk measured from one flank,
-which gets no ribbons or letters; \code{runs}, a row per stretch of a bar, \code{xmin} and \code{xmax}
+\code{bp}, \code{readout}, \code{backward}, \code{TRUE} where the bar reads the walk from its
+end, and \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
+no ribbons or letters; \code{runs}, a row per stretch of a bar, \code{xmin} and \code{xmax}
 in bp from the left flank, with \code{kind} and, on the reference's path,
 \code{referenceStart} and \code{reversed}, and on a gap, the \code{cause} a walk file
 states: \code{missing}, \code{elsewhere} or \code{unknown}, else \code{outside}; and \code{links}, a row per ribbon from row
