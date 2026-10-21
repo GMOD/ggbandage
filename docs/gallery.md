@@ -276,6 +276,83 @@ rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(heights = c(2.5, 1))
 ```
 
+## KIV-2 copy number in a syng graph
+
+`chr6:160,616,004-160,646,753`
+
+The KIV-2, amylase and RHD syng graphs are region-specific pangenomes.
+`scripts/build-syng-region.sh` cuts each region from the HPRC walk file to find
+each haplotype's contig span, fetches those spans from GenBank, and builds the
+graph with [impg](https://github.com/pangenome/impg). ggbandage ships the
+graphs in `inst/extdata`.
+
+- Syng folds every KIV-2 unit onto one ring, so a haplotype's copy count is how
+  often its walk goes round
+- The haplotypes differ in steps of about 5.5 kb, one unit each
+
+![Force-directed syng graph of KIV-2 from 21 HPRC haplotypes: the repeat units fold onto one ring coloured along GRCh38, with dashed grey loops of sequence GRCh38 lacks. Under it, walk rows in the same hues: GRCh38 spans 33 kb, and five haplotypes span 38 kb to 177 kb, each repeating the ring's colours once per extra 5.5 kb unit](../gallery/syng_kiv2.png)
+
+```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+kiv2_syng <- system.file("extdata", "kiv2.syng.gfa.gz", package = "ggbandage")
+g <- bandage_layout(kiv2_syng)
+rows <- bandage_walk_rows(kiv2_syng, haplotypes = c("HG00658#2", "NA18976#1", "HG02451#1", "NA18970#2", "NA18508#2"))
+(autoplot(g) + guides(fill = "none")) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(2.5, 1))
+```
+
+## Amylase copy number in a syng graph
+
+`chr1:103,540,000-103,780,000`
+
+- The haplotypes come in four lengths 94 kb apart, 148, 242, 336 and 430 kb, one
+  amylase repeat unit each
+- HG01106#2 repeats GRCh38's cyan and blue stretch, and HG00706#1 lacks one copy
+
+![Force-directed syng graph of the salivary amylase genes from 16 HPRC haplotypes, coloured along GRCh38, its copies folded onto shared loops. Under it, walk rows: GRCh38 spans 242 kb, HG00706#1 148 kb, HG02965#1 336 kb and HG01106#2 430 kb, and HG02080#1 matches GRCh38's length but walks the non-reference blocks A and B](../gallery/syng_amy.png)
+
+```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+amy_syng <- system.file("extdata", "amy.syng.gfa.gz", package = "ggbandage")
+g <- bandage_layout(amy_syng)
+rows <- bandage_walk_rows(amy_syng, haplotypes = c("HG00706#1", "HG02080#1", "HG02965#1", "HG01106#2"))
+(autoplot(g) + guides(fill = "none")) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(2.5, 1))
+```
+
+## RHD deletion and duplication in a syng graph
+
+`chr1:25,250,000-25,450,000`
+
+- The Rhesus boxes either side of RHD share their nodes, so GRCh38 walks them
+  twice
+- Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and
+  skip RHD, the deletion that most often makes blood RhD-negative
+- HG01106#1 walks the boxes three times and has a second RHD
+
+![Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a grey edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01258#2 132 kb, jumping from red to green, and HG01106#1 272 kb, repeating RHD's orange to green hues](../gallery/syng_rhd.png)
+
+```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
+g <- bandage_layout(rhd_syng)
+rows <- bandage_walk_rows(rhd_syng, haplotypes = c("HG01258#2", "HG02451#2", "HG01106#1"))
+(autoplot(g) + guides(fill = "none")) /
+  autoplot(rows, ribbons = FALSE, hues = "bandage") +
+  plot_layout(heights = c(2.5, 1))
+```
+
 ## Your own colours: KIV-2 nodes by walk passes
 
 `chr6:160,616,004-160,646,753`
