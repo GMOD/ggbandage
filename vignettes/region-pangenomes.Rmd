@@ -1,0 +1,111 @@
+---
+title: "Region-specific pangenomes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Region-specific pangenomes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+A whole-genome pangenome is too large to load into R.
+[gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) indexes it once by
+reference coordinate, and ggbandage reads the graph of one region from that
+index.
+
+- **In:** a pangenome GFA, indexed once by gfa-to-tabix, as a local file or a
+  url
+- **Out:** the graph of one region, as a figure, as GFA for other tools, or as
+  a syng graph of that region
+- ggbandage downloads the blocks under the region and no more. A cut at
+  KIV-2 with five haplotypes takes about 3 s from the hosted 1.2 GB HPRC walk
+  file
+
+## Two kinds of index
+
+|            | Walk file                                   | Segment index                                       |
+| ---------- | ------------------------------------------- | --------------------------------------------------- |
+| Input GFA  | base-level, with W or P lines               | an rGFA (`*.sv.gfa.gz`), or a plain GFA with `--reference` |
+| Command    | `gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph` | `gfa-to-tabix graph.sv.gfa.gz -o graph` |
+| Files      | `graph.GRCh38.walks.bed.gz` and its `.tbi`  | `graph.segs.bed.gz`, `graph.links.bed.gz` and a `.tbi` each |
+| Holds      | every haplotype's walk through the region   | the segments and links under the region             |
+| Draw it as | walks lifted or faceted, and walk rows      | the graph's shape, over megabases                   |
+
+`bandage_layout()` and `bandage_gfa()` read either file, given a `region`.
+`bandage_walk_rows()` needs a walk file.
+
+## Making a walk file
+
+1. Convert the graph to GFA if it ships as `.gbz`, as HPRC's do:
+
+   ```console
+   vg convert -f graph.gbz > graph.gfa
+   ```
+
+2. Index it, naming the genome whose coordinates `region` will use:
+
+   ```console
+   gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph
+   ```
+
+3. Read it from disk, or put the `.walks.bed.gz` and `.tbi` on a web server.
+   A server that answers range requests, as Amazon S3 does, sends each block
+   ggbandage asks for. One without range support, such as
+   `python -m http.server`, sends the whole file on every read
+
+## Reading a region
+
+```{r read, eval = FALSE}
+library(ggbandage)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+g <- bandage_layout(walks, region = "chr1:196,640,001-196,900,000", haplotypes = c("HG00097#1", "HG02055#1"))
+```
+
+- `region` takes a locus as a genome browser writes it. `"chr6"` stands for
+  `GRCh38#0#chr6` when exactly one sequence ends that way
+- `haplotypes` picks the `sample#haplotype` walks to cut, every one by default
+- `context` keeps that many bp of reference past each end, 1,000 by default
+
+## Exporting a region
+
+`bandage_gfa()` returns the region as GFA text, so the cut can feed any tool
+that reads GFA, such as odgi or ggtubemap's `read_gfa()`:
+
+```{r export, eval = FALSE}
+gfa <- bandage_gfa(walks, region = "chr6:160,616,004-160,646,753", haplotypes = c("HG00097#1", "HG00133#2"))
+writeLines(gfa, "kiv2.gfa")
+```
+
+Each W line names the haplotype's contig and its span there, such as
+`W HG00133 2 CM090065.1 162127148 162293018`, so the cut also locates each
+haplotype's sequence in its assembly.
+
+## A syng graph of a region
+
+`scripts/build-syng-region.sh` in the source repository builds a
+[syng](https://github.com/richarddurbin/syng) graph of one region from the
+HPRC walk file, with no alignment step:
+
+```console
+scripts/build-syng-region.sh chr1:25,250,000-25,450,000 rhd HG01258#2,HG01106#1
+```
+
+1. `bandage_gfa()` cuts the region, and its W lines give each haplotype's
+   contig span
+2. The script fetches each span from GenBank, and GRCh38's and CHM13's from
+   UCSC, all on GRCh38's strand
+3. [impg](https://github.com/pangenome/impg) builds the syng graph and writes
+   `rhd.syng.gfa.gz`
+
+ggbandage ships three graphs the script built, of KIV-2, the amylase genes and
+RHD. The gallery draws each one:
+
+```{r syng, eval = FALSE}
+rhd <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
+autoplot(bandage_layout(rhd))
+```
+
+- The script needs impg with the fix that keeps the queried path; `IMPG`
+  names its binary
+- The [developing notes](https://github.com/GMOD/ggbandage/blob/main/docs/developing.md)
+  cover how the cut reaches V8, and timings on the HPRC segment index

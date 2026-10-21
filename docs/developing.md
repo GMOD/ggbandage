@@ -176,6 +176,14 @@ Rscript scripts/gallery.R            # every figure
 Rscript scripts/gallery.R c4_stress  # one figure, and the docs
 ```
 
+## The syng graphs
+
+`inst/extdata/*.syng.gfa.gz` are the gallery's region syng graphs, from
+`scripts/build-syng-region.sh` and an impg built from its
+`syng-gfa-keep-query` branch. The script cuts with R, then fetches and builds
+with impg, so a box without R can run the second half from a `<prefix>.walks`
+file the first half wrote.
+
 ## Test fixtures
 
 `tests/testthat/testdata/ecoli_pggb.*` and `ecoli_rgfa.*` are segment indexes

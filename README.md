@@ -1,8 +1,8 @@
 # ggbandage
 
-- **In:** a GFA file, or a region of a
-  [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) walk file or segment
-  index, local or a url
+- **In:** a GFA file, or any region of a whole-genome pangenome that
+  [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) has indexed, local or
+  a url
 - **Out:** a ggplot of the graph, laid out as
   [Bandage](https://github.com/rrwick/Bandage) lays it out
 
@@ -52,7 +52,10 @@ gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc
 [Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
 `engine` and `genes`.
 
-## Your own pangenome
+## Region-specific pangenomes
+
+A whole-genome pangenome is too large to load, so gfa-to-tabix indexes it once
+and ggbandage reads one region at a time:
 
 1. Index the GFA once with gfa-to-tabix, where `--refs` names the genome
    whose coordinates `region` uses:
@@ -66,6 +69,9 @@ gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc
 2. Pass `graph.GRCh38.walks.bed.gz`, a path or a url, to `bandage_layout()`
    with a `region`. From a url, ggbandage fetches the blocks under the region
    by range request
+
+[Region-specific pangenomes](vignettes/region-pangenomes.Rmd) covers the two
+kinds of index, exporting a region as GFA, and building a region's syng graph.
 
 ## Gallery
 
@@ -83,6 +89,9 @@ More, with code, in [the gallery](docs/gallery.md).
 
 - [Gallery](docs/gallery.md): every figure with its code, including your own
   colours and stacking loci with patchwork
+- [Region-specific pangenomes](vignettes/region-pangenomes.Rmd): indexing a
+  pangenome with gfa-to-tabix, then reading, exporting or building a syng
+  graph of one region
 - [Walk rows](vignettes/walk-rows.Rmd): `bandage_walk_rows()` and how to read its
   bars
 - [Developing](docs/developing.md): for contributors, with the file readers,
