@@ -151,7 +151,7 @@ graphs in `inst/extdata`.
   skip RHD, the deletion that most often makes blood RhD-negative
 - HG01106#1 walks the boxes three times and has a second RHD
 
-![Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD](../gallery/syng_rhd.png)
+![Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a charcoal arc of sequence off GRCh38's path where haplotypes that lack RHD skip it. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD](../gallery/syng_rhd.png)
 
 ```r
 library(ggbandage)

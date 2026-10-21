@@ -98,7 +98,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   ),
   figure(
     "syng_rhd", "RHD deletion and duplication in a syng graph", "chr1:25,250,000-25,450,000",
-    "Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD",
+    "Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a charcoal arc of sequence off GRCh38's path where haplotypes that lack RHD skip it. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD",
     r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 g <- bandage_layout(rhd_syng)
 rows <- bandage_walk_rows(rhd_syng, haplotypes = c("HG01258#2", "HG01106#1"))
