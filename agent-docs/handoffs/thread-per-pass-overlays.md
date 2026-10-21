@@ -39,20 +39,30 @@
 - `BANDAGE_CORE=<checkout> node scripts/build-js.mjs` bundles `inst/js/bandage.js` from a local core.
 - `Rscript scripts/gallery.R [id]` redraws figures and rewrites `docs/gallery.md` and the README table.
 
+## Second session (core `1aa75b9`..`fc5b7d7`, on core main, unreleased)
+
+**Performance**, as a fraction of 11.8.0's time on the 20k-node lift bench. Builds ran interleaved in one process on a loaded box, since ada refused ssh all session; ratios hold to about ±7%.
+
+| Lift | whole graph | zoomed to a twentieth |
+| --- | --- | --- |
+| 2 walks | 0.98 | 0.69 |
+| 20 walks | 1.05 | 0.40 |
+| 2 walks, one repeating | 0.89 | 0.52 |
+| 20 walks, one repeating | 0.76 | 0.49 |
+
+- `1aa75b9`: the edge loop culls a lifted link against the viewport before building lanes. The margin is the widest band times the longest mitred normal plus the largest smoothing shift.
+- `5f0d540`, `dff2834`, `88056b8`: `laneLines` sums in typed arrays, `walkThreads` interns nodes and keys link threads from → to, and `laneRuns` claims each node with one lookup.
+- `e9edcf2`: lane prep is cached on the lift by positions, version and scale, so BandageJS reuses it when a pan rebuilds at the same zoom. `walkThreads.bench.ts` nudges the scale so each run is a cold zoom.
+- Output is byte-identical to 11.8.0 on 180 bench cases, and the gallery redraws pixel-identical.
+- A `Math.hypot` → `sqrt` swap saved ~3% but moved `syng_overlay` by antialiasing, so it was dropped.
+
+**Palette** (`fc5b7d7`): ramps lifted together that share a family split it, the first taking the pale end, with a 0.08 gap. Four or fewer ramps keep the whole family, so no gallery figure changes.
+
 ## Next steps
 
-1. **Performance:** timed on ada, min of 7 runs on a 20k-node chain:
-
-   | Lift | 11.7.3 | now |
-   | --- | --- | --- |
-   | 2 walks | 43 ms | 78 ms |
-   | 20 walks | 167 ms | 275 ms |
-   | 2 walks, one repeating | 34 ms | 165 ms |
-   | 20 walks, one repeating | 157 ms | 488 ms |
-
-   - The time spreads across lane runs, smoothing, thread assignment and GC, with no single hot line. The next step is a rewrite onto typed arrays, or lane runs cut to the viewport
-   - BandageJS rebuilds geometry after each zoom, and the lane work covers the whole graph
-2. **Palette for ramps:** walks lifted together on progress ramps still repeat the four families after the fourth walk.
+1. **Release:** core main is unreleased. `inst/js/bandage.js` is bundled from local `fc5b7d7` until a release, after which `package.json` should pin it.
+2. **Performance against 11.7.3:** repeating lifts still take 1.7–2.5× 11.7.3's time. The rest is per-walk, string-keyed map lookups for colours and threads at every node and edge. The next step is node-indexed arrays across `WalkLift` and the builder.
+3. **Viewport-cut prep:** lane prep can't be cut to the viewport exactly. A run's side comes from agreement summed over the whole run, so a cut could flip lanes mid-pan.
 
 ## Rough edges
 
