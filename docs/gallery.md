@@ -151,7 +151,7 @@ graphs in `inst/extdata`.
   skip RHD, the deletion that most often makes blood RhD-negative
 - HG01106#1 walks the boxes three times and has a second RHD
 
-![Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106 272 kb, repeating RHD's orange to green hues, and HG01258 132 kb, jumping from orange to green past RHD](../gallery/syng_rhd.png)
+![Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD](../gallery/syng_rhd.png)
 
 ```r
 library(ggbandage)
@@ -315,7 +315,7 @@ in jbrowse-plugin-graphgenomeviewer cuts this one from odgi's C4 test haplotypes
 - `hues = "bandage"` gives the rows the layout's hues. Ribbons are off, since
   the rows share almost every node
 
-![Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype has one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues](../gallery/syng_c4.png)
+![Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080#1's 51 kb haplotype has one copy and HG01978#2's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues](../gallery/syng_c4.png)
 
 ```r
 library(ggbandage)

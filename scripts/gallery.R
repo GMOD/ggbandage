@@ -98,7 +98,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   ),
   figure(
     "syng_rhd", "RHD deletion and duplication in a syng graph", "chr1:25,250,000-25,450,000",
-    "Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106 272 kb, repeating RHD's orange to green hues, and HG01258 132 kb, jumping from orange to green past RHD",
+    "Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a dark edge where deleted haplotypes jump past RHD. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD",
     r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 g <- bandage_layout(rhd_syng)
 rows <- bandage_walk_rows(rhd_syng, haplotypes = c("HG01258#2", "HG01106#1"))
@@ -196,7 +196,7 @@ wrap_plots(plots, ncol = 1, heights = c(1, 2.5)))",
   ),
   figure(
     "syng_c4", "C4 as a syng graph from impg", "chr6:31,972,047-32,055,647",
-    "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype has one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
+    "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080#1's 51 kb haplotype has one copy and HG01978#2's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
     r"(g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 (autoplot(g) + guides(fill = "none")) /
