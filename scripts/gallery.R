@@ -18,10 +18,11 @@ twelve <- c(
 )
 syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz")"
 
-figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = NULL) {
+figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = NULL,
+                   readme = FALSE) {
   list(
     id = id, title = title, locus = locus, alt = alt, code = code,
-    width = width, height = height, note = note
+    width = width, height = height, note = note, readme = readme
   )
 }
 
@@ -36,7 +37,7 @@ ggplot(g) +
   geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
   coord_fixed() +
   theme_void())",
-    width = 8, height = 4.4
+    width = 8, height = 4.4, readme = TRUE
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
@@ -48,7 +49,7 @@ ggplot(g) +
   facet = "walk"
 )
 autoplot(g, ncol = 2))",
-    height = 4
+    height = 4, readme = TRUE
   ),
   figure(
     "kiv2_overlay", "Three KIV-2 haplotypes overlaid", "chr6:160,616,004-160,646,753",
@@ -59,7 +60,7 @@ g <- bandage_layout(
   region = kiv2, haplotypes = haps, walks = c("GRCh38", haps), genes = genes
 )
 autoplot(g))",
-    width = 8, height = 7
+    width = 8, height = 7, readme = TRUE
   ),
   figure(
     "cfh_overlay", "CFHR3 and CFHR1 deleted in one of three walks", "chr1:196,640,001-196,900,000",
@@ -78,7 +79,7 @@ autoplot(g))",
     "Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
     r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
 autoplot(rows))",
-    height = 4.4
+    height = 4.4, readme = TRUE
   ),
   figure(
     "amylase_rows", "Amylase copy number in twelve haplotypes", "chr1:103,540,000-103,780,000",
@@ -123,7 +124,7 @@ wrap_plots(plots, ncol = 1, heights = c(1, 2.5)))",
   ),
   figure(
     "syng_c4", "C4 as a syng graph from impg", "chr6:31,972,047-32,055,647",
-    "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype carries one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
+    "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080's 51 kb haplotype has one copy and HG01978's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
     r"(g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 (autoplot(g) + guides(fill = "none")) /
@@ -159,7 +160,7 @@ autoplot(g))",
       "  visits and the key's lengths show its copies: HG01978#2 has one 32.7 kb copy",
       "  more than GRCh38",
       "- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.",
-      "  GRCh38's C4A and C4B both carry it, and both of HG01952#1's copies lack it"
+      "  GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it"
     )
   ),
   figure(
@@ -223,7 +224,8 @@ readme <- function() {
       anchor(f$title), f$title, f$locus, f$id, f$alt
     )
   }
-  rows <- split(figures, ceiling(seq_along(figures) / 2))
+  cards <- Filter(function(f) f$readme, figures)
+  rows <- split(cards, ceiling(seq_along(cards) / 2))
   table <- c(
     "<table>",
     vapply(rows, function(r) paste0("<tr>", paste(vapply(r, cell, ""), collapse = ""), "</tr>"), ""),
