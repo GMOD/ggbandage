@@ -50,6 +50,30 @@ autoplot(g, ncol = 2))",
     height = 4
   ),
   figure(
+    "kiv2_overlay", "Three KIV-2 haplotypes overlaid", "chr6:160,616,004-160,646,753",
+    "Force-directed KIV-2 array with three walks lifted together, one flat colour each, side by side where they share nodes: GRCh38 in charcoal, HG00097#1 in blue, 22.2 kb longer, and HG005#1 in orange, 88.7 kb longer. HG00097#1 alone runs a small loop at the right, and only HG005#1 runs the large loop below",
+    r"(g <- bandage_layout(
+  walks,
+  region = kiv2, haplotypes = c("HG00097#1", "HG005#1"),
+  walks = c("GRCh38#0#chr6", "HG00097#1#JBIRDD010000043.1", "HG005#1#CM099986.1"),
+  genes = genes
+)
+autoplot(g))",
+    width = 8, height = 7
+  ),
+  figure(
+    "cfh_overlay", "CFHR3 and CFHR1 deleted in one of three walks", "chr1:196,640,001-196,900,000",
+    "Force-directed CFH locus with three walks lifted together: GRCh38 in charcoal and HG00097#1 in blue run the loop through CFHR3 and CFHR1, and HG02055#1 in orange, 84.5 kb shorter, takes the dashed deletion edge under it",
+    r"(g <- bandage_layout(
+  walks,
+  region = "chr1:196,640,001-196,900,000", haplotypes = c("HG00097#1", "HG02055#1"),
+  walks = c("GRCh38#0#chr1", "HG00097#1#CM094060.1", "HG02055#1#CM092205.1"),
+  genes = genes
+)
+autoplot(g))",
+    width = 9, height = 3
+  ),
+  figure(
     "kiv2_rows", "KIV-2 copy number as walk rows", "chr6:160,616,004-160,646,753",
     "Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two",
     r"(rows <- bandage_walk_rows(walks, kiv2, haplotypes = five)
