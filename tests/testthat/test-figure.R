@@ -270,6 +270,16 @@ test_that("a walk file cut keeps the haplotypes asked for, and names its sequenc
   )
 })
 
+test_that("a walk the file abridged cuts in full, as from a file that did not", {
+  abridged <- test_path("testdata", "ecoli_pggb_abridged.K12.walks.bed.gz")
+  expect_match(readLines(gzfile(abridged)), "\tabridged\t", all = FALSE)
+  rows <- function(file) {
+    w <- bandage_walk_rows(file, "chr:1004500-1004961", context = 0)$rows
+    w[order(w$name), c("name", "bp", "complete")]
+  }
+  expect_equal(rows(abridged), rows(walk_file), ignore_attr = TRUE)
+})
+
 test_that("a region is a 1-based locus on a GFA and a walk file alike", {
   expect_equal(
     graph_source(pggb, "K12#1#chr:1004501-1004961", NULL, 0)$region,
