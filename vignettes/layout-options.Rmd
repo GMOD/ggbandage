@@ -1,0 +1,18 @@
+---
+title: "Layout options"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Layout options}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Arguments of `bandage_layout()` that the README example uses. `?bandage_layout`
+lists the rest.
+
+| Argument | Effect |
+| --- | --- |
+| `walks` | Haplotypes to colour |
+| `facet = "walk"` | One panel per walk |
+| `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
+| `genes` | A GFF3 or BED file pinned onto the reference |

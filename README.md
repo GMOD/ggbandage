@@ -46,12 +46,8 @@ vg convert -f hprc-v2.1-mc-grch38-f5.gbz > hprc-v2.1-mc-grch38-f5.gfa
 gfa-to-tabix hprc-v2.1-mc-grch38-f5.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f5
 ```
 
-| Argument | Effect |
-| --- | --- |
-| `walks` | Haplotypes to colour |
-| `facet = "walk"` | One panel per walk |
-| `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
-| `genes` | A GFF3 or BED file pinned onto the reference |
+[Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
+`engine` and `genes`.
 
 ## Your own pangenome
 
