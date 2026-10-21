@@ -116,7 +116,7 @@ test_that("the key sits at the plot's top left and wraps inside it at any size",
   expect_gt(length(unique(placed_keys(ggplot2::autoplot(three), 4, 3)$y)), 1)
 })
 
-test_that("a plot in a patchwork keeps its own layout", {
+test_that("only a plot keyed by walks pins its layout, and not in a patchwork", {
   skip_if_not_installed("patchwork")
   p <- ggplot2::autoplot(bandage_layout(pggb, walks = lifted))
   expect_s3_class(p, "bandage_plot")
@@ -124,6 +124,7 @@ test_that("a plot in a patchwork keeps its own layout", {
   on.exit(dev.off())
   expect_true(isTRUE(patchwork:::plot_table(p, "auto")$respect))
   expect_true(is.matrix(ggplot2::ggplotGrob(p)$respect))
+  expect_false(inherits(ggplot2::autoplot(bandage_layout(pggb)), "bandage_plot"))
 })
 
 test_that("a walk row lifted in one flat colour gets a swatch of it", {

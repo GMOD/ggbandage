@@ -11,8 +11,6 @@ walks=https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-# sample, haplotype, contig, 0-based start, end and strand (1 or 2) of each
-# walk through the region, GRCh38's first
 if [[ ! -s $prefix.walks ]]; then
   Rscript -e 'a <- commandArgs(TRUE)
     cat(ggbandage::bandage_gfa(a[1], a[2], haplotypes = strsplit(a[3], ",")[[1]]))' \
@@ -24,9 +22,6 @@ if [[ ! -s $prefix.walks ]]; then
   { grep '^GRCh38 ' "$tmp/walks"; grep -v '^GRCh38 ' "$tmp/walks"; } >"$prefix.walks"
 fi
 
-# impg's syng GFA splits off reverse-complemented haplotypes, so each walk's
-# sequence goes in on GRCh38's strand: references from UCSC, haplotypes from
-# their GenBank contigs
 while read -r sample hap contig start end strand; do
   case $sample in
   GRCh38 | CHM13)
@@ -46,14 +41,11 @@ done <"$prefix.walks" >"$tmp/haps.fa"
 samtools faidx "$tmp/haps.fa"
 
 "$impg" syng -f "$tmp/haps.fa" -o "$tmp/haps.syng" -t 8
-# impg drops the queried path when the query spans its whole sequence, so stop
-# 1 bp short; the path still ends at its last syncmer
 read -r ref len _ <"$tmp/haps.fa.fai"
 "$impg" query -a "$tmp/haps.syng" -r "$ref:0-$((len - 1))" \
   -d 1m -o gfa:syng --sequence-files "$tmp/haps.fa" \
   --force-large-region -O "$tmp/haps.syng"
 
-# impg names paths name:a-b:c-d; compose them to name:(a+c)-(a+d)
 awk -F'\t' -v OFS='\t' '$1 == "P" && match($2, /:[0-9]+-[0-9]+:[0-9]+-[0-9]+$/) {
   split(substr($2, RSTART + 1), r, /[-:]/)
   $2 = substr($2, 1, RSTART) (r[1] + r[3]) "-" (r[1] + r[4])

@@ -197,6 +197,16 @@ Rscript scripts/gallery.R c4_stress  # one figure, and the docs
 with impg, so a box without R can run the second half from a `<prefix>.walks`
 file the first half wrote.
 
+- `<prefix>.walks` gives each walk through the region a line of sample,
+  haplotype, contig, 0-based start, end and strand, 1 or 2, GRCh38's first
+- impg's syng GFA splits off reverse-complemented haplotypes, so the script
+  fetches each walk's sequence on GRCh38's strand, references from UCSC and
+  haplotypes from their GenBank contigs
+- impg drops the queried path when the query spans its whole sequence, so the
+  query stops 1 bp short. The path still ends at its last syncmer
+- impg names paths `name:a-b:c-d`, and the script rewrites each as
+  `name:(a+c)-(a+d)`
+
 ## Test fixtures
 
 `tests/testthat/testdata/ecoli_pggb.*` and `ecoli_rgfa.*` are segment indexes

@@ -93,7 +93,9 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
         )
       )
   }
-  class(p) <- c("bandage_plot", class(p))
+  if (nrow(object$keys) && !faceted) {
+    class(p) <- c("bandage_plot", class(p))
+  }
   p
 }
 

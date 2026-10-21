@@ -13,7 +13,7 @@ Every snippet runs on its own. `scripts/gallery.R` draws them all.
 
 The HPRC graphs are the files behind the
 [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/).
-[Your own pangenome](../README.md#your-own-pangenome) has the steps for another graph.
+[Region-specific pangenomes](../README.md#region-specific-pangenomes) has the steps for another graph.
 
 ## KIV-2 against a straight GRCh38 backbone, with LPA's exons
 
@@ -231,14 +231,19 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 
 `chr6:31,972,047-32,055,647`
 
+- The key and rows name the walks as the graph does. grch38 is GRCh38, and
+  HG01978 and HG01952 are HG01978#2 and HG01952#1, which the key tells from
+  their other haplotypes by where each contig starts
 - The ring holds every C4 copy's sequence once, so a walk with more copies goes
-  round it more often. Each walk draws a thread per pass: GRCh38 two round the
-  ring, and HG01978#2 three, its extra 32.7 kb. The rows show that as a longer bar
-- Each row takes its walk's colour in the drawing, paler where it leaves the GRCh38 path
+  round it more often. Each walk draws a thread per pass: grch38 two round the
+  ring, and HG01978 three, its extra 32.7 kb
+- HG01978's row runs 32.7 kb past grch38's for that copy
+- Each row takes its walk's colour in the drawing, a pale tint of it where the
+  walk leaves the grch38 path
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring, outside in, GRCh38 in charcoal draws two threads, HG01978#2 in blue three, its extra C4 copy, and HG01952#1 in orange two. Charcoal and blue threads run round the loop at the left, and the orange ones cut across it. Walk rows below, in the key's order, each in its walk's colour and paler off the GRCh38 path, give the lengths: GRCh38 84 kb, HG01978#2 116 kb and HG01952#1 71 kb](../gallery/syng_overlay.png)
+![The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring, outside in, grch38 in charcoal draws two threads, HG01978 in blue three, its extra C4 copy, and HG01952 in orange two. Charcoal and blue threads run round the loop at the left, and the orange ones cut across it. Walk rows below, in the key's order, each in its walk's colour and a pale tint of it off the grch38 path, give the lengths: grch38 84 kb, HG01978 116 kb and HG01952 71 kb](../gallery/syng_overlay.png)
 
 ```r
 library(ggbandage)
@@ -257,14 +262,15 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
 `chr6:31,972,047-32,055,647`
 
 - Each thread takes the hue of the GRCh38 position its node covers, as the rows
-  below do, so drawing and rows share one scale, and every pass through a node
-  takes the same hue. The gaps between lanes tell the walks apart: the lanes run
-  in the key's order, outside in, and HG01978#2 draws three threads round the
-  ring where GRCh38 draws two, one 32.7 kb copy more
+  below do, so drawing and rows share one scale
+- Every pass through a node takes the same hue, so the gaps between lanes tell
+  the walks apart. The lanes run in the key's order, outside in
+- HG01978 draws three threads round the ring where grch38 draws two, one
+  32.7 kb copy more
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with GRCh38, HG01978#2 and HG01952#1 lifted together and drawn as a thread per pass through a node, every thread coloured red to magenta by the GRCh38 position its node covers, and walk rows below in the same hues. Every thread shares its node's hue, so the gaps between lanes tell the walks apart. Round the ring seven threads run in groups of two, three and two, the key's order outside in, so HG01978#2 draws one more than GRCh38 and HG01952#1. Five threads run round the loop at the left, the 6.5 kb HERV-K of C4's long form. HG01978#2's row is 32.7 kb longer than GRCh38's and HG01952#1's 12.7 kb shorter](../gallery/syng_ramp.png)
+![The syng graph of C4 with grch38, HG01978 and HG01952 lifted together and drawn as a thread per pass through a node, every thread coloured red to magenta by the GRCh38 position its node covers, and walk rows below in the same hues. Every thread shares its node's hue, so the gaps between lanes tell the walks apart. Round the ring seven threads run in groups of two, three and two, the key's order outside in, so HG01978 draws one more than grch38 and HG01952. Five threads run round the loop at the left, the 6.5 kb HERV-K of C4's long form. HG01978's row is 32.7 kb longer than grch38's and HG01952's 12.7 kb shorter](../gallery/syng_ramp.png)
 
 ```r
 library(ggbandage)
