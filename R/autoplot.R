@@ -31,7 +31,6 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       plot.margin = ggplot2::margin(8, 8, 8, 8),
       legend.position = "bottom",
-      legend.location = "plot",
       legend.justification = "left",
       legend.margin = ggplot2::margin(l = 20),
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
@@ -43,6 +42,9 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
       ),
       panel.spacing = grid::unit(12, "pt")
     )
+  if (nrow(object$keys) && !faceted) {
+    p <- p + ggplot2::theme(legend.location = "plot")
+  }
   if (!m$pixelRows) {
     p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX)
   }
