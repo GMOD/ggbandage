@@ -146,6 +146,9 @@ scripts/update-deps.sh
   once R CMD check passes
 - `@jbrowse` releases go in the day they come out. Others wait three days,
   the `minimumReleaseAge` in `pnpm-workspace.yaml`
+- `BANDAGE_CORE=<bandage-core checkout> pnpm build` bundles that checkout's
+  sources in place of the pinned release, and the banner names its commit.
+  The `bundle` workflow fails on such a bundle until the core releases it
 
 ### Browser globals the bundle defines
 

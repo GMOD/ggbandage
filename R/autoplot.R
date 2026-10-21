@@ -22,7 +22,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
     genes[2] +
     if (labels) geom_bandage_labels()
   if (nrow(object$keys)) {
-    p <- p + geom_bandage_keys(text = !faceted)
+    p <- p + if (faceted) geom_bandage_keys(text = FALSE) else key_guide(object)
   }
   p <- p +
     layout_key(object) +
@@ -45,8 +45,8 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
   if (!m$pixelRows) {
     p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX)
   }
-  if (nrow(object$keys) && !nrow(object$rows)) {
-    # room over the drawing for the key bars, 24 px at the width it was fit to
+  if (faceted && !nrow(object$rows)) {
+    # room over each panel for its key bar, 24 px at the width it was fit to
     p <- p + ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(mult = 0.05, add = c(0, 24 / m$scaleY))
     )

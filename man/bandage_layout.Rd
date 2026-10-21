@@ -29,7 +29,8 @@ index or walk file needs \code{region}}
 \item{walks}{walks (P/W lines) to lift out of the drawing, each named in
 full or by a prefix such as \code{"HG00097#1"} or \code{"HG00097"}, which lifts
 every walk it begins. Walks lifted together share one panel, one flat
-colour each, side by side where they share nodes}
+colour each, side by side where they share nodes. Once one of them
+passes a node twice, each draws a thread per pass}
 
 \item{facet}{\code{"walk"} for a panel per walk}
 

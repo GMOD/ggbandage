@@ -22,6 +22,34 @@ test_that("a key that would run past the panel's right edge starts a new line", 
   expect_length(unique(vapply(bars, function(b) as.character(b$y), "")), 3)
 })
 
+repeat_gfa <- paste(
+  "S\tv1\tAAAA", "S\tv2\tCC", "S\tv3\tGGG",
+  "L\tv1\t+\tv2\t+\t0M", "L\tv2\t+\tv3\t+\t0M", "L\tv2\t+\tv1\t+\t0M",
+  "W\tref\t0\tchr\t0\t9\t>v1>v2>v3", "W\tdup\t1\tchr\t0\t15\t>v1>v2>v1>v2>v3",
+  sep = "\n"
+)
+
+test_that("a walk passing a node twice draws two threads there, keyed under the walks", {
+  gfa <- tempfile(fileext = ".gfa")
+  writeLines(repeat_gfa, gfa)
+  g <- bandage_layout(gfa, walks = c("ref#0#chr", "dup#1#chr"), engine = "stress")
+  expect_equal(keys_of(g)$kind, c("walk", "walk", "faded", "passes"))
+  expect_equal(sort(unique(g$nodes$pass[g$nodes$walk %in% 1])), c(0, 1))
+  n <- nodes_of(g)
+  lane <- n$walk %in% 1
+  expect_true(all(abs(n$slide_x[lane]) + abs(n$slide_y[lane]) > 0))
+  expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(g))))
+})
+
+test_that("a walk row lifted in one flat colour gets a swatch of it", {
+  g <- bandage_layout(pggb, walks = lifted)
+  rows <- bandage_walk_rows(pggb)
+  s <- row_swatches(rows$rows, g)
+  expect_equal(s$colour, g$keys$color[match(rows$rows$name[s$row + 1], g$keys$name)])
+  expect_length(s$row, 2)
+  expect_equal(nrow(row_swatches(rows$rows, NULL)), 0)
+})
+
 test_that("faceted, each panel draws its own walk's bar", {
   g <- bandage_layout(pggb, walks = lifted, facet = "walk")
   expect_equal(levels(keys_of(g)$panel), c("K12", "IAI39"))

@@ -1,4 +1,6 @@
+import { execFileSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 
 import { build } from 'esbuild'
 
@@ -6,9 +8,33 @@ import { build } from 'esbuild'
 // as one script V8 can evaluate, with no modules, file system or network, and
 // FMMM's WASM inlined. The banner names the core it was built from, so a committed bundle
 // says what it is.
+// BANDAGE_CORE=<checkout> bundles a bandage-core checkout's sources in place of
+// the npm package, and the banner names that checkout's commit
+const local = process.env.BANDAGE_CORE
 const { version } = JSON.parse(
-  readFileSync('node_modules/@jbrowse/bandage-core/package.json', 'utf8'),
+  readFileSync(
+    local
+      ? path.join(local, 'package.json')
+      : 'node_modules/@jbrowse/bandage-core/package.json',
+    'utf8',
+  ),
 )
+const built = local
+  ? `${version}+${execFileSync('git', ['-C', local, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim()}`
+  : version
+
+const localCore = {
+  name: 'local-core',
+  setup(b) {
+    b.onResolve({ filter: /^@jbrowse\/bandage-core(\/.*)?$/ }, args => ({
+      path: path.join(
+        path.resolve(local),
+        'src',
+        `${args.path.replace(/^@jbrowse\/bandage-core\/?/, '') || 'index'}.ts`,
+      ),
+    }))
+  },
+}
 
 const OUT = 'inst/js/bandage.js'
 
@@ -44,7 +70,7 @@ const { outputFiles } = await build({
   mainFields: ['module', 'main'],
   charset: 'ascii',
   minifyWhitespace: true,
-  plugins: [noFs],
+  plugins: local ? [noFs, localCore] : [noFs],
   write: false,
   outfile: OUT,
   define: { 'import.meta.url': 'undefined' },
@@ -177,7 +203,7 @@ const dataFetch = `if (!globalThis.fetch) {
 }`
 
 const banner = [
-  `// @jbrowse/bandage-core@${version}, bundled by scripts/build-js.mjs`,
+  `// @jbrowse/bandage-core@${built}, bundled by scripts/build-js.mjs`,
   'if (!globalThis.performance) globalThis.performance = { now: () => Date.now() };',
   decoder,
   textDecoder,

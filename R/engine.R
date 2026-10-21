@@ -75,7 +75,8 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @param walks walks (P/W lines) to lift out of the drawing, each named in
 #'   full or by a prefix such as `"HG00097#1"` or `"HG00097"`, which lifts
 #'   every walk it begins. Walks lifted together share one panel, one flat
-#'   colour each, side by side where they share nodes
+#'   colour each, side by side where they share nodes. Once one of them
+#'   passes a node twice, each draws a thread per pass
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
@@ -230,11 +231,11 @@ as_bandage_layout <- function(d) {
   }
 
   info <- frame(d$nodeInfo)
-  nodes <- upright(frame(d$nodes))
+  nodes <- upright(frame(d$nodes), c("y", "ny"))
   extra <- setdiff(names(info), "node")
   nodes[extra] <- info[match(nodes$node, info$node), extra]
 
-  edges <- upright(frame(d$edges), c("y0", "cy0", "cy1", "y1"))
+  edges <- upright(frame(d$edges), c("y0", "cy0", "cy1", "y1", "ny"))
   arrows <- upright(frame(d$arrows), c("y", "angle"))
   rows <- upright(frame(d$rowLabels))
   keys <- frame(d$keys)

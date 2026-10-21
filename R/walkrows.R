@@ -159,9 +159,11 @@ bar_tiles <- function(runs, tile) {
 #' @param hues `"viridis"`, or `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
 #'   a layout
+#' @param layout the `bandage_layout` drawn over the rows: each row its walks
+#'   lift in one flat colour gets a swatch of that colour beside its name
 #' @exportS3Method ggplot2::autoplot
 autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
-                                       hues = c("viridis", "bandage")) {
+                                       hues = c("viridis", "bandage"), layout = NULL) {
   hues <- match.arg(hues)
   rows <- object$rows
   reference <- rows$sample[1]
@@ -215,6 +217,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   } else {
     position_scale(ggplot2::scale_fill_viridis_c, title)
   }
+  swatches <- row_swatches(rows, layout)
   p <- ggplot2::ggplot()
   if (nrow(links)) {
     top <- y[links$row + 1] - half
@@ -286,7 +289,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ggplot2::scale_x_continuous(
       "kb from the left flank",
       labels = function(x) format(x / 1000, big.mark = ",", scientific = FALSE, trim = TRUE),
-      expand = ggplot2::expansion(mult = c(0.01, if (readouts) 0.3 else 0.02))
+      expand = ggplot2::expansion(
+        mult = c(if (nrow(swatches)) 0.045 else 0.01, if (readouts) 0.3 else 0.02)
+      )
     ) +
     ggplot2::labs(y = NULL) +
     ggplot2::theme_minimal(base_size = 10) +
@@ -303,6 +308,15 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.key.size = grid::unit(10, "pt")
     )
+  if (nrow(swatches)) {
+    p <- p + ggplot2::geom_rect(
+      data = data.frame(swatches, y = y[swatches$row + 1]),
+      ggplot2::aes(
+        xmin = -span * 0.035, xmax = -span * 0.012,
+        ymin = y - half, ymax = y + half, fill = I(colour)
+      )
+    )
+  }
   if (readouts) {
     p <- p + ggplot2::geom_text(
       data = data.frame(x = rows$xmax + span * 0.01, y = y, label = rows$readout),
@@ -311,4 +325,18 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     )
   }
   p
+}
+
+# The flat colour `layout` lifts each row's walk in, by name or by the walk
+# the name's range was cut from
+row_swatches <- function(rows, layout) {
+  keys <- layout$keys
+  if (is.null(keys$color)) {
+    return(data.frame(row = integer(), colour = character()))
+  }
+  keys <- keys[nzchar(keys$color), ]
+  origin <- function(name) sub(":[0-9]+-[0-9]+$", "", name)
+  at <- match(rows$name, keys$name)
+  at[is.na(at)] <- match(origin(rows$name), origin(keys$name))[is.na(at)]
+  data.frame(row = rows$row, colour = keys$color[at])[!is.na(at), ]
 }

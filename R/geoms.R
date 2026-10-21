@@ -49,15 +49,35 @@ in_draw_order <- function(d, id) {
 }
 
 nodes_of <- function(model, background = "white") {
-  n <- model$nodes
+  n <- slid_back(model$nodes, model$meta, c("x", "y"))
   n$ink <- ink(n$color, n$alpha, background)
   in_draw_order(n, "stroke")
 }
 
 edges_of <- function(model, background = "white") {
-  e <- bezier_points(model$edges, model$meta$scaleX)
+  e <- slid_back(model$edges, model$meta, c("x0", "y0", "cx0", "cy0", "cx1", "cy1", "x1", "y1"))
+  e <- bezier_points(e, model$meta$scaleX)
   e$ink <- ink(e$color, e$alpha, background)
   in_draw_order(e, "curve")
+}
+
+# A lifted walk's lane back on its node's line, with the px it was slid off
+# that line, so it slides the same px at whatever size the plot is drawn
+slid_back <- function(d, meta, xy) {
+  if (is.null(d$offset)) {
+    d$slide_x <- d$slide_y <- numeric(nrow(d))
+    return(d)
+  }
+  d$slide_x <- d$nx * d$offset
+  d$slide_y <- d$ny * d$offset
+  for (col in xy) {
+    d[[col]] <- d[[col]] - if (startsWith(col, "x") || startsWith(col, "cx")) {
+      d$slide_x / meta$scaleX
+    } else {
+      d$slide_y / meta$scaleY
+    }
+  }
+  d
 }
 
 # A curve gets a point every few px of its control polygon at the fit scale,
@@ -87,7 +107,10 @@ bezier_points <- function(e, scale) {
 # tens of thousands of strokes in a graph is most of the drawing time.
 GeomBandagePath <- ggplot2::ggproto("GeomBandagePath", ggplot2::Geom,
   required_aes = c("x", "y"),
-  default_aes = ggplot2::aes(colour = "grey30", linewidth = 1, alpha = NA, linetype = 1),
+  default_aes = ggplot2::aes(
+    colour = "grey30", linewidth = 1, alpha = NA, linetype = 1,
+    slide_x = 0, slide_y = 0
+  ),
   draw_key = ggplot2::draw_key_path,
   draw_panel = function(data, panel_params, coord) {
     if (!nrow(data)) {
@@ -96,7 +119,9 @@ GeomBandagePath <- ggplot2::ggproto("GeomBandagePath", ggplot2::Geom,
     d <- coord$transform(data[order(data$group), ], panel_params)
     first <- d[!duplicated(d$group), ]
     grid::polylineGrob(
-      d$x, d$y, id = d$group, default.units = "native",
+      grid::unit(d$x, "native") + grid::unit(d$slide_x / 96, "inches"),
+      grid::unit(d$y, "native") + grid::unit(d$slide_y / 96, "inches"),
+      id = d$group,
       gp = grid::gpar(
         col = ggplot2::alpha(first$colour, first$alpha),
         lwd = first$linewidth * ggplot2::.pt,
@@ -135,7 +160,7 @@ path_layer <- function(mapping, data, pick, ...) {
     geom = GeomBandagePath, stat = "identity", position = "identity",
     data = table_from(data, pick),
     mapping = with_defaults(mapping, ggplot2::aes(
-      x = x, y = y, group = draw,
+      x = x, y = y, group = draw, slide_x = slide_x, slide_y = slide_y,
       colour = I(ink), linewidth = I(px_linewidth(width))
     )),
     inherit.aes = FALSE, show.legend = NA,
@@ -274,19 +299,27 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
 
 FADED <- "#a0a0a0"
 
-# Each lifted walk's key, and unfaceted, a faded swatch for what no walk visits
+# Each lifted walk's key, and unfaceted, a faded swatch for what no walk
+# visits, then the key to the threads where walks draw a thread per pass
 keys_of <- function(model) {
   k <- model$keys
   if (!nrow(k)) {
     return(k)
   }
+  if (is.null(k$kind)) {
+    k$kind <- "walk"
+  }
   k$alpha <- 1
   if (nrow(model$panels) == 1) {
     k$panel <- NULL
-    k <- rbind(k, data.frame(
-      walk = "", stops = FADED, alpha = 0.3, scale = "",
-      note = paste("not on", if (nrow(k) == 1) k$walk else "these walks")
-    ))
+    walks <- k[k$kind == "walk", ]
+    faded <- walks[1, ]
+    faded[] <- ""
+    faded$kind <- "faded"
+    faded$stops <- FADED
+    faded$alpha <- 0.3
+    faded$note <- paste("not on", if (nrow(walks) == 1) walks$walk else "these walks")
+    k <- rbind(walks, faded, k[k$kind != "walk", ])
   } else {
     k$panel <- factor(k$panel, levels = model$panels$panel)
   }
@@ -295,7 +328,7 @@ keys_of <- function(model) {
 
 GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
   required_aes = c("stops", "label"),
-  default_aes = ggplot2::aes(alpha = 1),
+  default_aes = ggplot2::aes(alpha = 1, kind = "walk"),
   extra_params = c("na.rm", "text"),
   draw_panel = function(data, panel_params, coord, text = TRUE) {
     if (!nrow(data)) {
@@ -309,38 +342,55 @@ GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
 # run past the right edge starts a new line
 #' @exportS3Method grid::makeContent
 makeContent.bandage_keys <- function(x) {
-  data <- x$keys
-  px <- function(v) grid::unit(v / 96, "inches")
-  font <- grid::gpar(fontsize = 8.25, col = "grey15")
   room <- grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96
+  grid::setChildren(x, key_grobs(x$keys, x$text, room)$grobs)
+}
+
+key_font <- grid::gpar(fontsize = 8.25, col = "grey15")
+
+# Each key's bar and label from the top left, a new line wherever the next
+# would pass `room` px. Without a device to measure on, a label takes 6.5 px
+# a character.
+key_grobs <- function(data, text, room, measure = TRUE) {
+  px <- function(v) grid::unit(v / 96, "inches")
   grobs <- list()
   at <- 6
   line <- 0
   for (i in seq_len(nrow(data))) {
     colours <- strsplit(data$stops[i], ",", fixed = TRUE)[[1]]
+    threads <- identical(data$kind[i], "passes")
     bar <- if (length(colours) > 1) 48 else 18
     fill <- if (length(colours) > 1) {
       grid::linearGradient(colours, x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5)
-    } else {
+    } else if (!threads) {
       ggplot2::alpha(colours, data$alpha[i])
     }
-    label <- if (x$text && nzchar(data$label[i])) {
-      grid::textGrob(data$label[i], just = "left", gp = font)
+    label <- if (text && nzchar(data$label[i])) {
+      grid::textGrob(data$label[i], just = "left", gp = key_font)
     }
     wide <- bar + if (is.null(label)) {
       0
-    } else {
+    } else if (measure) {
       5 + grid::convertWidth(grid::grobWidth(label), "inches", valueOnly = TRUE) * 96
+    } else {
+      5 + 6.5 * nchar(data$label[i])
     }
     if (at > 6 && at + wide > room) {
       at <- 6
       line <- line + 1
     }
     top <- grid::unit(1, "npc") - px(6 + 16 * line)
-    grobs[[length(grobs) + 1]] <- grid::rectGrob(
-      x = px(at), y = top, width = px(bar), height = px(8),
-      just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
-    )
+    grobs[[length(grobs) + 1]] <- if (threads) {
+      grid::segmentsGrob(
+        px(at), top - px(c(1, 4, 7)), px(at + bar), top - px(c(1, 4, 7)),
+        gp = grid::gpar(col = "grey30", lwd = 2 * 72 / 96, lineend = "butt")
+      )
+    } else {
+      grid::rectGrob(
+        x = px(at), y = top, width = px(bar), height = px(8),
+        just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
+      )
+    }
     if (!is.null(label)) {
       grobs[[length(grobs) + 1]] <- grid::editGrob(
         label, x = px(at + bar + 5), y = top - px(4)
@@ -348,7 +398,21 @@ makeContent.bandage_keys <- function(x) {
     }
     at <- at + wide + 16
   }
-  grid::setChildren(x, do.call(grid::gList, grobs))
+  list(grobs = do.call(grid::gList, grobs), lines = line + 1)
+}
+
+# The keys as a legend over the plot, `room` px wide, which takes the lines
+# it needs at any size the plot is drawn
+key_guide <- function(model, room = 640) {
+  keys <- keys_of(model)
+  keys$label <- paste0(keys$walk, keys$note)
+  laid <- key_grobs(keys, TRUE, room, measure = FALSE)
+  ggplot2::guides(bandage_keys = ggplot2::guide_custom(
+    grid::gTree(children = laid$grobs),
+    width = grid::unit(room / 96, "inches"),
+    height = grid::unit((6 + 16 * laid$lines) / 96, "inches"),
+    position = "top"
+  ))
 }
 
 #' Each lifted walk's colour bar, as the Bandage view's key draws it
@@ -365,7 +429,7 @@ geom_bandage_keys <- function(data = NULL, text = TRUE) {
     geom = GeomBandageKey, stat = "identity", position = "identity",
     data = table_from(data, keys_of),
     mapping = ggplot2::aes(
-      stops = stops, label = paste0(walk, note), alpha = I(alpha)
+      stops = stops, label = paste0(walk, note), alpha = I(alpha), kind = kind
     ),
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(text = text)

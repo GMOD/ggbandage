@@ -63,7 +63,7 @@ autoplot(g, ncol = 2)
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed KIV-2 array with three walks lifted together, each shaded along its own length: GRCh38 grey to black, HG00097#1 cyan to navy, 22.2 kb longer, and HG00133#1 yellow to red, 116 kb longer. Walk rows below show each haplotype's length. HG00097#1 alone runs a small loop at the right, and only HG00133#1 runs the large loop below](../gallery/kiv2_overlay.png)
+![Force-directed KIV-2 array with three walks lifted together side by side, each shaded along its own length from light to mid-tone: GRCh38 light to mid grey, HG00097#1 cyan to blue, 22.2 kb longer, and HG00133#1 yellow to red-orange, 116 kb longer. Where the three walks end together at the right, their lanes stay distinct. Walk rows below show each haplotype's length. HG00097#1 alone runs the loop at the top, and only HG00133#1 runs the large loop below](../gallery/kiv2_overlay.png)
 
 ```r
 library(ggbandage)
@@ -84,7 +84,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1))
 
 `chr1:196,640,001-196,900,000`
 
-![Force-directed CFH locus with GRCh38, HG00097#1 and HG02055#1 lifted together, each coloured red to magenta by GRCh38 position, and walk rows below in the same hues. HG02055#1, 84.5 kb shorter, takes the dashed deletion edge under the loop through CFHR3 and CFHR1, so its row jumps from green to blue](../gallery/cfh_overlay.png)
+![Force-directed CFH locus with GRCh38, HG00097#1 and HG02055#1 lifted together as three side-by-side lanes, each coloured red to magenta by GRCh38 position, and walk rows below in the same hues. HG02055#1, 84.5 kb shorter, takes the dashed deletion edge under the loop through CFHR3 and CFHR1, so its row jumps from green to blue](../gallery/cfh_overlay.png)
 
 ```r
 library(ggbandage)
@@ -231,13 +231,15 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
 
 `chr6:31,972,047-32,055,647`
 
-- The ring holds every C4 copy's sequence once, so a walk with more copies draws
-  over the same nodes: HG01978#2 goes round the ring more often than GRCh38 and
-  looks identical there. The rows show the extra 32.7 kb as a longer bar
+- The ring holds every C4 copy's sequence once, so a walk with more copies goes
+  round it more often. Each walk draws a thread per pass: GRCh38 two round the
+  ring, and HG01978#2 three, its extra 32.7 kb. The rows show that as a longer bar
+- A thread breaks where a walk's copies part round a bubble for more than a few px
+- The swatch beside each row's name is its walk's colour in the drawing
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with three walks lifted together, one flat colour each: GRCh38 in charcoal, HG01952#1 in blue and HG01978#2 in orange, all on the same ring with a loop at the left that only HG01952#1 skips. Walk rows below give the lengths the ring cannot: GRCh38 84 kb, HG01952#1 71 kb and HG01978#2 116 kb](../gallery/syng_overlay.png)
+![The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring GRCh38 in charcoal draws two threads, HG01952#1 in blue two, and HG01978#2 in orange three, its extra C4 copy. Only HG01952#1 skips the loop at the left. Walk rows below, each with a swatch of its walk's colour, give the lengths: GRCh38 84 kb, HG01952#1 71 kb and HG01978#2 116 kb](../gallery/syng_overlay.png)
 
 ```r
 library(ggbandage)
@@ -248,7 +250,7 @@ syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer
 haps <- c("HG01952#1", "HG01978#2")
 g <- bandage_layout(syng, walks = c("grch38", haps))
 rows <- bandage_walk_rows(syng, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1))
+autoplot(g) / autoplot(rows, ribbons = FALSE, layout = g) + plot_layout(heights = c(2.5, 1))
 ```
 
 ## C4's HERV-K loop with each walk on a position ramp
@@ -256,12 +258,13 @@ autoplot(g) / autoplot(rows, ribbons = FALSE) + plot_layout(heights = c(2.5, 1))
 `chr6:31,972,047-32,055,647`
 
 - Each walk takes the hue of the GRCh38 position it covers, as the rows below
-  do, so drawing and rows share one scale. The rows give each haplotype's
-  length: HG01978#2 has one 32.7 kb copy more than GRCh38
+  do, so drawing and rows share one scale. The lanes run in the order the key
+  lists the walks, outside in, and each draws a thread per pass: HG01978#2
+  draws three round the ring where GRCh38 draws two, one 32.7 kb copy more
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with GRCh38, HG01952#1 and HG01978#2 lifted together, each coloured red to magenta by GRCh38 position, and walk rows below in the same hues: HG01952#1 is 12.7 kb shorter than GRCh38 and HG01978#2 32.7 kb longer. The loop at the left is the 6.5 kb HERV-K of C4's long form, which HG01952#1 skips](../gallery/syng_ramp.png)
+![The syng graph of C4 with GRCh38, HG01952#1 and HG01978#2 lifted together, each coloured red to magenta by GRCh38 position and drawn as a thread per pass through a node, and walk rows below in the same hues. Round the ring the outer two lanes, GRCh38 and HG01952#1, draw two threads each and the inner lane, HG01978#2, three: HG01952#1 is 12.7 kb shorter than GRCh38 and HG01978#2 32.7 kb longer. The loop at the left is the 6.5 kb HERV-K of C4's long form, which HG01952#1 skips](../gallery/syng_ramp.png)
 
 ```r
 library(ggbandage)

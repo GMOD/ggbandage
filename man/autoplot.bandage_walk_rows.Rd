@@ -9,7 +9,8 @@
   ...,
   readouts = TRUE,
   ribbons = TRUE,
-  hues = c("viridis", "bandage")
+  hues = c("viridis", "bandage"),
+  layout = NULL
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ reference past its end}
 \item{hues}{\code{"viridis"}, or \code{"bandage"} for the Bandage view's position
 hues, as \code{\link[=scale_fill_bandage_position]{scale_fill_bandage_position()}} draws them, to set walk rows under
 a layout}
+
+\item{layout}{the \code{bandage_layout} drawn over the rows: each row its walks
+lift in one flat colour gets a swatch of that colour beside its name}
 }
 \description{
 A bar per walk on an axis of bp from the left flank, the walk's label on y
