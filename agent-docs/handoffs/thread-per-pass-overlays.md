@@ -13,7 +13,7 @@
   - `syng_c4`, `syng_kiv2`, `syng_amy` and `syng_rhd` moved by subpixels with core 11.7.2's `9c46a40`, which orients a force layout to the reference. A bundle of 11.7.1 redraws the old PNGs exactly.
   - `kiv2_walks` and `own_colours` were drawn from the `-f4` walk file, which jbrowse.org no longer serves.
 
-**Core (`bandage-core`, branch `overlay-followups`, unpublished)**
+**Core (`bandage-core` 11.8.0, released 2026-10-21)**
 - First session: `ff8651f`..`a28924f` draw a thread per pass, cap the band at 48 px and add walk, pass and offset columns to `figureData`.
 - `1aacd82`: `keys` gains `field`, so a host can tell a progress ramp from a reference-position one.
 - `4f69312`: lanes cut only a curl shorter than π times the band. The old 2π cut straightened C4's HERV-K loop away once ten walks widened the band.
@@ -25,12 +25,12 @@
 - `326986c`: `pathLegend` tries sample#haplotype before an offset, so syng walks key as `HG01978#2`.
 - `0ba03af`: walk rows widen P-line labels to sample#haplotype where two would match.
 
-**ggbandage (branch `overlay-followups`)**
+**ggbandage**
 - `hues = "walk"` takes progress ramps as well as flat colours, runs a ramp from the bar's end where the row reads its walk backwards, and outlines blocks so their fills leave the walk colours visible.
 - Rows a passed `layout` lifts take the key's names, and blocks past the three filled ones are keyed.
 - `autoplot.bandage_layout` draws with `clip = "off"`, and the position colourbar lays out horizontally wherever its legend sits.
 - The rows' outline scale is skipped when nothing takes an outline, which fixes the "No shared levels found" warning.
-- `inst/js/bandage.js` is bundled from core `0ba03af`.
+- `inst/js/bandage.js` is bundled from the 11.8.0 release, which `package.json` pins.
 
 **Tests:** core 856 pass, with tsc, eslint and prettier clean. Every R test passes, R CMD check gives no notes, and the four findings of an independent review are fixed.
 
@@ -41,8 +41,7 @@
 
 ## Next steps
 
-1. **Release core:** publish a version from the core's `main`, bump the `package.json` pin from 11.7.0, run `pnpm install` and rebuild the bundle. `docs/developing.md` lists the steps. Both repos' commits are local, and the `bundle` workflow fails on `main` until the release.
-2. **Performance:** timed on ada, min of 7 runs on a 20k-node chain:
+1. **Performance:** timed on ada, min of 7 runs on a 20k-node chain:
 
    | Lift | 11.7.3 | now |
    | --- | --- | --- |
@@ -53,7 +52,7 @@
 
    - The time spreads across lane runs, smoothing, thread assignment and GC, with no single hot line. The next step is a rewrite onto typed arrays, or lane runs cut to the viewport
    - BandageJS rebuilds geometry after each zoom, and the lane work covers the whole graph
-3. **Palette for ramps:** walks lifted together on progress ramps still repeat the four families after the fourth walk.
+2. **Palette for ramps:** walks lifted together on progress ramps still repeat the four families after the fourth walk.
 
 ## Rough edges
 
