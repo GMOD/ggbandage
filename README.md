@@ -65,13 +65,14 @@ GRCh38 skips.
    with a `region`. From a url, ggbandage fetches the blocks under the region
    by range request
 
-[Walk files and segment indexes](docs/tabix.md) has the details.
+[Developing](docs/developing.md#reading-gfa-to-tabix-files) has how ggbandage
+reads walk files and segment indexes.
 
 ## Walk rows
 
 `bandage_walk_rows()` draws each walk as a bar of the bp it has between the
-reference nodes flanking the region: the reference on top, then the walks that
-reach both flanks, longest first. A repeat expansion shows as a longer bar,
+reference nodes flanking the region, with the reference on top and the walks
+that reach both flanks below it, longest first. A repeat expansion shows as a longer bar,
 which no node layout shows. The gallery has
 [KIV-2](docs/gallery.md#kiv-2-copy-number-as-walk-rows) and
 [amylase](docs/gallery.md#amylase-copy-number-in-twelve-haplotypes) examples.
@@ -147,10 +148,8 @@ More, with code, in [the gallery](docs/gallery.md).
 
 - [Gallery](docs/gallery.md): every figure with its code, including your own
   colours and stacking loci with patchwork
-- [Walk files and segment indexes](docs/tabix.md): the file formats, and how
-  ggbandage reads them
-- [Developing](docs/developing.md): the engine bundle, the gallery and the
-  tests
+- [Developing](docs/developing.md): how ggbandage reads walk files and
+  segment indexes, the engine bundle, the gallery and the test fixtures
 
 ## See also
 
