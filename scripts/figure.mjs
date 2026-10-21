@@ -25,18 +25,39 @@ function geneSource({ file, index, ...rest } = {}) {
   return rest.text === undefined ? undefined : rest
 }
 
+// A walk named in full, or every walk a prefix such as sample#haplotype begins
+function liftedWalks(graph, walks = []) {
+  const names = [...new Set((graph.paths ?? []).map(p => p.name))]
+  const lifted = walkLayers(walks).map(layer =>
+    names.includes(layer.walk)
+      ? [layer]
+      : names
+          .filter(
+            n =>
+              n.startsWith(`${layer.walk}#`) || n.startsWith(`${layer.walk}:`),
+          )
+          .map(walk => ({ ...layer, walk })),
+  )
+  return {
+    walks: lifted.flat(),
+    unmatched: walks.filter((_, i) => lifted[i].length === 0),
+  }
+}
+
 export async function figure(text, name, spec, genes) {
   const region = spec.region ? parseRegion(spec.region) : undefined
   const { graph, layout } = await laidOutGraph(text, name, region, spec)
   const source = geneSource(genes)
   const read = source ? await backboneGenes(graph, source) : { genes: [] }
+  const { walks, unmatched } = liftedWalks(graph, spec.walks)
   return {
     ...figureData(graph, layout, {
       ...spec,
       region,
-      walks: walkLayers(spec.walks),
+      walks,
       genes: read.genes,
     }),
+    unmatched,
     unbound: read.unbound,
   }
 }

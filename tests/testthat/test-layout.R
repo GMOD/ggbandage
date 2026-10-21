@@ -19,6 +19,14 @@ test_that("walks facet a panel each, in the core's order", {
   expect_equal(nrow(b$layout$layout), 2)
 })
 
+test_that("a prefix lifts every walk it begins, and a name matching none warns", {
+  expect_warning(
+    g <- bandage_layout(pggb, walks = c("K12#1", "IAI39", "nope"), facet = "walk"),
+    "no walk named nope"
+  )
+  expect_equal(levels(g$nodes$panel), c("K12", "IAI39"))
+})
+
 test_that("an anchored layout draws a bp axis and its rows on y", {
   g <- bandage_layout(rgfa, layout = "auto")
   expect_true(g$meta$referenceAxis)

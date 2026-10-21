@@ -72,9 +72,10 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #'   a local pair); or of a gfa-to-tabix `--walks` file (`.walks.bed.gz`). An
 #'   index or walk file needs `region`
 #' @param layout `"force"`, `"auto"`, `"ordered"` or `"samplerows"`
-#' @param walks walk (P/W line) names to lift out of the drawing. Walks lifted
-#'   together share one panel, one flat colour each, side by side where they
-#'   share nodes
+#' @param walks walks (P/W lines) to lift out of the drawing, each named in
+#'   full or by a prefix such as `"HG00097#1"` or `"HG00097"`, which lifts
+#'   every walk it begins. Walks lifted together share one panel, one flat
+#'   colour each, side by side where they share nodes
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
@@ -114,7 +115,7 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     await = TRUE
   )
   d <- jsonlite::fromJSON(json)
-  missing <- setdiff(walks, d$walkNames)
+  missing <- unlist(d$unmatched)
   if (length(missing)) {
     warning(
       sprintf(

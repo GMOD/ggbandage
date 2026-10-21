@@ -26,9 +26,10 @@ index or walk file needs \code{region}}
 
 \item{layout}{\code{"force"}, \code{"auto"}, \code{"ordered"} or \code{"samplerows"}}
 
-\item{walks}{walk (P/W line) names to lift out of the drawing. Walks lifted
-together share one panel, one flat colour each, side by side where they
-share nodes}
+\item{walks}{walks (P/W lines) to lift out of the drawing, each named in
+full or by a prefix such as \code{"HG00097#1"} or \code{"HG00097"}, which lifts
+every walk it begins. Walks lifted together share one panel, one flat
+colour each, side by side where they share nodes}
 
 \item{facet}{\code{"walk"} for a panel per walk}
 
