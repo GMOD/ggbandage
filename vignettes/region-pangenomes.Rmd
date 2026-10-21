@@ -105,7 +105,6 @@ rhd <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 autoplot(bandage_layout(rhd))
 ```
 
-- The script needs impg with the fix that keeps the queried path; `IMPG`
-  names its binary
+- `IMPG` names the impg binary, `impg` on the `PATH` by default
 - The [developing notes](https://github.com/GMOD/ggbandage/blob/main/docs/developing.md)
   cover how the cut reaches V8, and timings on the HPRC segment index

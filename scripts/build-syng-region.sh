@@ -2,7 +2,7 @@
 # Builds <prefix>.syng.gfa.gz, a syng graph of HPRC haplotypes over a GRCh38
 # region, with impg:
 #   build-syng-region.sh chr6:160,616,004-160,646,753 kiv2 HG00097#1,HG00133#2
-# Needs R with ggbandage, impg built with syng-gfa-keep-query (or set IMPG),
+# Needs R with ggbandage, impg (or set IMPG),
 # samtools, curl and python3. Without R, copy <prefix>.walks from a machine with it.
 set -euo pipefail
 region=$1 prefix=$2 haps=$3
@@ -46,8 +46,10 @@ done <"$prefix.walks" >"$tmp/haps.fa"
 samtools faidx "$tmp/haps.fa"
 
 "$impg" syng -f "$tmp/haps.fa" -o "$tmp/haps.syng" -t 8
+# impg drops the queried path when the query spans its whole sequence, so stop
+# 1 bp short; the path still ends at its last syncmer
 read -r ref len _ <"$tmp/haps.fa.fai"
-"$impg" query -a "$tmp/haps.syng" -r "$ref:0-$len" \
+"$impg" query -a "$tmp/haps.syng" -r "$ref:0-$((len - 1))" \
   -d 1m -o gfa:syng --sequence-files "$tmp/haps.fa" \
   --force-large-region -O "$tmp/haps.syng"
 
