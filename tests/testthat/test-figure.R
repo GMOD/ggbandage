@@ -171,6 +171,22 @@ test_that("walk-hued rows run a walk's progress ramp from the bar's start to its
   expect_true(near(bar$fill[nrow(bar)], stops[length(stops)]))
 })
 
+test_that("walk-hued rows outline blocks and leave their fill to the walk", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    paste0("S\t", 1:4, "\t", strrep(c("A", "A", "A", "C"), c(1000, 10, 1000, 200))),
+    "L\t1\t+\t2\t+\t0M", "L\t2\t+\t3\t+\t0M", "L\t1\t+\t4\t+\t0M", "L\t4\t+\t3\t+\t0M",
+    "P\tref#0#chr\t1+,2+,3+\t*", "P\ta#1#c\t1+,4+,3+\t*", "P\tb#1#c\t1+,4+,3+\t*"
+  ), gfa)
+  g <- bandage_layout(gfa, walks = c("ref#0#chr", "a#1#c", "b#1#c"), engine = "stress")
+  rows <- bandage_walk_rows(gfa)
+  expect_gt(nrow(rows$blocks), 0)
+  b <- expect_no_warning(ggplot2::ggplot_build(ggplot2::autoplot(rows, hues = "walk", layout = g)))
+  fills <- toupper(unlist(lapply(b$data, function(d) as.character(d$fill))))
+  expect_false(any(fills %in% c("#D4785F", "#D9A94E", "#C98AA3", "#E8E8E8")))
+})
+
 test_that("walk-hued rows draw off-path stretches as unoutlined tints of the walk, and key one", {
   g <- bandage_layout(pggb, walks = lifted)
   rows <- bandage_walk_rows(pggb)

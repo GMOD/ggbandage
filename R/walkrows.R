@@ -143,7 +143,8 @@ bar_tiles <- function(runs, tile) {
 #' which may still resemble the reference, as an extra repeat copy does. A
 #' letter marks a block of non-reference nodes that two or more drawn rows
 #' walk, the same letter wherever the block recurs, and the three largest
-#' blocks are filled. White is sequence the extracted subgraph does not hold:
+#' blocks are filled, except under `hues = "walk"`, which outlines them. White
+#' is sequence the extracted subgraph does not hold:
 #' dashed where the graph holds it outside the subgraph, and for a cut from a
 #' walk file, solid dark where a record break says the graph lacks it and
 #' dotted where the file leaves it open. The readout says where a walk went
@@ -219,7 +220,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
-  fills <- c("#d4785f", "#d9a94e", "#c98aa3")
+  fills <- if (walk_hued) character() else c("#d4785f", "#d9a94e", "#c98aa3")
   filled <- blocks[blocks$block < length(fills), ]
   filled$letter <- factor(filled$letter, levels = block_letters(seq_along(fills) - 1))
   lettered <- blocks[blocks$bp >= span * letter_share, ]
@@ -292,7 +293,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ggplot2::geom_rect(
       data = blocks[blocks$block >= length(fills), ],
       ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half),
-      fill = "#e8e8e8", colour = "#7a7a7a", linewidth = 0.25
+      fill = if (walk_hued) NA else "#e8e8e8", colour = "#7a7a7a", linewidth = 0.25
     ) +
     ggplot2::geom_rect(
       data = filled,

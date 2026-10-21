@@ -43,7 +43,8 @@ one shows them reversed. Charcoal is sequence on non-reference nodes,
 which may still resemble the reference, as an extra repeat copy does. A
 letter marks a block of non-reference nodes that two or more drawn rows
 walk, the same letter wherever the block recurs, and the three largest
-blocks are filled. White is sequence the extracted subgraph does not hold:
+blocks are filled, except under \code{hues = "walk"}, which outlines them. White
+is sequence the extracted subgraph does not hold:
 dashed where the graph holds it outside the subgraph, and for a cut from a
 walk file, solid dark where a record break says the graph lacks it and
 dotted where the file leaves it open. The readout says where a walk went
