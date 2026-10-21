@@ -43,8 +43,12 @@ GRCh38 and HG00097#1 across LPA's KIV-2 repeat, each walk shaded yellow to
 red along its length. HG00097#1 runs a 22 kb loop of extra repeat copies that
 GRCh38 skips.
 
-- `walks` picks the haplotypes to colour, and `facet = "walk"` gives each one
-  a panel
+- The walk file is HPRC's v2.1 GRCh38 graph, prepared with
+  `vg convert -f hprc-v2.1-mc-grch38-f5.gbz > hprc-v2.1-mc-grch38-f5.gfa`,
+  then `gfa-to-tabix hprc-v2.1-mc-grch38-f5.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f5`
+  ([steps](#your-own-pangenome))
+- `walks = ` picks the haplotypes to colour, and `facet = "walk"` gives each
+  one a panel
 - `engine = "stress"` draws the reference straight, with each variant hanging
   off it, in place of Bandage's force-directed default
 - `genes` pins a GFF3 or BED file onto the reference
