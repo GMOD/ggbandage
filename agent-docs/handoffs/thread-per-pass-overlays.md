@@ -39,7 +39,7 @@
 - `BANDAGE_CORE=<checkout> node scripts/build-js.mjs` bundles `inst/js/bandage.js` from a local core.
 - `Rscript scripts/gallery.R [id]` redraws figures and rewrites `docs/gallery.md` and the README table.
 
-## Second session (core `1aa75b9`..`fc5b7d7`, on core main, unreleased)
+## Second session (core `1aa75b9`..`fc5b7d7`, released as 11.9.0)
 
 **Performance**, as a fraction of 11.8.0's time on the 20k-node lift bench. Builds ran interleaved in one process on a loaded box, since ada refused ssh all session; ratios hold to about ±7%.
 
@@ -60,9 +60,8 @@
 
 ## Next steps
 
-1. **Release:** core main is unreleased. `inst/js/bandage.js` is bundled from local `fc5b7d7` until a release, after which `package.json` should pin it.
-2. **Performance against 11.7.3:** repeating lifts still take 1.7–2.5× 11.7.3's time. The rest is per-walk, string-keyed map lookups for colours and threads at every node and edge. The next step is node-indexed arrays across `WalkLift` and the builder.
-3. **Viewport-cut prep:** lane prep can't be cut to the viewport exactly. A run's side comes from agreement summed over the whole run, so a cut could flip lanes mid-pan.
+1. **Performance against 11.7.3:** repeating lifts still take 1.7–2.5× 11.7.3's time. The rest is per-walk, string-keyed map lookups for colours and threads at every node and edge. The next step is node-indexed arrays across `WalkLift` and the builder.
+2. **Viewport-cut prep:** lane prep can't be cut to the viewport exactly. A run's side comes from agreement summed over the whole run, so a cut could flip lanes mid-pan.
 
 ## Rough edges
 
