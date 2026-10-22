@@ -141,11 +141,11 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
 
 `chr1:25,250,000-25,450,000`
 
-The KIV-2, amylase and RHD syng graphs are region-specific pangenomes.
-`scripts/build-syng-region.sh` cuts each region from the HPRC walk file to find
+The RHD syng graph is a region-specific pangenome.
+`scripts/build-syng-region.sh` cuts the region from the HPRC walk file to find
 each haplotype's contig span, fetches those spans from GenBank, and builds the
-graph with [impg](https://github.com/pangenome/impg). ggbandage ships the
-graphs in `inst/extdata`.
+graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
+`inst/extdata`.
 
 - The Rhesus boxes either side of RHD share their nodes, so GRCh38 walks them
   twice
@@ -262,41 +262,6 @@ g <- bandage_layout(
 autoplot(g)
 ```
 
-### RHD and CYP2D6 gene deletions as arches
-
-`RHD, CYP2D6`
-
-![RHD and CYP2D6 in the stress layout, one above the other, GRCh38 straight and genes named: in each, a dashed arch spans the whole gene, the route of haplotypes that skip it, and non-reference sequence hangs in grey](../gallery/deletions.png)
-
-```r
-library(ggbandage)
-library(ggplot2)
-library(patchwork)
-
-index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
-genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
-
-deletions <- c(
-  RHD = "chr1:25,250,000-25,450,000",
-  CYP2D6 = "chr22:42,118,000-42,136,000"
-)
-plots <- Map(
-  function(gene, region) {
-    g <- bandage_layout(index, region = region, engine = "stress", genes = genes)
-    ggplot(g) +
-      geom_bandage_edges() +
-      geom_bandage_genes() +
-      geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
-      coord_fixed(clip = "off") +
-      labs(title = gene, subtitle = region) +
-      theme_void() +
-      theme(plot.title = element_text(face = "italic"), plot.margin = margin(4, 12, 4, 12))
-  },
-  names(deletions), deletions
-)
-wrap_plots(plots, ncol = 1, heights = c(1, 2.5))
-```
-
 ### C4 as a syng graph from impg
 
 `chr6:31,972,047-32,055,647`
@@ -328,84 +293,6 @@ syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer
 
 g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
-(autoplot(g) + guides(fill = "none")) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(2.5, 1))
-```
-
-### C4's HERV-K loop on a GRCh38 position ramp
-
-`chr6:31,972,047-32,055,647`
-
-- grch38's threads take the hue of the GRCh38 position they cover, as the rows
-  below do, so drawing and rows share one scale
-- The haplotypes take one flat colour each, since on a position ramp every pass
-  through a node would share the node's hue and the walks would blur together
-- HG01978 draws three threads round the ring where grch38 draws two, one
-  32.7 kb copy more
-- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
-  GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
-
-![The syng graph of C4 with grch38, HG01978 and HG01952 lifted together and drawn as a thread per pass through a node: grch38's threads coloured red to magenta by GRCh38 position, HG01978's dark grey and HG01952's mauve. Round the ring, outside in, grch38 draws two threads, HG01978 three and HG01952 two. grch38 and HG01978 run round the loop at the left, the 6.5 kb HERV-K of C4's long form, and HG01952 cuts across it. Walk rows below take the GRCh38 position hues: HG01978's row is 32.7 kb longer than grch38's and HG01952's 12.7 kb shorter](../gallery/syng_ramp.png)
-
-```r
-library(ggbandage)
-library(patchwork)
-
-syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
-
-haps <- c("HG01978#2", "HG01952#1")
-hued <- list(
-  list(walk = "grch38", color = list(field = "reference", scheme = "rainbow")),
-  list(walk = haps[1], color = list(field = "walk", scheme = "grey")),
-  list(walk = haps[2], color = list(field = "walk", scheme = "purple"))
-)
-g <- bandage_layout(syng, walks = hued)
-rows <- bandage_walk_rows(syng, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(heights = c(2.5, 1))
-```
-
-### KIV-2 copy number in a syng graph
-
-`chr6:160,616,004-160,646,753`
-
-- Syng folds every KIV-2 unit onto one ring, so a haplotype's copy count is how
-  often its walk goes round
-- The haplotypes differ in steps of about 5.5 kb, one unit each
-
-![Force-directed syng graph of KIV-2 from 21 HPRC haplotypes: the repeat units fold onto one ring coloured along GRCh38, and three dashed loops are links that skip GRCh38 sequence. Under it, walk rows in the same hues: GRCh38 spans 33 kb, and five haplotypes span 38 kb to 177 kb, each repeating the ring's colours once per extra 5.5 kb unit](../gallery/syng_kiv2.png)
-
-```r
-library(ggbandage)
-library(ggplot2)
-library(patchwork)
-
-kiv2_syng <- system.file("extdata", "kiv2.syng.gfa.gz", package = "ggbandage")
-g <- bandage_layout(kiv2_syng)
-rows <- bandage_walk_rows(kiv2_syng, haplotypes = c("HG00658#2", "NA18976#1", "HG02451#1", "NA18970#2", "NA18508#2"))
-(autoplot(g) + guides(fill = "none")) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(2.5, 1))
-```
-
-### Amylase copy number in a syng graph
-
-`chr1:103,540,000-103,780,000`
-
-- The haplotypes come in four lengths 94 kb apart, 148, 242, 336 and 430 kb, one
-  amylase repeat unit each
-- HG01106#2 repeats GRCh38's cyan and blue stretch, and HG00706#1 lacks one copy
-
-![Force-directed syng graph of the salivary amylase genes from 16 HPRC haplotypes, coloured along GRCh38, its copies folded onto shared loops. Under it, walk rows: GRCh38 spans 242 kb, HG00706#1 148 kb, HG02965#1 336 kb and HG01106#2 430 kb, and HG02080#1 matches GRCh38's length but walks the non-reference blocks A and B](../gallery/syng_amy.png)
-
-```r
-library(ggbandage)
-library(ggplot2)
-library(patchwork)
-
-amy_syng <- system.file("extdata", "amy.syng.gfa.gz", package = "ggbandage")
-g <- bandage_layout(amy_syng)
-rows <- bandage_walk_rows(amy_syng, haplotypes = c("HG00706#1", "HG02080#1", "HG02965#1", "HG01106#2"))
 (autoplot(g) + guides(fill = "none")) /
   autoplot(rows, ribbons = FALSE, hues = "bandage") +
   plot_layout(heights = c(2.5, 1))

@@ -5,10 +5,10 @@
 **Request:** the gallery's "Three KIV-2 haplotypes overlaid" figure, then the CFHR3/CFHR1 and C4 overlays, should use gradients, with walk rows below. The C4 extra copy was invisible because every copy shares nodes.
 
 **Gallery**
-- The README shows eight figures, four wide then four tall: `cfh_overlay`, `kiv2_rows`, `amylase_rows`, `cyp2d6_stress`, `kiv2_overlay`, `syng_overlay`, `syng_rhd` and `own_colours`. `docs/gallery.md` shows them first and the other eight under "More examples". `readme = TRUE` in `scripts/gallery.R` marks the core set.
+- The README shows eight figures, four wide then four tall: `cfh_overlay`, `kiv2_rows`, `amylase_rows`, `cyp2d6_stress`, `kiv2_overlay`, `syng_overlay`, `syng_rhd` and `own_colours`. `docs/gallery.md` shows them first and the other four under "More examples". `deletions`, `syng_ramp`, `syng_kiv2` and `syng_amy` were cut as duplicates, with the KIV-2 and amylase syng graphs they drew. `readme = TRUE` in `scripts/gallery.R` marks the core set.
 - `kiv2_overlay`, `cfh_overlay` and `syng_overlay` sit above walk rows.
 - In all three each walk has a separate colour ramp, and each row repeats its walk's ramp unbroken along the bar, under a grey strip where it runs on the GRCh38 path. `cfh_overlay`'s ribbons break across the 85 kb HG02055#1 lacks.
-- `syng_overlay` lifts its walks as grey, blue and orange progress ramps with a thread per pass. Core 11.10.0 shades each thread by its own pass, so a node's threads step light to dark. `syng_ramp`, in `docs/gallery.md` only, puts grch38 on a position ramp and the haplotypes in flat grey and mauve.
+- `syng_overlay` lifts its walks as grey, blue and orange progress ramps with a thread per pass. Core 11.10.0 shades each thread by its own pass, so a node's threads step light to dark.
 - The six PNGs that drifted are redrawn:
   - `syng_c4`, `syng_kiv2`, `syng_amy` and `syng_rhd` moved by subpixels with core 11.7.2's `9c46a40`, which orients a force layout to the reference. A bundle of 11.7.1 redraws the old PNGs exactly.
   - `kiv2_walks` and `own_colours` were drawn from the `-f4` walk file, which jbrowse.org no longer serves.
