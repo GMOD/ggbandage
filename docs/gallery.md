@@ -293,7 +293,7 @@ syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer
 
 g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
-(autoplot(g) + guides(fill = "none")) /
+(autoplot(g) + guides(fill = "none", colour = "none", linetype = "none") + labs(caption = NULL)) /
   autoplot(rows, ribbons = FALSE, hues = "bandage") +
   plot_layout(heights = c(2.5, 1))
 ```

@@ -177,7 +177,7 @@ autoplot(g))",
     "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080#1's 51 kb haplotype has one copy and HG01978#2's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
     r"(g <- bandage_layout(syng)
 rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
-(autoplot(g) + guides(fill = "none")) /
+(autoplot(g) + guides(fill = "none", colour = "none", linetype = "none") + labs(caption = NULL)) /
   autoplot(rows, ribbons = FALSE, hues = "bandage") +
   plot_layout(heights = c(2.5, 1)))",
     width = 9, height = 8.5,
