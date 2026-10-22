@@ -188,7 +188,11 @@ the README's cards from the same list, a card for each figure marked
 ```console
 Rscript scripts/gallery.R            # every figure
 Rscript scripts/gallery.R c4_stress  # one figure, and the docs
+Rscript scripts/gallery.R --check    # what CI runs: offline, draws nothing
 ```
+
+`--check` fails when a snippet calls a function no attached package defines, or
+when `docs/gallery.md` or the README cards differ from what the script writes.
 
 ## The syng graphs
 

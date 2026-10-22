@@ -2,6 +2,8 @@
 # and the README's gallery table from the same code:
 #   Rscript scripts/gallery.R            every figure
 #   Rscript scripts/gallery.R c4_stress  one figure, and the docs
+#   Rscript scripts/gallery.R --check    fails on a snippet calling a function
+#                                        that doesn't exist, or on stale docs
 
 definitions <- list(
   walks = 'walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"',
@@ -211,7 +213,7 @@ draw <- function(f) {
   message(sprintf("%s %.1f s", f$id, as.numeric(Sys.time() - started, units = "secs")))
 }
 
-docs <- function() {
+docs_text <- function() {
   out <- c(
     "# Gallery",
     "",
@@ -243,14 +245,14 @@ docs <- function() {
       "```r", standalone(f$code), "```"
     )
   }
-  writeLines(out, file.path("docs", "gallery.md"))
+  out
 }
 
 anchor <- function(title) {
   gsub(" ", "-", gsub("[^a-z0-9 -]", "", tolower(title)))
 }
 
-readme <- function() {
+readme_text <- function() {
   cell <- function(f) {
     sprintf(
       '<td width="25%%"><a href="docs/gallery.md#%s"><img src="gallery/%s.png" alt="%s" width="100%%"></a><br>%s</td>',
@@ -267,14 +269,45 @@ readme <- function() {
   text <- readLines("README.md")
   from <- which(text == "<!-- gallery -->")
   to <- which(text == "<!-- /gallery -->")
-  writeLines(c(text[seq_len(from)], table, text[to:length(text)]), "README.md")
+  c(text[seq_len(from)], table, text[to:length(text)])
 }
 
-devtools::load_all(quiet = TRUE)
-dir.create("gallery", showWarnings = FALSE)
-wanted <- commandArgs(TRUE)
-for (f in figures) {
-  if (!length(wanted) || f$id %in% wanted) draw(f)
+# The functions a snippet calls that no attached package defines
+unresolved <- function(f) {
+  body <- as.call(c(as.name("{"), as.list(parse(text = standalone(f$code)))))
+  called <- codetools::findGlobals(eval(call("function", NULL, body)), merge = FALSE)$functions
+  missing <- called[!vapply(called, exists, TRUE)]
+  if (length(missing)) sprintf("%s calls %s", f$id, paste(missing, collapse = ", "))
 }
-docs()
-readme()
+
+check <- function() {
+  library(ggplot2)
+  library(patchwork)
+  stale <- function(path, text) {
+    joined <- function(lines) paste(lines, collapse = "\n")
+    if (joined(readLines(path)) != joined(text)) paste(path, "is stale: run scripts/gallery.R")
+  }
+  problems <- c(
+    unlist(lapply(figures, unresolved)),
+    stale(file.path("docs", "gallery.md"), docs_text()),
+    stale("README.md", readme_text())
+  )
+  if (length(problems)) {
+    message(paste(problems, collapse = "\n"))
+    quit(status = 1)
+  }
+  message(sprintf("%d snippets resolve, and the docs are current", length(figures)))
+}
+
+pkgload::load_all(quiet = TRUE)
+wanted <- commandArgs(TRUE)
+if (identical(wanted, "--check")) {
+  check()
+} else {
+  dir.create("gallery", showWarnings = FALSE)
+  for (f in figures) {
+    if (!length(wanted) || f$id %in% wanted) draw(f)
+  }
+  writeLines(docs_text(), file.path("docs", "gallery.md"))
+  writeLines(readme_text(), "README.md")
+}

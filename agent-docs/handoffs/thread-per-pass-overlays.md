@@ -68,5 +68,5 @@
 - **Crossing:** the lanes knot where the C4 ring closes and the tails leave it.
 - **Notch:** every lane jogs about 1 px at the top right of the C4 ring, where one run's smoothing hands over to another's.
 - **Floating curl:** the pale curl beside the right tail is sequence no lifted walk visits, drawn faded as the key says.
-- **Thumbnails:** the 2 px threads can't be counted at README thumbnail size.
+- **Thumbnails:** the 2 px threads can't be counted at README thumbnail size, about a fifth of the PNG. The core's `THREAD_PX` fixes their width, so `width` doesn't thicken them, and threads countable there would need ~10 px at full size.
 - **Commit trailers:** some agent commits say Opus 5.5 where the owner's say Sonnet.
