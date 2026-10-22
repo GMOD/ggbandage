@@ -69,5 +69,4 @@
 - **Notch:** every lane jogs about 1 px at the top right of the C4 ring, where one run's smoothing hands over to another's.
 - **Floating curl:** the pale curl beside the right tail is sequence no lifted walk visits, drawn faded as the key says.
 - **Thumbnails:** the 2 px threads can't be counted at README thumbnail size.
-- **Ramp rows:** a row's ramp runs from its bar's start, at the left flank, and the drawing's ramp from the cut's start, 1 kb further out, so the two differ by a few percent.
 - **Commit trailers:** some agent commits say Opus 5.5 where the owner's say Sonnet.

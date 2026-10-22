@@ -14,6 +14,7 @@ import {
 } from '@jbrowse/bandage-core/layout/walkRowLinks'
 import { walkRows as cutRows } from '@jbrowse/bandage-core/layout/walkRows'
 import { loadGraph } from '@jbrowse/bandage-core/pipeline'
+import { walkHighlight } from '@jbrowse/bandage-core/walkHighlight'
 
 import { openIndexed } from './tabix-cut.mjs'
 
@@ -57,6 +58,13 @@ export async function figure(text, name, spec, genes) {
       walks,
       genes: read.genes,
     }),
+    ranges: columns(
+      walks.flatMap(({ walk }) => {
+        const range = walkHighlight(graph, walk)?.range
+        return range ? [{ name: walk, ...range }] : []
+      }),
+      ['name', 'contig', 'start', 'end'],
+    ),
     unmatched,
     unbound: read.unbound,
   }
@@ -113,6 +121,8 @@ export function walkRows(text, name, spec) {
       complete: all.map(r => r.complete),
       linked: all.map(r => r.complete),
       backward: all.map(r => !!r.axis?.reversed),
+      contig: all.map(r => r.axis?.contig ?? null),
+      contigStart: all.map(r => r.axis?.start ?? null),
       readout: all.map((r, i) =>
         walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
       ),

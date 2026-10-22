@@ -239,6 +239,11 @@ as_bandage_layout <- function(d) {
   arrows <- upright(frame(d$arrows), c("y", "angle"))
   rows <- upright(frame(d$rowLabels))
   keys <- frame(d$keys)
+  ranges <- frame(d$ranges)
+  at <- match(keys$name, ranges$name)
+  keys$contig <- as.character(ranges$contig)[at]
+  keys$start <- as.numeric(ranges$start)[at]
+  keys$end <- as.numeric(ranges$end)[at]
   threads <- frame(d$threadKeys)
   genes <- upright(frame(d$pins))
   exons <- upright(frame(d$exons))

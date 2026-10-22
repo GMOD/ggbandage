@@ -161,8 +161,10 @@ bar_tiles <- function(runs, tile) {
 #' @param hues `"viridis"`; `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
 #'   a layout coloured by position; or `"walk"` for each row in the colours
-#'   `layout` lifts its walk in, a flat colour or a progress ramp run from the
-#'   bar's start to its end, to set rows under walks lifted together. A grey
+#'   `layout` lifts its walk in, a flat colour or a progress ramp, to set rows
+#'   under walks lifted together. A ramp takes each bp of the bar the colour the
+#'   drawing gives that contig position, so it starts past the ramp's first
+#'   colour where the cut reaches beyond the flank. A grey
 #'   strip above a row marks where its walk runs on the reference's path
 #' @param layout the `bandage_layout` drawn above the rows. A row whose walk
 #'   the layout lifts takes the name the layout's key gives it, and a swatch
@@ -396,15 +398,21 @@ key_labels <- function(rows, layout) {
 }
 
 # Each row's walk as `layout` lifts it: a flat `colour`, or the `stops` of a
-# progress ramp with no colour
+# progress ramp with no colour, run over `start` to `end` of `contig`
 walk_inks <- function(rows, layout) {
   keys <- layout$keys
   if (is.null(keys$color)) {
-    return(data.frame(row = integer(), colour = character(), stops = character()))
+    return(data.frame(
+      row = integer(), colour = character(), stops = character(),
+      contig = character(), start = numeric(), end = numeric()
+    ))
   }
   keys <- keys[nzchar(keys$color) | keys$field == "progress", ]
   at <- key_index(rows$name, keys)
-  data.frame(row = rows$row, colour = keys$color[at], stops = keys$stops[at])[!is.na(at), ]
+  data.frame(
+    row = rows$row, colour = keys$color[at], stops = keys$stops[at],
+    contig = keys$contig[at], start = keys$start[at], end = keys$end[at]
+  )[!is.na(at), ]
 }
 
 row_swatches <- function(rows, layout) {
@@ -412,7 +420,8 @@ row_swatches <- function(rows, layout) {
   inks[nzchar(inks$colour), c("row", "colour")]
 }
 
-# A row's colour `x` bp along its bar
+# A row's colour `x` bp along its bar. A ramp runs over the stretch of contig
+# the layout lifts, which reaches past the flanks the bar spans
 walk_fill <- function(inks, rows, row, x) {
   rgb <- matrix(0x9a, length(row), 3)
   for (r in intersect(unique(row), inks$row)) {
@@ -422,9 +431,20 @@ walk_fill <- function(inks, rows, row, x) {
       matrix(grDevices::col2rgb(inks$colour[k]), sum(here), 3, byrow = TRUE)
     } else {
       ramp <- grDevices::colorRamp(strsplit(inks$stops[k], ",")[[1]], space = "Lab")
-      along <- if (rows$bp[r + 1] > 0) pmin(1, pmax(0, x[here] / rows$bp[r + 1])) else 0
-      ramp(if (isTRUE(rows$backward[r + 1])) 1 - along else along)
+      ramp(pmin(1, pmax(0, ramp_along(inks[k, ], rows[r + 1, ], x[here]))))
     }
   }
   grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3], maxColorValue = 255)
+}
+
+# How far along its ramp `x` bp of a row's bar falls: by contig position where
+# the row's axis and the lifted stretch share a contig, else by share of the bar
+ramp_along <- function(ink, row, x) {
+  backward <- isTRUE(row$backward)
+  if (isTRUE(ink$contig == row$contig) && ink$end > ink$start) {
+    position <- row$contigStart + if (backward) -x else x
+    return((position - ink$start) / (ink$end - ink$start))
+  }
+  along <- if (row$bp > 0) x / row$bp else 0 * x
+  if (backward) 1 - along else along
 }

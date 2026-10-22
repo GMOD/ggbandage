@@ -26,8 +26,10 @@ reference past its end}
 \item{hues}{\code{"viridis"}; \code{"bandage"} for the Bandage view's position
 hues, as \code{\link[=scale_fill_bandage_position]{scale_fill_bandage_position()}} draws them, to set walk rows under
 a layout coloured by position; or \code{"walk"} for each row in the colours
-\code{layout} lifts its walk in, a flat colour or a progress ramp run from the
-bar's start to its end, to set rows under walks lifted together. A grey
+\code{layout} lifts its walk in, a flat colour or a progress ramp, to set rows
+under walks lifted together. A ramp takes each bp of the bar the colour the
+drawing gives that contig position, so it starts past the ramp's first
+colour where the cut reaches beyond the flank. A grey
 strip above a row marks where its walk runs on the reference's path}
 
 \item{layout}{the \code{bandage_layout} drawn above the rows. A row whose walk

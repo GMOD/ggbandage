@@ -171,6 +171,30 @@ test_that("walk-hued rows run a walk's progress ramp from the bar's start to its
   expect_true(near(bar$fill[nrow(bar)], stops[length(stops)]))
 })
 
+test_that("a row's ramp runs over the stretch of contig its walk is lifted on, past the bar's flanks", {
+  ink <- data.frame(contig = "c", start = 100, end = 300)
+  row <- data.frame(bp = 100, backward = FALSE, contig = "c", contigStart = 150)
+  expect_equal(ramp_along(ink, row, c(0, 100)), c(0.25, 0.75))
+  row$backward <- TRUE
+  row$contigStart <- 250
+  expect_equal(ramp_along(ink, row, c(0, 100)), c(0.75, 0.25))
+  row$contig <- "elsewhere"
+  expect_equal(ramp_along(ink, row, c(0, 100)), c(1, 0))
+})
+
+test_that("a walk file cut with context starts each row's ramp where the drawing's reaches its flank", {
+  region <- "chr:1004650-1004800"
+  g <- bandage_layout(walk_file, region = region, context = 100, walks = list(
+    list(walk = "K12", color = list(field = "progress"))
+  ))
+  rows <- bandage_walk_rows(walk_file, region, context = 100)
+  inks <- walk_inks(rows$rows, g)
+  r <- inks$row[1]
+  along <- ramp_along(inks[1, ], rows$rows[r + 1, ], c(0, rows$rows$bp[r + 1]))
+  expect_gt(along[1], 0.05)
+  expect_lt(along[2], 0.95)
+})
+
 test_that("blocks past the three filled ones are keyed", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
