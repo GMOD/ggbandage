@@ -8,7 +8,7 @@
 - The README shows eight figures, four wide then four tall: `cfh_overlay`, `kiv2_rows`, `amylase_rows`, `cyp2d6_stress`, `kiv2_overlay`, `syng_overlay`, `syng_rhd` and `own_colours`. `docs/gallery.md` shows them first and the other eight under "More examples". `readme = TRUE` in `scripts/gallery.R` marks the core set.
 - `kiv2_overlay`, `cfh_overlay` and `syng_overlay` sit above walk rows.
 - In all three each walk has a separate colour ramp, and each row repeats its walk's ramp unbroken along the bar, under a grey strip where it runs on the GRCh38 path. `cfh_overlay`'s ribbons break across the 85 kb HG02055#1 lacks.
-- `syng_overlay` lifts its walks as grey, blue and orange progress ramps with a thread per pass. Core 11.10.0 shades each thread by its own pass, so a node's threads step light to dark. `syng_ramp` is the position-ramp version, in `docs/gallery.md` only.
+- `syng_overlay` lifts its walks as grey, blue and orange progress ramps with a thread per pass. Core 11.10.0 shades each thread by its own pass, so a node's threads step light to dark. `syng_ramp`, in `docs/gallery.md` only, puts grch38 on a position ramp and the haplotypes in flat grey and mauve.
 - The six PNGs that drifted are redrawn:
   - `syng_c4`, `syng_kiv2`, `syng_amy` and `syng_rhd` moved by subpixels with core 11.7.2's `9c46a40`, which orients a force layout to the reference. A bundle of 11.7.1 redraws the old PNGs exactly.
   - `kiv2_walks` and `own_colours` were drawn from the `-f4` walk file, which jbrowse.org no longer serves.
@@ -68,6 +68,6 @@
 - **Crossing:** the lanes knot where the C4 ring closes and the tails leave it.
 - **Notch:** every lane jogs about 1 px at the top right of the C4 ring, where one run's smoothing hands over to another's.
 - **Floating curl:** the pale curl beside the right tail is sequence no lifted walk visits, drawn faded as the key says.
-- **Thumbnails:** the 2 px threads can't be counted at README thumbnail size. `syng_ramp` gives every pass through a node that node's colour, so all of a node's threads match.
+- **Thumbnails:** the 2 px threads can't be counted at README thumbnail size.
 - **Ramp rows:** a row's ramp runs from its bar's start, at the left flank, and the drawing's ramp from the cut's start, 1 kb further out, so the two differ by a few percent.
 - **Commit trailers:** some agent commits say Opus 5.5 where the owner's say Sonnet.

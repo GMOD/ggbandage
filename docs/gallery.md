@@ -333,20 +333,20 @@ rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
   plot_layout(heights = c(2.5, 1))
 ```
 
-### C4's HERV-K loop with each walk on a position ramp
+### C4's HERV-K loop on a GRCh38 position ramp
 
 `chr6:31,972,047-32,055,647`
 
-- Each thread takes the hue of the GRCh38 position its node covers, as the rows
+- grch38's threads take the hue of the GRCh38 position they cover, as the rows
   below do, so drawing and rows share one scale
-- Every pass through a node takes the same hue, so the gaps between lanes tell
-  the walks apart. The lanes run in the key's order, outside in
+- The haplotypes take one flat colour each, since on a position ramp every pass
+  through a node would share the node's hue and the walks would blur together
 - HG01978 draws three threads round the ring where grch38 draws two, one
   32.7 kb copy more
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with grch38, HG01978 and HG01952 lifted together and drawn as a thread per pass through a node, every thread coloured red to magenta by the GRCh38 position its node covers, and walk rows below in the same hues. Every thread shares its node's hue, so the gaps between lanes tell the walks apart. Round the ring seven threads run in groups of two, three and two, the key's order outside in, so HG01978 draws one more than grch38 and HG01952. Five threads run round the loop at the left, the 6.5 kb HERV-K of C4's long form. HG01978's row is 32.7 kb longer than grch38's and HG01952's 12.7 kb shorter](../gallery/syng_ramp.png)
+![The syng graph of C4 with grch38, HG01978 and HG01952 lifted together and drawn as a thread per pass through a node: grch38's threads coloured red to magenta by GRCh38 position, HG01978's dark grey and HG01952's mauve. Round the ring, outside in, grch38 draws two threads, HG01978 three and HG01952 two. grch38 and HG01978 run round the loop at the left, the 6.5 kb HERV-K of C4's long form, and HG01952 cuts across it. Walk rows below take the GRCh38 position hues: HG01978's row is 32.7 kb longer than grch38's and HG01952's 12.7 kb shorter](../gallery/syng_ramp.png)
 
 ```r
 library(ggbandage)
@@ -355,7 +355,11 @@ library(patchwork)
 syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 
 haps <- c("HG01978#2", "HG01952#1")
-hued <- lapply(c("grch38", haps), function(w) list(walk = w, color = list(field = "reference", scheme = "rainbow")))
+hued <- list(
+  list(walk = "grch38", color = list(field = "reference", scheme = "rainbow")),
+  list(walk = haps[1], color = list(field = "walk", scheme = "grey")),
+  list(walk = haps[2], color = list(field = "walk", scheme = "purple"))
+)
 g <- bandage_layout(syng, walks = hued)
 rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(heights = c(2.5, 1))
