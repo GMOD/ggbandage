@@ -242,7 +242,7 @@ test_that("walk-hued rows outline blocks and leave their fill to the walk", {
   expect_false(any(fills %in% c("#D4785F", "#D9A94E", "#C98AA3", "#E8E8E8")))
 })
 
-test_that("walk-hued rows draw off-path stretches as unoutlined tints of the walk, and key one", {
+test_that("walk-hued rows keep each bar unbroken, and strip it grey where it runs on the reference", {
   g <- bandage_layout(pggb, walks = lifted)
   rows <- bandage_walk_rows(pggb)
   p <- ggplot2::autoplot(rows, hues = "walk", layout = g)
@@ -250,17 +250,21 @@ test_that("walk-hued rows draw off-path stretches as unoutlined tints of the wal
   plain <- p$layers[[at]]$data
   drawn <- ggplot2::layer_data(p, at)
   swatch <- row_swatches(rows$rows, g)
-  off <- startsWith(plain$key, "paler") & plain$row %in% swatch$row
+  off <- startsWith(plain$key, "grey above") & plain$row %in% swatch$row
   expect_true(any(off))
   expect_true(all(is.na(drawn$colour[off])))
   bar <- p$layers[[which(vapply(p$layers, function(l) "position" %in% names(l$data), TRUE))]]$data
-  tinted <- bar$kind == "off the reference's path" & bar$row %in% swatch$row
-  expect_true(any(tinted))
-  rgb <- grDevices::col2rgb(swatch$colour[match(bar$row[tinted], swatch$row)]) / 255
-  tint <- grDevices::rgb(t(rgb + (1 - rgb) * PALER))
-  expect_equal(toupper(bar$fill[tinted]), toupper(tint))
+  hued <- bar$row %in% swatch$row
+  expect_true(any(hued & bar$kind == "off the reference's path"))
+  expect_equal(
+    toupper(bar$fill[hued]),
+    toupper(swatch$colour[match(bar$row[hued], swatch$row)])
+  )
+  strips <- p$layers[[which(vapply(p$layers, function(l) identical(l$aes_params$fill, STRIP_FILL), TRUE))]]$data
+  on <- bar[bar$kind == "on the reference's path" & bar$row > 0, ]
+  expect_equal(paste(strips$row, strips$xmin), paste(on$row, on$xmin))
   legend <- p$scales$get_scales("colour")$guide$params$override.aes$fill
-  expect_true(toupper(legend[1]) %in% toupper(tint))
+  expect_equal(legend[1], STRIP_FILL)
 })
 
 test_that("faceted, each panel draws its own walk's bar", {

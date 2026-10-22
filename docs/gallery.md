@@ -92,7 +92,7 @@ autoplot(g)
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 116 kb longer, and HG00097 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097 alone runs the loop at the top, and HG00133 alone runs the large loop below, the small loops at the right and one at the left. Walk rows below, each on its walk's ramp and paler off the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 147 kb and HG00097 53 kb](../gallery/kiv2_overlay.png)
+![Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 116 kb longer, and HG00097 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097 alone runs the loop at the top, and HG00133 alone runs the large loop below, the small loops at the right and one at the left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 147 kb and HG00097 53 kb](../gallery/kiv2_overlay.png)
 
 ```r
 library(ggbandage)
@@ -116,12 +116,12 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   round it more often. Each walk draws a thread per pass: grch38 two round the
   ring, and HG01978 three, its extra 32.7 kb
 - HG01978's row runs 32.7 kb past grch38's for that copy
-- Each row takes its walk's colour in the drawing, a pale tint of it where the
-  walk leaves the grch38 path
+- Each walk shades light to dark along its length, in the drawing and in its
+  row, so a thread's shade says which pass round the ring it is
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
-![The syng graph of C4 with three walks lifted together, one flat colour each and a thread for every pass through a node: round the ring, outside in, grch38#chr6 in charcoal draws two threads, HG01978#2 in blue three, its extra C4 copy, and HG01952#1 in orange two. Charcoal and blue threads run round the HERV-K loop at the left, and the orange ones cut across it. Walk rows below, each in its walk's colour, give the lengths: grch38#chr6 84 kb, HG01978#2 116 kb and HG01952#1 71 kb](../gallery/syng_overlay.png)
+![The syng graph of C4 with three walks lifted together, each shaded light to dark along its own length, grch38#chr6 grey, HG01978#2 cyan to blue and HG01952#1 peach to rust, and a thread for every pass through a node: round the ring, outside in, grch38#chr6 draws two threads, HG01978#2 three, its extra C4 copy, and HG01952#1 two, each pass darker than the one before. Grey and blue threads run round the HERV-K loop at the left, and the orange ones cut across it. Walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, give the lengths: grch38#chr6 84 kb, HG01978#2 116 kb and HG01952#1 71 kb](../gallery/syng_overlay.png)
 
 ```r
 library(ggbandage)
@@ -130,7 +130,9 @@ library(patchwork)
 syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
 
 haps <- c("HG01978#2", "HG01952#1")
-g <- bandage_layout(syng, walks = c("grch38", haps))
+schemes <- c(grch38 = "grey", "HG01978#2" = "blue", "HG01952#1" = "orange")
+progress <- lapply(names(schemes), function(w) list(walk = w, color = list(field = "progress", scheme = schemes[[w]])))
+g <- bandage_layout(syng, walks = progress)
 rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1))
 ```

@@ -161,9 +161,9 @@ bar_tiles <- function(runs, tile) {
 #' @param hues `"viridis"`; `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
 #'   a layout coloured by position; or `"walk"` for each row in the colours
-#'   `layout` lifts its walk in, lighter off the reference's path, to set rows
-#'   under walks lifted together: a flat colour, or a progress ramp run from
-#'   the bar's start to its end
+#'   `layout` lifts its walk in, a flat colour or a progress ramp run from the
+#'   bar's start to its end, to set rows under walks lifted together. A grey
+#'   strip above a row marks where its walk runs on the reference's path
 #' @param layout the `bandage_layout` drawn above the rows. A row whose walk
 #'   the layout lifts takes the name the layout's key gives it, and a swatch
 #'   beside it where the walk is one flat colour; `hues = "walk"` takes the
@@ -201,7 +201,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     xmax = tapply(plain$xmax, stretch, max),
     kind = tapply(as.character(plain$kind), stretch, `[`, 1)
   )
-  off <- paste(if (walk_hued) "paler: off the" else "off the", reference, "path")
+  off <- paste(if (walk_hued) "grey above: on the" else "off the", reference, "path")
   ribbon <- "ribbon: next row walks the same nodes"
   inverted <- "ribbon: next row walks them backwards"
   plain$key <- ifelse(
@@ -210,12 +210,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   )
   more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
   labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted, more)
-  off_fill <- if (walk_hued) {
-    first <- c(setdiff(inks$row, 0), inks$row)[1]
-    walk_fill(inks, rows, first, rows$bp[first + 1] / 2, PALER)
-  } else {
-    "#3c4148"
-  }
+  off_fill <- if (walk_hued) STRIP_FILL else "#3c4148"
   off_ink <- if (walk_hued) NA else "#3c4148"
   block_fill <- if (walk_hued) NA else "#e8e8e8"
   keys <- stats::setNames(
@@ -240,6 +235,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   }
   key <- ifelse(links$b0 > links$b1, inverted, ribbon)
   shown <- intersect(names(keys), c(plain$key, key, others$key))
+  strips <- all[walk_hued & on & all$row > 0 & off %in% shown, c("row", "y", "xmin", "xmax")]
+  rise <- if (nrow(strips)) STRIP_GAP + STRIP_HEIGHT else 0
   title <- paste(reference, "position, Mb")
   fill <- if (walk_hued) {
     NULL
@@ -261,16 +258,13 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   }
   plain$fill <- ifelse(walk_hued & plain$key == off, NA, keys[plain$key])
   if (walk_hued) {
-    tiles$fill <- walk_fill(
-      inks, rows, tiles$row, (tiles$xmin + tiles$xmax) / 2,
-      ifelse(tiles$kind == "on the reference's path", 0, PALER)
-    )
+    tiles$fill <- walk_fill(inks, rows, tiles$row, (tiles$xmin + tiles$xmax) / 2)
     swatches <- swatches[0, ]
   }
   p <- ggplot2::ggplot()
   if (nrow(links)) {
     top <- y[links$row + 1] - half
-    bottom <- top - 1 + 2 * half
+    bottom <- top - 1 + 2 * half + rise
     p <- p + ggplot2::geom_polygon(
       data = data.frame(
         id = rep(seq_len(nrow(links)), each = 4),
@@ -290,6 +284,13 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       } else {
         ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, fill = position)
       }
+    ) +
+    ggplot2::geom_rect(
+      data = strips,
+      ggplot2::aes(
+        xmin = xmin, xmax = xmax, ymin = y + half + STRIP_GAP, ymax = y + half + rise
+      ),
+      fill = STRIP_FILL
     ) +
     ggplot2::geom_rect(
       data = plain,
@@ -372,7 +373,9 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   p
 }
 
-PALER <- 0.6
+STRIP_FILL <- "#8c8c8c"
+STRIP_GAP <- 0.03
+STRIP_HEIGHT <- 0.06
 
 # Which key, if any, names each walk, by its full name or the name without
 # the cut's range
@@ -409,8 +412,8 @@ row_swatches <- function(rows, layout) {
   inks[nzchar(inks$colour), c("row", "colour")]
 }
 
-# A row's colour `x` bp along its bar, `light` of the way to white
-walk_fill <- function(inks, rows, row, x, light = 0) {
+# A row's colour `x` bp along its bar
+walk_fill <- function(inks, rows, row, x) {
   rgb <- matrix(0x9a, length(row), 3)
   for (r in intersect(unique(row), inks$row)) {
     k <- match(r, inks$row)
@@ -423,7 +426,5 @@ walk_fill <- function(inks, rows, row, x, light = 0) {
       ramp(if (isTRUE(rows$backward[r + 1])) 1 - along else along)
     }
   }
-  rgb <- rgb / 255
-  rgb <- rgb + (1 - rgb) * light
-  grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3])
+  grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3], maxColorValue = 255)
 }
