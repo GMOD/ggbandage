@@ -7,8 +7,8 @@
 **Gallery**
 - The README shows eight figures, four wide then four tall: `cfh_overlay`, `kiv2_rows`, `amylase_rows`, `cyp2d6_stress`, `kiv2_overlay`, `syng_overlay`, `syng_rhd` and `own_colours`. `docs/gallery.md` shows them first and the other eight under "More examples". `readme = TRUE` in `scripts/gallery.R` marks the core set.
 - `kiv2_overlay`, `cfh_overlay` and `syng_overlay` sit above walk rows.
-- In `kiv2_overlay` and `cfh_overlay` each walk has a separate colour ramp, and each row repeats its walk's ramp along the bar, paler off the GRCh38 path. `cfh_overlay`'s ribbons break across the 85 kb HG02055#1 lacks.
-- `syng_overlay` lifts each walk in one flat colour with a thread per pass, and its rows take those colours. `syng_ramp` is the position-ramp version, in `docs/gallery.md` only.
+- In all three each walk has a separate colour ramp, and each row repeats its walk's ramp unbroken along the bar, under a grey strip where it runs on the GRCh38 path. `cfh_overlay`'s ribbons break across the 85 kb HG02055#1 lacks.
+- `syng_overlay` lifts its walks as grey, blue and orange progress ramps with a thread per pass. Core 11.10.0 shades each thread by its own pass, so a node's threads step light to dark. `syng_ramp` is the position-ramp version, in `docs/gallery.md` only.
 - The six PNGs that drifted are redrawn:
   - `syng_c4`, `syng_kiv2`, `syng_amy` and `syng_rhd` moved by subpixels with core 11.7.2's `9c46a40`, which orients a force layout to the reference. A bundle of 11.7.1 redraws the old PNGs exactly.
   - `kiv2_walks` and `own_colours` were drawn from the `-f4` walk file, which jbrowse.org no longer serves.

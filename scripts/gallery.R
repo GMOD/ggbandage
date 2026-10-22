@@ -93,7 +93,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
       "  ring, and HG01978 three, its extra 32.7 kb",
       "- HG01978's row runs 32.7 kb past grch38's for that copy",
       "- Each walk shades light to dark along its length, in the drawing and in its",
-      "  row, so a thread's shade says which pass round the ring it is",
+      "  row, so a darker thread is a later pass round the ring",
       "- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.",
       "  GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it"
     )
