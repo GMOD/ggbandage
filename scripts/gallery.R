@@ -69,8 +69,8 @@ autoplot(g))",
   ),
   figure(
     "kiv2_overlay", "KIV-2 expansions as extra loops", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 116 kb longer, and HG00097 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00097 alone runs the loop at the top, and HG00133 alone runs the large loop below, the small loops at the right and one at the left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 147 kb and HG00097 53 kb",
-    r"(haps <- c("HG00133#1", "HG00097#1")
+    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 133 kb longer, and HG00097 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00133 and HG00097 run the loop at the right together, and HG00133 alone runs the large loop below and the loops at the top right and left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with the right loop outlined as block A in both",
+    r"(haps <- c("HG00133#2", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
 g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress)
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
