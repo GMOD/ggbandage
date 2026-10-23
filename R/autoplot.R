@@ -24,7 +24,11 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
     genes[3] +
     if (labels) geom_bandage_labels()
   if (nrow(object$keys)) {
-    p <- p + if (faceted) geom_bandage_keys(text = FALSE) else key_guide(object)
+    p <- p + if (faceted) {
+      list(geom_bandage_keys(text = FALSE), facet_key_guide(object))
+    } else {
+      key_guide(object)
+    }
   }
   p <- p +
     layout_key(object) +

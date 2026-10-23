@@ -296,6 +296,15 @@ test_that("faceted, each panel draws its own walk's bar", {
   expect_equal(levels(keys_of(g)$panel), c("K12", "IAI39"))
 })
 
+test_that("faceted, one key below the panels names the shading, the faded rest and the deletions", {
+  g <- bandage_layout(pggb, walks = lifted, facet = "walk")
+  guide <- ggplot2::autoplot(g)$guides$guides$bandage_keys
+  expect_equal(guide$params$position, "bottom")
+  expect_equal(guide$params$grob$keys$label, c(
+    "each walk, start to end", "only in other haplotypes", "skips K12 chr sequence (a deletion)"
+  ))
+})
+
 test_that("labels name each node once, at a point of its stroke", {
   g <- bandage_layout(pggb)
   d <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_labels())

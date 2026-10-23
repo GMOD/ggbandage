@@ -344,23 +344,26 @@ keys_of <- function(model, exons = FALSE) {
     return(k)
   }
   k$panel <- NULL
+  notes <- key_notes(model, exons)
+  notes[setdiff(names(k), names(notes))] <- ""
+  rbind(k, notes[names(k)])
+}
+
+# The key's entries after the walks: the faded rest, the deletions, the
+# threads and the exon outline
+key_notes <- function(model, exons = FALSE) {
   extra <- function(kind, note, stops = "", alpha = 1) {
     if (!length(note)) {
       return(NULL)
     }
-    row <- k[rep(1, length(note)), ]
-    row[] <- ""
-    row$kind <- kind
-    row$note <- note
-    row$stops <- stops
-    row$alpha <- alpha
-    row
+    data.frame(walk = "", note = note, stops = stops, kind = kind, alpha = alpha)
   }
-  faded <- extra("faded", model$meta$fadedKey, FADED, 0.3)
-  deletions <- extra("deletion", model$meta$deletionKey, FADED)
   rbind(
-    k, faded, deletions, extra("passes", as.character(model$threads$note)),
-    if (exons && nrow(model$exons)) extra("exon", "exon", EXON)
+    extra("faded", model$meta$fadedKey, FADED, 0.3),
+    extra("deletion", model$meta$deletionKey, FADED),
+    extra("passes", as.character(model$threads$note)),
+    if (exons && nrow(model$exons)) extra("exon", "exon", EXON),
+    data.frame(walk = character(), note = character(), stops = character(), kind = character(), alpha = numeric())
   )
 }
 
@@ -445,6 +448,26 @@ key_guide <- function(model) {
   ggplot2::guides(bandage_keys = ggplot2::guide_custom(
     grid::gTree(keys = keys, cl = "bandage_key_guide"),
     position = "top"
+  ))
+}
+
+# Faceted, each panel's bar goes unlabelled under its title, so a key below
+# the panels names the shading, the faded rest and the dashes
+facet_key_guide <- function(model) {
+  shades <- unique(model$keys$stops[grepl(",", model$keys$stops, fixed = TRUE)])
+  keys <- rbind(
+    if (length(shades) == 1) {
+      data.frame(walk = "", note = "each walk, start to end", stops = shades, kind = "walk", alpha = 1)
+    },
+    key_notes(model)
+  )
+  if (!nrow(keys)) {
+    return(NULL)
+  }
+  keys$label <- keys$note
+  ggplot2::guides(bandage_keys = ggplot2::guide_custom(
+    grid::gTree(keys = keys, cl = "bandage_key_guide"),
+    position = "bottom"
   ))
 }
 

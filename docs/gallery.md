@@ -198,7 +198,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   The 18 kb between them is the GSTM1 deletion, so the second loop is most likely
   GSTM1 too, a copy the graph did not align to GRCh38's.
 
-![The GSTM1 locus cut from the walk file with all 464 HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that every haplotype walks. GSTM1 hangs off them as a thin pale loop, beside a second pale loop of non-reference sequence, and most haplotypes take the grey dashed edge that skips both. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
+![The GSTM1 locus cut from the walk file with all 464 HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that every haplotype walks. GSTM1 hangs off them as a thin pale loop labelled 16%, beside a second pale loop of non-reference sequence labelled 19%, and most haplotypes take the grey dashed edge that skips both. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
 
 ```r
 library(ggbandage)
@@ -209,18 +209,21 @@ genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 gstm1 <- "chr1:109,665,000-109,715,000"
 g <- bandage_layout(walks, region = gstm1, genes = genes)
+loops <- g$nodes[g$nodes$frequency > 0.05 & g$nodes$frequency < 0.5 & g$nodes$length > 400, ]
+loops <- loops[!duplicated(loops$depth), ]
 share <- "share of HPRC haplotypes"
 ggplot(g) +
   geom_bandage_edges(aes(colour = I("grey80"))) +
   geom_bandage_genes() +
   geom_bandage_nodes(aes(colour = frequency, linewidth = frequency)) +
+  geom_label(aes(x, y, label = scales::percent(frequency, 1)), data = loops, size = 3, fill = "white", linewidth = 0) +
   scale_colour_viridis_c(share, option = "mako", direction = -1, end = 0.9, labels = scales::label_percent()) +
   scale_linewidth(share, range = c(0.4, 3.5), labels = scales::label_percent()) +
-  guides(colour = "legend") +
-  labs(caption = "Specks along a strand are small variants that some haplotypes carry") +
+  guides(colour = guide_legend(order = 1), linewidth = guide_legend(order = 1)) +
+  labs(caption = "A dashed edge skips GRCh38 sequence. Specks along a strand are small variants that some haplotypes carry") +
   coord_fixed() +
   theme_void() +
-  theme(legend.position = "bottom", legend.title.position = "top", plot.caption = element_text(hjust = 0.5))
+  theme(legend.position = "bottom", legend.title = element_text(size = 9), plot.caption = element_text(hjust = 0.5))
 ```
 
 ## More examples
@@ -231,7 +234,7 @@ Narrower cases, and other ways to draw the same loci.
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and a grey dashed link that neither walk takes skips the loop at the top. The panel titles give HG00097 113 kb and GRCh38 90.8 kb, each span the region plus 30 kb of flank either side](../gallery/kiv2_walks.png)
+![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and a grey dashed link that neither walk takes skips the loop at the top. The panel titles give HG00097 113 kb and GRCh38 90.8 kb, each span the region plus 30 kb of flank either side, and a key below the panels names the shading, the faded nodes and the dashes](../gallery/kiv2_walks.png)
 
 ```r
 library(ggbandage)
@@ -252,24 +255,17 @@ autoplot(g, ncol = 2)
 
 `chr6:160,616,004-160,646,753`
 
-![Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below in two tiers, node lengths compressed so the longest insertion draws as a bar shorter than the array, and dashed arches where haplotypes skip reference sequence](../gallery/kiv2_stress.png)
+![Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in charcoal hanging below in two tiers, node lengths compressed so the longest insertion draws as a bar shorter than the array, and dashed arches where haplotypes skip reference sequence](../gallery/kiv2_stress.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 
 index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes, bubbleSpread = "compress")
-ggplot(g) +
-  geom_bandage_edges() +
-  geom_bandage_genes() +
-  geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
-  coord_fixed() +
-  theme_void() +
-  theme(legend.position = "bottom")
+autoplot(g)
 ```
 
 ### C4A and C4B in the stress layout
@@ -302,7 +298,7 @@ autoplot(g)
   HPRC's own `hprc-v2.1-mc-grch38.raw.vcf.gz`, or a cohort genotyped with
   `vg call`. Pass its table to `bandage_layout(frequencies = )`.
 
-![Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. A key gives the widths of 100%, 50% and 10%](../gallery/ugt2b17_frequency.png)
+![Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. Text inside the loop gives 51% of haplotypes walking it and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%](../gallery/ugt2b17_frequency.png)
 
 ```r
 library(ggbandage)
@@ -312,5 +308,11 @@ genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 ugt2b17 <- "chr4:68,500,000-68,680,000"
 g <- bandage_layout(walks, region = ugt2b17, genes = genes, nodeWidth = "frequency", contigThickness = 10)
-autoplot(g)
+share <- median(g$nodes$frequency[g$nodes$node %in% g$exons$node[g$exons$gene == "UGT2B17"]])
+loop <- g$nodes[abs(g$nodes$frequency - share) < 0.01, ]
+autoplot(g) +
+  annotate(
+    "text", x = mean(range(loop$x)), y = mean(range(loop$y)), size = 3.5, colour = "grey15",
+    label = sprintf("%s of haplotypes walk the UGT2B17 loop,\nand %s take the dashed edge past it", scales::percent(share), scales::percent(1 - share))
+  )
 ```
