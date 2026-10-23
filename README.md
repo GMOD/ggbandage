@@ -102,15 +102,21 @@ More, with code, in [the gallery](docs/gallery.md).
   web browser
 - [jbrowse-plugin-graphgenomeviewer](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer)
   browses them in JBrowse
+
+R libraries
+
 - [ggjbrowse](https://github.com/GMOD/ggjbrowse) draws gene tracks to stack
   above these figures
 - [ggtubemap](https://github.com/GMOD/ggtubemap) draws tube maps from the GFA
   that `bandage_gfa()` returns
+
+Tutorials
+
 - The HPRC tutorials on jbrowse.org:
   [graph alleles and haplotypes](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/)
   and [repeat lengths](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc_repeats/)
 
-### Libraries
+Libraries
 
 - [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix): writes walk files and
   segment indexes
