@@ -68,12 +68,9 @@ test_that("a walk passing a node twice draws two threads there, and the key says
   writeLines(repeat_gfa, gfa)
   g <- bandage_layout(gfa, walks = c("ref#0#chr", "dup#1#chr"), engine = "stress")
   p <- ggplot2::autoplot(g)
-  d <- ggplot2::layer_data(p, 2)
-  v1 <- g$nodes[g$nodes$name == "v1", ]
-  inside <- d$x > min(v1$x) & d$x < max(v1$x)
-  threads <- tapply(d$group[inside], toupper(d$colour[inside]), function(x) length(unique(x)))
-  walks <- toupper(g$keys$color[nzchar(g$keys$color)])
-  expect_equal(as.vector(threads[walks]), c(1, 2))
+  v1 <- g$nodes[g$nodes$name == "v1" & !is.na(g$nodes$walk), ]
+  threads <- tapply(v1$stroke, v1$walk, function(x) length(unique(x)))
+  expect_equal(as.vector(threads), c(1, 2))
   expect_equal(drawn_keys(p, 8)$labels[4], "a thread per pass through a node")
 })
 
