@@ -199,6 +199,22 @@ ggplot(g) +
 )
 autoplot(g))",
     height = 2.6
+  ),
+  figure(
+    "ugt2b17_frequency", "UGT2B17's deletion, each node as wide as its frequency", "chr4:68,500,000-68,680,000",
+    "Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. A key gives the widths of 100%, 50% and 10%",
+    r"(ugt2b17 <- "chr4:68,500,000-68,680,000"
+g <- bandage_layout(walks, region = ugt2b17, genes = genes, nodeWidth = "frequency", contigThickness = 10)
+autoplot(g))",
+    width = 8, height = 5,
+    note = c(
+      "- Nearly every haplotype walks the flanks, which draw full width. Half the haplotypes",
+      "  lack UGT2B17, so its loop draws half as wide, and the dashed deletion edge is",
+      "  the other half's route.",
+      "- `vcf_frequencies()` reads the same widths from a VCF's `AT` allele paths:",
+      "  HPRC's own `hprc-v2.1-mc-grch38.raw.vcf.gz`, or a cohort genotyped with",
+      "  `vg call`. Pass its table to `bandage_layout(frequencies = )`."
+    )
   )
 )
 

@@ -26,6 +26,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
   }
   p <- p +
     layout_key(object) +
+    frequency_key(object) +
     ggplot2::theme_void() +
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
@@ -44,6 +45,9 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
     )
   if (nrow(object$keys) && !faceted) {
     p <- p + ggplot2::theme(legend.location = "plot")
+  }
+  if (!is.null(m$frequencyKey)) {
+    p <- p + ggplot2::theme(legend.box = "vertical", legend.box.just = "left")
   }
   if (!m$pixelRows) {
     p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX, clip = "off")
@@ -151,6 +155,29 @@ layout_key <- function(object) {
         reference, format(length(revisited), big.mark = ",")
       ))
     }
+  )
+}
+
+# What a node's width means where it is as wide as its frequency
+frequency_key <- function(object) {
+  stops <- object$meta$frequencyKey
+  if (is.null(stops)) {
+    return(list())
+  }
+  nodes <- object$nodes
+  key <- factor(rep(stops$label, each = 2), levels = stops$label)
+  list(
+    ggplot2::geom_path(
+      ggplot2::aes(x = x, y = y, linewidth = key, group = key),
+      data = data.frame(x = nodes$x[1], y = nodes$y[1], key = key),
+      inherit.aes = FALSE, alpha = 0, colour = "#3c4148"
+    ),
+    ggplot2::scale_discrete_manual(
+      "linewidth",
+      name = "haplotypes passing a node",
+      values = stats::setNames(px_linewidth(stops$widthPx), stops$label),
+      guide = ggplot2::guide_legend(order = 3, override.aes = list(alpha = 1))
+    )
   )
 }
 

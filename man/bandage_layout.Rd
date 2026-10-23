@@ -15,6 +15,7 @@ bandage_layout(
   gene_names = NULL,
   haplotypes = NULL,
   context = 1000,
+  frequencies = NULL,
   ...
 )
 }
@@ -56,12 +57,19 @@ one when \code{NULL}}
 
 \item{context}{on a walk file, bp of reference kept past each end of \code{region}}
 
+\item{frequencies}{each node's passes per haplotype, as a data frame of
+\code{name} and \code{frequency} such as \code{\link[=vcf_frequencies]{vcf_frequencies()}} returns, or a numeric
+vector named by node. They override any \code{AF} tag and what the walks give,
+and \code{nodeWidth = "frequency"} draws them}
+
 \item{...}{other figure spec fields, such as \code{referencePath},
-\code{colorScheme}, \code{nodeWidth}, \code{contigThickness}, \code{quality}, \code{engine}
+\code{colorScheme}, \code{contigThickness}, \code{quality}, \code{engine}
 (\code{"fmmm"}, the default, or \code{"stress"}), and \code{bubbleSpread} (\code{"auto"}, the
 default, which draws node length proportional to bp; \code{"open"} or \code{"wide"},
 which lift short alleles; or \code{"compress"}, which pulls long and short
-nodes towards the mean)}
+nodes towards the mean), and \code{nodeWidth}: \code{"depth"}, the default, wider
+the more walks pass a node against the mean; \code{"frequency"}, as wide as
+the share of haplotypes that pass it, full width at 1; or \code{"uniform"}}
 }
 \description{
 Lay out a GFA graph with the Bandage engine

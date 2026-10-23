@@ -56,7 +56,7 @@ const { outputFiles } = await build({
     contents: [
       "export { figure, walkRows } from './scripts/figure.mjs'",
       "export { cutWalks } from './scripts/walks-cut.mjs'",
-      "export { cutTabix } from './scripts/tabix-cut.mjs'",
+      "export { cutTabix, indexedLines } from './scripts/tabix-cut.mjs'",
     ].join('\n'),
     resolveDir: process.cwd(),
     loader: 'js',

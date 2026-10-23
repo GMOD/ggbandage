@@ -94,23 +94,30 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @param haplotypes on a walk file, the `sample#haplotype` walks to cut, every
 #'   one when `NULL`
 #' @param context on a walk file, bp of reference kept past each end of `region`
+#' @param frequencies each node's passes per haplotype, as a data frame of
+#'   `name` and `frequency` such as [vcf_frequencies()] returns, or a numeric
+#'   vector named by node. They override any `AF` tag and what the walks give,
+#'   and `nodeWidth = "frequency"` draws them
 #' @param ... other figure spec fields, such as `referencePath`,
-#'   `colorScheme`, `nodeWidth`, `contigThickness`, `quality`, `engine`
+#'   `colorScheme`, `contigThickness`, `quality`, `engine`
 #'   (`"fmmm"`, the default, or `"stress"`), and `bubbleSpread` (`"auto"`, the
 #'   default, which draws node length proportional to bp; `"open"` or `"wide"`,
 #'   which lift short alleles; or `"compress"`, which pulls long and short
-#'   nodes towards the mean)
+#'   nodes towards the mean), and `nodeWidth`: `"depth"`, the default, wider
+#'   the more walks pass a node against the mean; `"frequency"`, as wide as
+#'   the share of haplotypes that pass it, full width at 1; or `"uniform"`
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, region = NULL, genes = NULL,
                            gene_names = NULL, haplotypes = NULL,
-                           context = 1000, ...) {
+                           context = 1000, frequencies = NULL, ...) {
   src <- graph_source(gfa, region, haplotypes, context)
   spec <- c(
     list(layout = layout, width = width),
     if (!is.null(src$region)) list(region = src$region),
     if (length(walks)) list(walks = as.list(walks)),
     if (!is.null(facet)) list(facet = facet),
+    if (!is.null(frequencies)) list(frequencies = frequency_map(frequencies)),
     list(...)
   )
   json <- engine()$call(
@@ -135,6 +142,11 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     warning(unbound_genes(genes, d$unbound), call. = FALSE)
   }
   as_bandage_layout(d)
+}
+
+frequency_map <- function(x) {
+  if (is.data.frame(x)) x <- stats::setNames(x$frequency, x$name)
+  as.list(x)
 }
 
 gene_source <- function(genes, gene_names = NULL) {

@@ -74,3 +74,20 @@ export async function cutTabix({
   )
   return rgfaCut(files, { refName: name, start, end }, { hops: 1 })
 }
+
+// The lines of an indexed file under a region, as one string
+export async function indexedLines({ file, index, refName, start, end }) {
+  const tabix = openIndexed(file, index)
+  const names = await tabix.getReferenceSequenceNames()
+  // a VCF names the reference's contig bare where the graph says GRCh38#0#chr4
+  const contig = refName.split('#').at(-1)
+  const name = resolveName(
+    names,
+    names.includes(refName) || !names.includes(contig) ? refName : contig,
+  )
+  const lines = []
+  await tabix.getLines(name, start, end, line => {
+    lines.push(line)
+  })
+  return lines.join('\n')
+}
