@@ -31,10 +31,13 @@ drawn_keys <- function(plot, width) {
   list(labels = unname(vapply(texts, function(k) k$label, "")[order(y, x)]), inches = inches, room = room)
 }
 
-test_that("the key names each lifted walk, then what no walk visits", {
+test_that("the key names each lifted walk, then the faded rest and the deletions", {
   g <- bandage_layout(pggb, walks = lifted)
   k <- drawn_keys(ggplot2::autoplot(g), 8)
-  expect_equal(k$labels, c(paste0(c("K12", "IAI39"), g$keys$note), "nodes and links not on these walks"))
+  expect_equal(k$labels, c(
+    paste0(c("K12", "IAI39"), g$keys$note),
+    "only in other haplotypes", "skips K12 chr sequence (a deletion)"
+  ))
 })
 
 test_that("the key wraps to the width the plot is drawn at", {

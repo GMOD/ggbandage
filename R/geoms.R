@@ -301,6 +301,11 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
 
 FADED <- "#a0a0a0"
 
+deletion_key <- function(meta) {
+  reference <- if (is.null(meta$referenceName)) "the reference" else meta$referenceName
+  paste("skips", reference, "sequence (a deletion)")
+}
+
 keys_of <- function(model) {
   k <- model$keys
   if (!nrow(k)) {
@@ -325,11 +330,11 @@ keys_of <- function(model) {
     row$alpha <- alpha
     row
   }
-  faded <- extra(
-    "faded", paste("nodes and links not on", if (nrow(k) == 1) k$walk else "these walks"),
-    FADED, 0.3
-  )
-  rbind(k, faded, extra("passes", as.character(model$threads$note)))
+  faded <- extra("faded", model$meta$fadedKey, FADED, 0.3)
+  deletions <- if (isTRUE(model$meta$deletions > 0)) {
+    extra("deletion", deletion_key(model$meta), FADED)
+  }
+  rbind(k, faded, deletions, extra("passes", as.character(model$threads$note)))
 }
 
 GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
@@ -383,6 +388,11 @@ key_grobs <- function(data, text, room) {
       grid::segmentsGrob(
         px(at), top - px(c(1, 4, 7)), px(at + bar), top - px(c(1, 4, 7)),
         gp = grid::gpar(col = "grey30", lwd = 2 * 72 / 96, lineend = "butt")
+      )
+    } else if (identical(data$kind[i], "deletion")) {
+      grid::segmentsGrob(
+        px(at), top - px(4), px(at + bar), top - px(4),
+        gp = grid::gpar(col = colours, lwd = 2 * 72 / 96, lty = "22", lineend = "butt")
       )
     } else {
       grid::rectGrob(

@@ -116,7 +116,7 @@ layout_key <- function(object) {
   inks <- c(
     if (!all(nodes$backbone)) stats::setNames("#3c4148", paste("off the", reference, "path")),
     if (isTRUE(m$deletions > 0)) {
-      stats::setNames("#18181c", paste(reference, "sequence a link skips"))
+      stats::setNames("#18181c", deletion_key(m))
     }
   )
   widths <- c("#3c4148" = 2.5, "#18181c" = 0.8)[inks]
