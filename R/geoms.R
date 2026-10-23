@@ -162,15 +162,22 @@ geom_bandage_edges <- function(mapping = NULL, data = NULL,
   path_layer(mapping, data, function(m) edges_of(m, background), ...)
 }
 
+# ggplot2 keys a layer under any legend whose aesthetic it maps, I() or not,
+# so the default inks would stroke solid over every key's own swatch
 path_layer <- function(mapping, data, pick, ...) {
+  mapping <- with_defaults(mapping, ggplot2::aes(
+    x = x, y = y, group = draw, slide_x = slide_x, slide_y = slide_y,
+    colour = I(ink), linewidth = I(px_linewidth(width))
+  ))
+  asis <- vapply(mapping, function(q) {
+    e <- rlang::quo_get_expr(q)
+    is.call(e) && identical(e[[1]], quote(I))
+  }, TRUE)
   ggplot2::layer(
     geom = GeomBandagePath, stat = "identity", position = "identity",
     data = table_from(data, pick),
-    mapping = with_defaults(mapping, ggplot2::aes(
-      x = x, y = y, group = draw, slide_x = slide_x, slide_y = slide_y,
-      colour = I(ink), linewidth = I(px_linewidth(width))
-    )),
-    inherit.aes = FALSE, show.legend = NA,
+    mapping = mapping,
+    inherit.aes = FALSE, show.legend = ifelse(asis, FALSE, NA),
     params = list(...)
   )
 }

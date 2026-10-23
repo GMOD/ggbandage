@@ -505,6 +505,19 @@ test_that("a layout coloured by position keys its hues, and says which nodes tak
   expect_null(ggplot2::ggplot_build(lifted)$plot$scales$get_scales("fill"))
 })
 
+test_that("a position-coloured layout keys its deletions with a dash and nothing drawn over it", {
+  p <- ggplot2::autoplot(bandage_layout(pggb))
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  gt <- ggplot2::ggplotGrob(p)
+  strokes <- function(x) {
+    own <- if (inherits(x, "segments")) format(x$gp$lty)
+    c(own, unlist(lapply(c(x$grobs, x$children), strokes)))
+  }
+  box <- gt$grobs[startsWith(gt$layout$name, "guide-box")]
+  expect_equal(sort(unname(unlist(lapply(box, strokes)))), c("22", "solid"))
+})
+
 test_that("Bandage's position hues run red to magenta at the view's saturation", {
   hues <- bandage_hues()
   expect_equal(hues[1], "#D92626")

@@ -135,7 +135,8 @@ layout_key <- function(object) {
     c("#3c4148" = "solid", "#18181c" = "22", "#e8a200" = "solid")[inks], names(inks)
   )
   guide <- ggplot2::guide_legend(
-    order = 2, override.aes = list(alpha = 1, linewidth = unname(widths))
+    order = 2, override.aes = list(alpha = 1, linewidth = unname(widths)),
+    theme = ggplot2::theme(legend.key.width = grid::unit(30, "pt"))
   )
   revisited <- unique(nodes$node[nodes$referenceVisits > 1])
   list(

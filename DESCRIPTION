@@ -16,6 +16,7 @@ Imports:
     gtable,
     curl,
     jsonlite,
+    rlang,
     stats,
     utils,
     V8
