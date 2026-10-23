@@ -326,7 +326,7 @@ keys_of <- function(model) {
     row
   }
   faded <- extra(
-    "faded", paste("not on", if (nrow(k) == 1) k$walk else "these walks"),
+    "faded", paste("nodes and links not on", if (nrow(k) == 1) k$walk else "these walks"),
     FADED, 0.3
   )
   rbind(k, faded, extra("passes", as.character(model$threads$note)))

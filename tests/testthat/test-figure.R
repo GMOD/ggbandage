@@ -34,7 +34,7 @@ drawn_keys <- function(plot, width) {
 test_that("the key names each lifted walk, then what no walk visits", {
   g <- bandage_layout(pggb, walks = lifted)
   k <- drawn_keys(ggplot2::autoplot(g), 8)
-  expect_equal(k$labels, c(paste0(c("K12", "IAI39"), g$keys$note), "not on these walks"))
+  expect_equal(k$labels, c(paste0(c("K12", "IAI39"), g$keys$note), "nodes and links not on these walks"))
 })
 
 test_that("the key wraps to the width the plot is drawn at", {
