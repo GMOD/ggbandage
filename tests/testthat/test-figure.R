@@ -320,6 +320,8 @@ test_that("a gene lands on the backbone nodes under it", {
   expect_equal(g$genes$gene, "geneA")
   expect_gt(nrow(g$exons), 0)
   expect_true(all(g$exons$node %in% g$nodes$node))
+  g$exons <- g$exons[0, ]
+  expect_no_error(ggplot2::ggplot_build(autoplot(g)))
 })
 
 test_that("a gene file naming the backbone otherwise warns, and gene_names binds it", {

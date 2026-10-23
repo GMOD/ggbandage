@@ -236,11 +236,8 @@ geom_bandage_labels <- function(mapping = NULL, data = NULL,
 
 exons_of <- function(model, outline) {
   e <- model$exons
-  if (!nrow(e)) {
-    return(e)
-  }
   width <- tapply(model$nodes$width, model$nodes$node, max)
-  e$width <- width[e$node] + 2 * outline
+  e$width <- as.numeric(width[e$node]) + 2 * outline
   e
 }
 
