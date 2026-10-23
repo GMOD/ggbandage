@@ -57,8 +57,11 @@ one when \code{NULL}}
 \item{context}{on a walk file, bp of reference kept past each end of \code{region}}
 
 \item{...}{other figure spec fields, such as \code{referencePath},
-\code{colorScheme}, \code{nodeWidth}, \code{contigThickness}, \code{quality}, and \code{engine}
-(\code{"fmmm"}, the default, or \code{"stress"})}
+\code{colorScheme}, \code{nodeWidth}, \code{contigThickness}, \code{quality}, \code{engine}
+(\code{"fmmm"}, the default, or \code{"stress"}), and \code{bubbleSpread} (\code{"auto"}, the
+default, which draws node length proportional to bp; \code{"open"} or \code{"wide"},
+which lift short alleles; or \code{"compress"}, which pulls long and short
+nodes towards the mean)}
 }
 \description{
 Lay out a GFA graph with the Bandage engine

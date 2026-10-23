@@ -71,13 +71,20 @@ autoplot(g))",
   ),
   figure(
     "kiv2_overlay", "KIV-2 expansions as extra loops", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 133 kb longer, and HG00097 yellow to red-orange, 22.2 kb longer. Where walks share nodes their lanes run side by side. HG00133 and HG00097 run the loop at the right together, and HG00133 alone runs the large loop below and the loops at the top right and left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with the right loop outlined as block A in both",
+    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 133 kb longer, and HG00097 yellow to red-orange, 22.4 kb longer. GRCh38 runs straight in along 30 kb of flank from either side to a knot of loops at the array. Where walks share nodes their lanes run side by side. All three walks run the loops at the top, HG00133 and HG00097 run the loop at the lower right together, and HG00133 alone runs the loop at the lower left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with the lower right loop outlined as block A in both",
     r"(haps <- c("HG00133#2", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
-g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress)
+g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000, bubbleSpread = "compress")
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1)))",
-    width = 7, height = 8, readme = TRUE
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1)))",
+    width = 7, height = 6.5, readme = TRUE,
+    note = c(
+      "- `context = 30000` keeps 30 kb of GRCh38 past each end of the region, so the",
+      "  reference runs in straight before it reaches the array",
+      "- `bubbleSpread = \"compress\"` pulls node lengths towards the mean, so HG00133's",
+      "  extra copies no longer dwarf the rest. Loop size stops tracking bp, so read",
+      "  lengths off the walk rows below"
+    )
   ),
   figure(
     "syng_overlay", "C4 copies as threads round an impg syng graph", "chr6:31,972,047-32,055,647",

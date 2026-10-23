@@ -95,8 +95,11 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #'   one when `NULL`
 #' @param context on a walk file, bp of reference kept past each end of `region`
 #' @param ... other figure spec fields, such as `referencePath`,
-#'   `colorScheme`, `nodeWidth`, `contigThickness`, `quality`, and `engine`
-#'   (`"fmmm"`, the default, or `"stress"`)
+#'   `colorScheme`, `nodeWidth`, `contigThickness`, `quality`, `engine`
+#'   (`"fmmm"`, the default, or `"stress"`), and `bubbleSpread` (`"auto"`, the
+#'   default, which draws node length proportional to bp; `"open"` or `"wide"`,
+#'   which lift short alleles; or `"compress"`, which pulls long and short
+#'   nodes towards the mean)
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, region = NULL, genes = NULL,

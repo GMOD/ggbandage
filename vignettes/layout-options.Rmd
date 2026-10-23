@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-Arguments of `bandage_layout()` that the README example uses. `?bandage_layout`
+Arguments of `bandage_layout()` that the README and gallery use. `?bandage_layout`
 lists the rest.
 
 | Argument | Effect |
@@ -16,3 +16,5 @@ lists the rest.
 | `facet = "walk"` | One panel per walk |
 | `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
 | `genes` | A GFF3 or BED file pinned onto the reference |
+| `context = 30000` | On a walk file, 30 kb of reference past each end of `region`, so the drawing shows where straight reference meets the variation. Default 1 kb |
+| `bubbleSpread = "compress"` | Long and short nodes drawn nearer the mean length, so one long insertion doesn't fill the figure. Default draws length proportional to bp |
