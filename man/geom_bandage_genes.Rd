@@ -4,7 +4,7 @@
 \alias{geom_bandage_genes}
 \title{Genes pinned on the backbone}
 \usage{
-geom_bandage_genes(data = NULL, outline = 3, colour = "#e8a200")
+geom_bandage_genes(data = NULL, outline = 3, colour = EXON, key = "exon")
 }
 \arguments{
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
@@ -12,9 +12,11 @@ geom_bandage_genes(data = NULL, outline = 3, colour = "#e8a200")
 \item{outline}{px the outline reaches past each side of the node}
 
 \item{colour}{the outline's colour}
+
+\item{key}{the legend entry naming the outline, or \code{NULL} for none}
 }
 \value{
-a list of two layers, the outlines and the names
+the outlines and names, two layers, and the outline's legend entry
 }
 \description{
 Outlines each exon round the stretch of node that carries it, under the

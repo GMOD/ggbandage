@@ -186,38 +186,38 @@ rows <- bandage_walk_rows(rhd_syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1))
 ```
 
-## Your own colours: KIV-2 by haplotypes per node
+## Your own colours: GSTM1, missing from two thirds of haplotypes
 
-`chr6:160,616,004-160,646,753`
+`chr1:109,665,000-109,715,000`
 
-- Colour and width both show `depth`, how many of the six haplotypes run through
-  a node. `depth` counts every pass, so where a cut's haplotype runs a node twice
-  it counts twice; no haplotype in this cut repeats a node.
-- A short pale dash on a dark strand is a 1 bp node that one or two haplotypes
-  carry, a single-base variant inside a copy the rest share. `bubbleSpread =
-  "compress"` draws it that long, and stops loop size tracking bp.
+- Colour and width both show `frequency`, the share of the cut's haplotypes
+  through a node: `depth` over the haplotype count.
+- Of 465 walks, 71 run GRCh38's GSTM1 loop, 84 the non-reference loop beside it,
+  2 both, and 308 neither, taking the dashed deletion edge.
 
-![The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured and sized by how many of the six haplotypes, GRCh38 and the five named, run through it, from a thin pale line for one to a thick dark line for all six. The 30 kb of flank either side, which all six walk, runs in as straight black lines](../gallery/own_colours.png)
+![The GSTM1 locus cut from the walk file with all 464 HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that every haplotype walks. GSTM1 hangs off them as a thin pale loop, beside a second pale loop of non-reference sequence, and most haplotypes take the grey dashed edge that skips both. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
 
 ```r
 library(ggbandage)
 library(ggplot2)
 
 walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
-kiv2 <- "chr6:160,616,004-160,646,753"
-five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
-g <- bandage_layout(walks, region = kiv2, haplotypes = five, context = 30000, bubbleSpread = "compress")
-haplotypes <- "haplotypes through node"
+gstm1 <- "chr1:109,665,000-109,715,000"
+g <- bandage_layout(walks, region = gstm1, genes = genes)
+share <- "share of HPRC haplotypes"
 ggplot(g) +
   geom_bandage_edges(aes(colour = I("grey80"))) +
-  geom_bandage_nodes(aes(colour = factor(depth), linewidth = factor(depth))) +
-  scale_colour_viridis_d(haplotypes, option = "mako", direction = -1, end = 0.85) +
-  scale_linewidth_manual(haplotypes, values = 1.2 * sqrt(1:6)) +
-  guides(colour = guide_legend(nrow = 1), linewidth = guide_legend(nrow = 1)) +
+  geom_bandage_genes() +
+  geom_bandage_nodes(aes(colour = frequency, linewidth = frequency)) +
+  scale_colour_viridis_c(share, option = "mako", direction = -1, end = 0.9, labels = scales::label_percent()) +
+  scale_linewidth(share, range = c(0.4, 3.5), labels = scales::label_percent()) +
+  guides(colour = "legend") +
+  labs(caption = "Specks along a strand are small variants that some haplotypes carry") +
   coord_fixed() +
   theme_void() +
-  theme(legend.position = "bottom", legend.title.position = "top")
+  theme(legend.position = "bottom", legend.title.position = "top", plot.caption = element_text(hjust = 0.5))
 ```
 
 ## More examples
@@ -265,7 +265,8 @@ ggplot(g) +
   geom_bandage_genes() +
   geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
   coord_fixed() +
-  theme_void()
+  theme_void() +
+  theme(legend.position = "bottom")
 ```
 
 ### C4A and C4B in the stress layout

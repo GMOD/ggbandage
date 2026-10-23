@@ -324,6 +324,14 @@ test_that("a gene lands on the backbone nodes under it", {
   expect_no_error(ggplot2::ggplot_build(autoplot(g)))
 })
 
+test_that("the exon outline has a legend entry unless key is NULL", {
+  g <- bandage_layout(rgfa, genes = test_path("testdata", "ecoli_genes.bed"))
+  guides <- function(p) names(p$guides$guides)
+  expect_true("bandage_genes" %in% guides(ggplot2::ggplot(g) + geom_bandage_genes()))
+  expect_false("bandage_genes" %in% guides(ggplot2::ggplot(g) + geom_bandage_genes(key = NULL)))
+  expect_no_error(ggplot2::ggplot_build(ggplot2::ggplot(g) + geom_bandage_genes()))
+})
+
 test_that("a gene file naming the backbone otherwise warns, and gene_names binds it", {
   bed <- tempfile(fileext = ".bed")
   on.exit(unlink(bed))

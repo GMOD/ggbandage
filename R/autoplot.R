@@ -13,13 +13,15 @@
 autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
   m <- object$meta
   faceted <- nrow(object$panels) > 1
-  genes <- if (nrow(object$genes)) geom_bandage_genes()
+  keyed <- (nrow(object$keys) && !faceted) || ramp_keyed(object)
+  genes <- if (nrow(object$genes)) geom_bandage_genes(key = if (!keyed) "exon")
   p <- ggplot2::ggplot(object) +
     geom_bandage_edges() +
     genes[1] +
     geom_bandage_nodes() +
     geom_bandage_arrows() +
     genes[2] +
+    genes[3] +
     if (labels) geom_bandage_labels()
   if (nrow(object$keys)) {
     p <- p + if (faceted) geom_bandage_keys(text = FALSE) else key_guide(object)
@@ -103,12 +105,18 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
   p
 }
 
-# What the hues, the charcoal and the dashes mean, for a layout coloured by
-# reference position; a lifted walk recolours the drawing and keys itself
+ramp_keyed <- function(object) {
+  m <- object$meta
+  identical(m$colorScheme, "reference-position") && !is.null(m$referenceRamp) &&
+    !nrow(object$keys)
+}
+
+# What the hues, the charcoal, the dashes and the orange mean, for a layout
+# coloured by reference position; a lifted walk recolours the drawing and keys
+# itself
 layout_key <- function(object) {
   m <- object$meta
-  if (!identical(m$colorScheme, "reference-position") || is.null(m$referenceRamp) ||
-    nrow(object$keys)) {
+  if (!ramp_keyed(object)) {
     return(list())
   }
   reference <- if (is.null(m$referenceName)) "the reference" else m$referenceName
@@ -119,10 +127,13 @@ layout_key <- function(object) {
   )
   inks <- c(
     if (!all(nodes$backbone)) stats::setNames("#3c4148", paste("off the", reference, "path")),
-    if (!is.null(m$deletionKey)) stats::setNames("#18181c", m$deletionKey)
+    if (!is.null(m$deletionKey)) stats::setNames("#18181c", m$deletionKey),
+    if (nrow(object$exons)) stats::setNames(EXON, "exon")
   )
-  widths <- c("#3c4148" = 2.5, "#18181c" = 0.8)[inks]
-  lines <- stats::setNames(c("#3c4148" = "solid", "#18181c" = "22")[inks], names(inks))
+  widths <- c("#3c4148" = 2.5, "#18181c" = 0.8, "#e8a200" = 2.5)[inks]
+  lines <- stats::setNames(
+    c("#3c4148" = "solid", "#18181c" = "22", "#e8a200" = "solid")[inks], names(inks)
+  )
   guide <- ggplot2::guide_legend(
     order = 2, override.aes = list(alpha = 1, linewidth = unname(widths))
   )

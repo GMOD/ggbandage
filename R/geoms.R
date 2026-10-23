@@ -275,9 +275,11 @@ gene_labels <- function(model) {
 #' @inheritParams geom_bandage_nodes
 #' @param outline px the outline reaches past each side of the node
 #' @param colour the outline's colour
-#' @return a list of two layers, the outlines and the names
+#' @param key the legend entry naming the outline, or `NULL` for none
+#' @return the outlines and names, two layers, and the outline's legend entry
 #' @export
-geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
+geom_bandage_genes <- function(data = NULL, outline = 3, colour = EXON,
+                               key = "exon") {
   list(
     ggplot2::layer(
       geom = GeomBandagePath, stat = "identity", position = "identity",
@@ -297,13 +299,33 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
         size = 3, fontface = "italic", colour = "#1c1c22", fill = "white",
         vjust = 1.6
       )
-    )
+    ),
+    if (!is.null(key)) {
+      ggplot2::guides(bandage_genes = exon_key(colour, key))
+    }
+  )
+}
+
+exon_key <- function(colour, label) {
+  px <- function(v) grid::unit(v / 96, "inches")
+  text <- grid::textGrob(
+    label,
+    x = px(23), just = "left", gp = grid::gpar(fontsize = 9, col = "grey15")
+  )
+  bar <- grid::rectGrob(
+    x = 0, width = px(18), height = px(8), just = "left",
+    gp = grid::gpar(col = NA, fill = colour)
+  )
+  ggplot2::guide_custom(
+    grid::grobTree(bar, text),
+    width = px(23) + grid::grobWidth(text), height = px(14), order = 9
   )
 }
 
 FADED <- "#a0a0a0"
+EXON <- "#e8a200"
 
-keys_of <- function(model) {
+keys_of <- function(model, exons = FALSE) {
   k <- model$keys
   if (!nrow(k)) {
     return(k)
@@ -329,7 +351,10 @@ keys_of <- function(model) {
   }
   faded <- extra("faded", model$meta$fadedKey, FADED, 0.3)
   deletions <- extra("deletion", model$meta$deletionKey, FADED)
-  rbind(k, faded, deletions, extra("passes", as.character(model$threads$note)))
+  rbind(
+    k, faded, deletions, extra("passes", as.character(model$threads$note)),
+    if (exons && nrow(model$exons)) extra("exon", "exon", EXON)
+  )
 }
 
 GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
@@ -408,7 +433,7 @@ key_grobs <- function(data, text, room) {
 KEY_INSET <- (8 + 8 + 20) * 96 / 72
 
 key_guide <- function(model) {
-  keys <- keys_of(model)
+  keys <- keys_of(model, exons = TRUE)
   keys$label <- paste0(keys$walk, keys$note)
   ggplot2::guides(bandage_keys = ggplot2::guide_custom(
     grid::gTree(keys = keys, cl = "bandage_key_guide"),
