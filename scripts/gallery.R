@@ -102,12 +102,14 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   ),
   figure(
     "syng_rhd", "RHD deletion and duplication in a syng graph", "chr1:25,250,000-25,450,000",
-    "Force-directed syng graph of RHD from 19 HPRC haplotypes with three walks lifted together, each shaded light to dark along its own length, grch38 grey, HG01106#1 cyan to blue and HG01258#2 peach to rust, and a thread for every pass through a node. Through the Rhesus box at the left, grch38 draws two threads, HG01106#1 three and HG01258#2 one, each pass darker than the one before. Round RHD, the loop at the top, grch38 draws one thread, HG01106#1 two, its second RHD, and HG01258#2 none, taking the box straight on to the loop below that every walk runs once. In the walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, grch38 spans 202 kb, HG01106#1 272 kb and HG01258#2 132 kb",
+    "Force-directed syng graph of RHD from 19 HPRC haplotypes with three walks lifted together, each shaded light to dark along its own length, grch38 grey, HG01106#1 cyan to blue and HG01258#2 peach to rust, and a thread for every pass through a node. Through the Rhesus box at the left, grch38 draws two threads, HG01106#1 three and HG01258#2 one, each pass darker than the one before. Round the loop at the top, labelled RHD, grch38 draws one thread, HG01106#1 two, its second RHD, and HG01258#2 none, taking the box straight on to the loop below, labelled TMEM50A and RHCE, that every walk runs once. In the walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, grch38 spans 202 kb, HG01106#1 272 kb and HG01258#2 132 kb",
     r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 haps <- c("HG01106#1", "HG01258#2")
 schemes <- c(grch38 = "grey", "HG01106#1" = "blue", "HG01258#2" = "orange")
 progress <- lapply(names(schemes), function(w) list(walk = w, color = list(field = "progress", scheme = schemes[[w]])))
-g <- bandage_layout(rhd_syng, walks = progress)
+g <- bandage_layout(rhd_syng, walks = progress, genes = genes)
+g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
+g$exons <- g$exons[0, ]
 rows <- bandage_walk_rows(rhd_syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1)))",
     width = 7, height = 7, readme = TRUE,
