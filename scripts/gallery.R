@@ -90,6 +90,12 @@ rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1)))",
     width = 7, height = 8, readme = TRUE,
     note = c(
+      "[impg](https://github.com/pangenome/impg) builds a",
+      "[syng](https://github.com/richarddurbin/syng) graph of C4 from 90 haplotypes",
+      "with no alignment step;",
+      "[build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh)",
+      "in jbrowse-plugin-graphgenomeviewer cuts it from odgi's C4 test haplotypes.",
+      "",
       "- The ring holds every C4 copy's sequence once, so a walk with more copies goes",
       "  round it more often. Each walk draws a thread per pass: grch38 two round the",
       "  ring, and HG01978 three, its extra 32.7 kb",
@@ -178,33 +184,6 @@ ggplot(g) +
 )
 autoplot(g))",
     height = 2.6
-  ),
-  figure(
-    "syng_c4", "C4 as a syng graph from impg", "chr6:31,972,047-32,055,647",
-    "Force-directed syng graph of C4 from 90 haplotypes: a ring coloured red to magenta along GRCh38, whose two C4 copies share its nodes, with blue specks where only the second copy goes. Under it, walk rows for three samples in the same hues: GRCh38 is one smooth gradient over 84 kb, HG02080#1's 51 kb haplotype has one copy and HG01978#2's 116 kb haplotype three, each copy in the colours of the GRCh38 copy it continues",
-    r"(g <- bandage_layout(syng)
-rows <- bandage_walk_rows(syng, haplotypes = c("HG02080", "HG00735", "HG01978"))
-(autoplot(g) + guides(fill = "none", colour = "none", linetype = "none") + labs(caption = NULL)) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(2.5, 1)))",
-    width = 9, height = 8.5,
-    note = c(
-      "[impg](https://github.com/pangenome/impg) builds a",
-      "[syng](https://github.com/richarddurbin/syng) graph with no alignment step;",
-      "[build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh)",
-      "in jbrowse-plugin-graphgenomeviewer cuts this one from odgi's C4 test haplotypes.",
-      "",
-      "- GRCh38 has C4A and C4B, two copies of a 32.7 kb module, and syng puts both on",
-      "  one copy's nodes: GRCh38 walks the ring twice, and a haplotype's copy count is",
-      "  how often it goes round",
-      "- A layout node takes its first visit's colour, so the ring shows C4A's hues. The",
-      "  blue specks are nodes GRCh38 walks only in C4B, where C4B differs from C4A",
-      "- A walk row follows each copy to the GRCh38 copy it continues, and switches where",
-      "  it walks a node only C4A or only C4B holds: HG00735#1's second copy starts on",
-      "  C4A's own sequence, so it takes C4A's hues",
-      "- `hues = \"bandage\"` gives the rows the layout's hues. Ribbons are off, since",
-      "  the rows share almost every node"
-    )
   )
 )
 
