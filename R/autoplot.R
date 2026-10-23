@@ -115,9 +115,7 @@ layout_key <- function(object) {
   )
   inks <- c(
     if (!all(nodes$backbone)) stats::setNames("#3c4148", paste("off the", reference, "path")),
-    if (isTRUE(m$deletions > 0)) {
-      stats::setNames("#18181c", deletion_key(m))
-    }
+    if (!is.null(m$deletionKey)) stats::setNames("#18181c", m$deletionKey)
   )
   widths <- c("#3c4148" = 2.5, "#18181c" = 0.8)[inks]
   lines <- stats::setNames(c("#3c4148" = "solid", "#18181c" = "22")[inks], names(inks))

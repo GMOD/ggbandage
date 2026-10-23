@@ -301,11 +301,6 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = "#e8a200") {
 
 FADED <- "#a0a0a0"
 
-deletion_key <- function(meta) {
-  reference <- if (is.null(meta$referenceName)) "the reference" else meta$referenceName
-  paste("skips", reference, "sequence (a deletion)")
-}
-
 keys_of <- function(model) {
   k <- model$keys
   if (!nrow(k)) {
@@ -331,9 +326,7 @@ keys_of <- function(model) {
     row
   }
   faded <- extra("faded", model$meta$fadedKey, FADED, 0.3)
-  deletions <- if (isTRUE(model$meta$deletions > 0)) {
-    extra("deletion", deletion_key(model$meta), FADED)
-  }
+  deletions <- extra("deletion", model$meta$deletionKey, FADED)
   rbind(k, faded, deletions, extra("passes", as.character(model$threads$note)))
 }
 
