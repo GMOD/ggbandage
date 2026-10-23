@@ -8,6 +8,13 @@ test_that("a force layout lays every node out, with its node table", {
   expect_true(all(c("depth", "length", "backbone") %in% names(g$nodes)))
 })
 
+test_that("the node table places backbone nodes on the reference", {
+  g <- bandage_layout(pggb)
+  backbone <- g$nodes[g$nodes$backbone, ]
+  expect_false(anyNA(backbone$position))
+  expect_true(all(backbone$position > 0))
+})
+
 test_that("walks facet a panel each, in the core's order", {
   g <- bandage_layout(
     pggb,

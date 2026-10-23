@@ -18,5 +18,7 @@ geom_bandage_nodes(mapping = NULL, data = NULL, background = "white", ...)
 \description{
 By default each node takes the colour, opacity and width the Bandage view
 gives it. Map \code{colour}, \code{alpha} or \code{linewidth} to a column of the node table
-(\code{depth}, \code{length}, \code{backbone}, \code{node}) to draw it your own way.
+(\code{depth}, \code{length}, \code{backbone}, \code{node}, \code{position}) to draw it your own way.
+\code{position} is the reference bp at the node's middle: an allele takes its
+flanks', and a node nothing links to the reference has \code{NA}.
 }

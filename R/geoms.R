@@ -139,7 +139,9 @@ GeomBandagePath <- ggplot2::ggproto("GeomBandagePath", ggplot2::Geom,
 #'
 #' By default each node takes the colour, opacity and width the Bandage view
 #' gives it. Map `colour`, `alpha` or `linewidth` to a column of the node table
-#' (`depth`, `length`, `backbone`, `node`) to draw it your own way.
+#' (`depth`, `length`, `backbone`, `node`, `position`) to draw it your own way.
+#' `position` is the reference bp at the node's middle. An allele takes the
+#' midpoint of its flanks, and a node nothing links to the reference has `NA`.
 #' @param mapping aesthetics that override the defaults
 #' @param data a `bandage_layout`, or `NULL` for the plot's
 #' @param background what faded ink is mixed with, the plot's background
