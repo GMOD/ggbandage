@@ -38,11 +38,15 @@ while read -r sample hap contig start end strand; do
     ;;
   esac
 done <"$prefix.walks" >"$tmp/haps.fa"
+
+# impg leaves the queried path out of its GFA, so query a copy of the reference
+awk '/^>/ { n++ } n == 1 { print (NR == 1 ? ">query#0#ref" : $0) }' "$tmp/haps.fa" >"$tmp/query.fa"
+cat "$tmp/query.fa" >>"$tmp/haps.fa"
 samtools faidx "$tmp/haps.fa"
 
 "$impg" syng -f "$tmp/haps.fa" -o "$tmp/haps.syng" -t 8
-read -r ref len _ <"$tmp/haps.fa.fai"
-"$impg" query -a "$tmp/haps.syng" -r "$ref:0-$((len - 1))" \
+len=$(awk -F'\t' '$1 == "query#0#ref" { print $2 }' "$tmp/haps.fa.fai")
+"$impg" query -a "$tmp/haps.syng" -r "query#0#ref:0-$len" \
   -d 1m -o gfa:syng --sequence-files "$tmp/haps.fa" \
   --force-large-region -O "$tmp/haps.syng"
 

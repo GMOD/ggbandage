@@ -206,8 +206,8 @@ file the first half wrote.
 - impg's syng GFA splits off reverse-complemented haplotypes, so the script
   fetches each walk's sequence on GRCh38's strand, references from UCSC and
   haplotypes from their GenBank contigs
-- impg drops the queried path when the query spans its whole sequence, so the
-  query stops 1 bp short. The path still ends at its last syncmer
+- impg leaves the queried path out of its GFA, so the script appends a copy of
+  the reference as `query#0#ref` and queries that. GRCh38 comes back as a hit
 - impg names paths `name:a-b:c-d`, and the script rewrites each as
   `name:(a+c)-(a+d)`
 
