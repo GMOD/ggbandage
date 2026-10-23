@@ -38,7 +38,8 @@
 
 ## Rough edges
 
-- **Hairpin pull-back:** a hairpin's tip now sits back from its nodes, by however far it takes to turn the band's inner thread. At the RHD hub the lanes stop short of the faded node cluster.
+- **Hairpin pull-back:** a hairpin's tip sits back from its nodes, by however far it takes to turn the band's inner thread. At the RHD hub the lanes stop short of the faded node cluster.
+  - Tried 2026-10-23: sliding each loosened turn back out along its axis (core branch `thread-order`, 1b1b2ff). Restoring the centreline's tip let the hub's two opposing hairpins overlap in `syng_rhd`. Restoring only the outer thread's reach drew nearly what 11.13.0 does, so the pull-back is the room the band needs, and the branch didn't land.
 - **Orange curl:** the core still draws a small curl for HG01258#2 at the RHD hub, where the walk's route loops in the layout.
-- **Thread order:** threads still stack in pass order. Ordering them by where they go next would cut the remaining crossings.
+- **Crossings:** of the 5 left in each figure, 7 of the 10 lie between different walks, where a walk's fixed slot puts it on the wrong side of a band that splits. Only 1 in RHD and 1 in C4 lie within one walk's threads. Ordering threads by where they go next would remove only those; most of the rest need slots that change order along a band, as in metro-line crossing minimisation.
 - **Flat lanes:** lanes of walks that never repeat keep one frame per node, so their links still slide by the frame they leave from.
