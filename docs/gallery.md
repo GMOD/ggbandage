@@ -108,7 +108,7 @@ rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(2.5, 1))
 ```
 
-## C4 copies as threads round a syng ring
+## C4 copies as threads round an impg syng graph
 
 `chr6:31,972,047-32,055,647`
 
@@ -143,7 +143,7 @@ rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1))
 ```
 
-## RHD deletion and duplication in a syng graph
+## RHD deletion and duplication in an impg syng graph
 
 `chr1:25,250,000-25,450,000`
 

@@ -80,7 +80,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
     width = 7, height = 8, readme = TRUE
   ),
   figure(
-    "syng_overlay", "C4 copies as threads round a syng ring", "chr6:31,972,047-32,055,647",
+    "syng_overlay", "C4 copies as threads round an impg syng graph", "chr6:31,972,047-32,055,647",
     "The syng graph of C4 with three walks lifted together, each shaded light to dark along its own length, grch38#chr6 grey, HG01978#2 cyan to blue and HG01952#1 peach to rust, and a thread for every pass through a node: round the ring, outside in, grch38#chr6 draws two threads, HG01978#2 three, its extra C4 copy, and HG01952#1 two, each pass darker than the one before. Grey and blue threads run round the HERV-K loop at the left, and the orange ones cut across it. Walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, give the lengths: grch38#chr6 84 kb, HG01978#2 116 kb and HG01952#1 71 kb",
     r"(haps <- c("HG01978#2", "HG01952#1")
 schemes <- c(grch38 = "grey", "HG01978#2" = "blue", "HG01952#1" = "orange")
@@ -107,7 +107,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
     )
   ),
   figure(
-    "syng_rhd", "RHD deletion and duplication in a syng graph", "chr1:25,250,000-25,450,000",
+    "syng_rhd", "RHD deletion and duplication in an impg syng graph", "chr1:25,250,000-25,450,000",
     "Force-directed syng graph of RHD from 19 HPRC haplotypes with three walks lifted together, each shaded light to dark along its own length, grch38 grey, HG01106#1 cyan to blue and HG01258#2 peach to rust, and a thread for every pass through a node. Through the Rhesus box at the left, grch38 draws two threads, HG01106#1 three and HG01258#2 one, each pass darker than the one before. Round the loop at the top, labelled RHD, grch38 draws one thread, HG01106#1 two, its second RHD, and HG01258#2 none, taking the box straight on to the loop below, labelled TMEM50A and RHCE, that every walk runs once. In the walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, grch38 spans 202 kb, HG01106#1 272 kb and HG01258#2 132 kb",
     r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 haps <- c("HG01106#1", "HG01258#2")
