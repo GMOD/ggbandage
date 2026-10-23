@@ -144,8 +144,8 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   ),
   figure(
     "own_colours", "Your own colours: KIV-2 by haplotypes per node", "chr6:160,616,004-160,646,753",
-    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured and sized by how many of the six haplotypes, GRCh38 and the five named, run through it, from a thin pale line for one to a thick dark line for all six",
-    r"(g <- bandage_layout(walks, region = kiv2, haplotypes = five)
+    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured and sized by how many of the six haplotypes, GRCh38 and the five named, run through it, from a thin pale line for one to a thick dark line for all six. The 30 kb of flank either side, which all six walk, runs in as straight black lines",
+    r"(g <- bandage_layout(walks, region = kiv2, haplotypes = five, context = 30000, bubbleSpread = "compress")
 haplotypes <- "haplotypes through node"
 ggplot(g) +
   geom_bandage_edges(aes(colour = I("grey80"))) +
@@ -161,21 +161,22 @@ ggplot(g) +
       "- Colour and width both show `depth`, how many of the six haplotypes run through",
       "  a node. `depth` counts every pass, so where a cut's haplotype runs a node twice",
       "  it counts twice; no haplotype in this cut repeats a node.",
-      "- A pale dot on a dark strand is a 1 bp node that one or two haplotypes carry, a",
-      "  single-base variant inside a copy the rest share."
+      "- A short pale dash on a dark strand is a 1 bp node that one or two haplotypes",
+      "  carry, a single-base variant inside a copy the rest share. `bubbleSpread =",
+      "  \"compress\"` draws it that long, and stops loop size tracking bp."
     )
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
-    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and the panel titles give HG00097 55 kb and GRCh38 32.8 kb, each span the region plus 1 kb of flank either side",
+    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and a grey dashed link that neither walk takes skips the loop at the top. The panel titles give HG00097 113 kb and GRCh38 90.8 kb, each span the region plus 30 kb of flank either side",
     r"(g <- bandage_layout(
   walks,
-  region = kiv2, haplotypes = "HG00097#1",
+  region = kiv2, haplotypes = "HG00097#1", context = 30000,
   walks = c("GRCh38", "HG00097#1"),
   facet = "walk"
 )
 autoplot(g, ncol = 2))",
-    height = 4
+    height = 3.5
   ),
   figure(
     "kiv2_stress", "KIV-2 against a straight GRCh38 backbone, with LPA's exons", "chr6:160,616,004-160,646,753",
