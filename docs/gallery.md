@@ -249,7 +249,7 @@ autoplot(g, ncol = 2)
 
 `chr6:160,616,004-160,646,753`
 
-![Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence](../gallery/kiv2_stress.png)
+![Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below in two tiers, node lengths compressed so the longest insertion draws as a bar shorter than the array, and dashed arches where haplotypes skip reference sequence](../gallery/kiv2_stress.png)
 
 ```r
 library(ggbandage)
@@ -259,7 +259,7 @@ index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.g
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
-g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
+g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes, bubbleSpread = "compress")
 ggplot(g) +
   geom_bandage_edges() +
   geom_bandage_genes() +

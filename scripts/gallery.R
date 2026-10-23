@@ -180,15 +180,15 @@ autoplot(g, ncol = 2))",
   ),
   figure(
     "kiv2_stress", "KIV-2 against a straight GRCh38 backbone, with LPA's exons", "chr6:160,616,004-160,646,753",
-    "Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below, and dashed arches where haplotypes skip reference sequence",
-    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes)
+    "Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in grey hanging below in two tiers, node lengths compressed so the longest insertion draws as a bar shorter than the array, and dashed arches where haplotypes skip reference sequence",
+    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes, bubbleSpread = "compress")
 ggplot(g) +
   geom_bandage_edges() +
   geom_bandage_genes() +
   geom_bandage_nodes(aes(colour = I(ifelse(backbone, color, "grey70")))) +
   coord_fixed() +
   theme_void())",
-    width = 8, height = 4.4
+    width = 8, height = 3
   ),
   figure(
     "c4_stress", "C4A and C4B in the stress layout", "chr6:31,978,000-32,040,000",
