@@ -154,18 +154,13 @@ graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
 - Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and
   skip RHD, the deletion that most often makes blood RhD-negative
 - HG01106#1 walks the boxes three times and has a second RHD
-- The strip on top cuts 1.2 Mb from the walk file for the same walks. Past the
-  Rhesus boxes they run in one line. A syng graph that wide would tie distant
-  copies of short repeats into loops, so the strip uses the walk file
 
-![A strip on top draws 1.2 Mb round RHD from the walk file for the same walks as a straight grey line, black over the 200 kb drawn below, where it knots once. Under it, a force-directed syng graph of RHD from 19 HPRC haplotypes with three walks lifted together, each shaded light to dark along its own length, grch38 grey, HG01106#1 cyan to blue and HG01258#2 peach to rust, and a thread for every pass through a node. Through the Rhesus box at the left, grch38 draws two threads, HG01106#1 three and HG01258#2 one, each pass darker than the one before. Round the loop at the top, labelled RHD, grch38 draws one thread, HG01106#1 two, its second RHD, and HG01258#2 none, taking the box straight on to the loop below, labelled TMEM50A and RHCE, that every walk runs once. In the walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, grch38 spans 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
+![Force-directed syng graph of RHD from 19 HPRC haplotypes with three walks lifted together, each shaded light to dark along its own length, grch38 grey, HG01106#1 cyan to blue and HG01258#2 peach to rust, and a thread for every pass through a node. Through the Rhesus box at the left, grch38 draws two threads, HG01106#1 three and HG01258#2 one, each pass darker than the one before. Round the loop at the top, labelled RHD, grch38 draws one thread, HG01106#1 two, its second RHD, and HG01258#2 none, taking the box straight on to the loop below, labelled TMEM50A and RHCE, that every walk runs once. In the walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, grch38 spans 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 library(patchwork)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
@@ -176,18 +171,7 @@ g <- bandage_layout(rhd_syng, walks = progress, genes = genes)
 g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
 g$exons <- g$exons[0, ]
 rows <- bandage_walk_rows(rhd_syng, haplotypes = haps)
-wide <- bandage_layout(walks, region = "chr1:24,750,000-25,950,000", haplotypes = haps)
-context <- ggplot(wide) +
-  geom_bandage_edges(aes(colour = I("grey80"))) +
-  geom_bandage_nodes(aes(colour = I(ifelse(
-    !is.na(position) & position > 25.25e6 & position < 25.45e6, "grey15", "grey75"
-  )))) +
-  coord_fixed() +
-  theme_void() +
-  theme(plot.subtitle = element_text(size = 10, colour = "grey30")) +
-  labs(subtitle = "1.2 Mb round RHD from the walk file, the 200 kb drawn below in black")
-context / autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) +
-  plot_layout(heights = c(0.25, 1.6, 1))
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1))
 ```
 
 ## Your own colours: KIV-2 nodes by walk visits
