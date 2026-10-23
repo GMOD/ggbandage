@@ -194,6 +194,9 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
   through a node: `depth` over the haplotype count.
 - Of 465 walks, 71 run GRCh38's GSTM1 loop, 84 the non-reference loop beside it,
   2 both, and 308 neither, taking the dashed deletion edge.
+- A walk through either loop spans 60.6 kb, and one taking the deletion 42.2 kb.
+  The 18 kb between them is the GSTM1 deletion, so the second loop is most likely
+  GSTM1 too, a copy the graph did not align to GRCh38's.
 
 ![The GSTM1 locus cut from the walk file with all 464 HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that every haplotype walks. GSTM1 hangs off them as a thin pale loop, beside a second pale loop of non-reference sequence, and most haplotypes take the grey dashed edge that skips both. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
 

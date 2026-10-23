@@ -164,7 +164,10 @@ ggplot(g) +
       "- Colour and width both show `frequency`, the share of the cut's haplotypes",
       "  through a node: `depth` over the haplotype count.",
       "- Of 465 walks, 71 run GRCh38's GSTM1 loop, 84 the non-reference loop beside it,",
-      "  2 both, and 308 neither, taking the dashed deletion edge."
+      "  2 both, and 308 neither, taking the dashed deletion edge.",
+      "- A walk through either loop spans 60.6 kb, and one taking the deletion 42.2 kb.",
+      "  The 18 kb between them is the GSTM1 deletion, so the second loop is most likely",
+      "  GSTM1 too, a copy the graph did not align to GRCh38's."
     )
   ),
   figure(
