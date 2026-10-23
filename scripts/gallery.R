@@ -136,20 +136,27 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
     )
   ),
   figure(
-    "own_colours", "Your own colours: KIV-2 nodes by walk visits", "chr6:160,616,004-160,646,753",
-    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured by how many times the cut's walks visit it, light for once to dark for six",
+    "own_colours", "Your own colours: KIV-2 by haplotypes per node", "chr6:160,616,004-160,646,753",
+    "The KIV-2 array cut from the walk file, force-directed and drawn with plain ggplot2 layers: grey edges, and each node coloured and sized by how many of the six haplotypes, GRCh38 and the five named, run through it, from a thin pale line for one to a thick dark line for all six",
     r"(g <- bandage_layout(walks, region = kiv2, haplotypes = five)
+haplotypes <- "haplotypes through node"
 ggplot(g) +
   geom_bandage_edges(aes(colour = I("grey80"))) +
-  geom_bandage_nodes(aes(colour = depth)) +
-  scale_colour_viridis_c(
-    "walk visits per node",
-    option = "mako", direction = -1, end = 0.85, breaks = 1:6
-  ) +
+  geom_bandage_nodes(aes(colour = factor(depth), linewidth = factor(depth))) +
+  scale_colour_viridis_d(haplotypes, option = "mako", direction = -1, end = 0.85) +
+  scale_linewidth_manual(haplotypes, values = 1.2 * sqrt(1:6)) +
+  guides(colour = guide_legend(nrow = 1), linewidth = guide_legend(nrow = 1)) +
   coord_fixed() +
   theme_void() +
-  theme(legend.position = "bottom"))",
-    width = 6.5, height = 7, readme = TRUE
+  theme(legend.position = "bottom", legend.title.position = "top"))",
+    width = 6.5, height = 7, readme = TRUE,
+    note = c(
+      "- Colour and width both show `depth`, how many of the six haplotypes run through",
+      "  a node. `depth` counts every pass, so where a cut's haplotype runs a node twice",
+      "  it counts twice; no haplotype in this cut repeats a node.",
+      "- A pale dot on a dark strand is a 1 bp node that one or two haplotypes carry, a",
+      "  single-base variant inside a copy the rest share."
+    )
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
