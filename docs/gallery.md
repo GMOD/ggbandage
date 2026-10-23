@@ -147,25 +147,30 @@ each haplotype's contig span, fetches those spans from GenBank, and builds the
 graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
 `inst/extdata`.
 
-- The Rhesus boxes either side of RHD share their nodes, so GRCh38 walks them
-  twice
+- The Rhesus boxes either side of RHD share many of their nodes, so GRCh38
+  walks them twice
+- Each lifted walk draws a thread per pass, and each node on a thread takes the
+  hue of the GRCh38 box copy the walk is following there: GRCh38's first pass
+  runs orange, its second green
 - Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and
-  skip RHD, the deletion that most often makes blood RhD-negative
-- HG01106#1 walks the boxes three times and has a second RHD
+  skip RHD, the deletion that most often makes blood RhD-negative. HG01258#2's
+  one pass turns from orange to green partway, the hybrid box the deletion
+  leaves
+- HG01106#1 walks the boxes three times and has a second RHD. Its passes switch
+  between orange and green, where they match one box's alleles, then the other's
 
-![Force-directed syng graph of RHD from 19 HPRC haplotypes, coloured along GRCh38, with a charcoal arc of sequence off GRCh38's path where haplotypes that lack RHD skip it. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD](../gallery/syng_rhd.png)
+![Force-directed syng graph of RHD from 19 HPRC haplotypes with grch38, HG01106#1 and HG01258#2 lifted, each drawing a thread per pass coloured by its place along GRCh38. Through the Rhesus box at the left, grch38 runs one orange and one green thread, HG01106#1 three threads that switch between orange and green, and HG01258#2 one that turns from orange to green partway. Round RHD, the green to cyan loop below, grch38 runs one thread, HG01106#1 two and HG01258#2 none. Under it, walk rows: GRCh38 spans 202 kb, HG01106#1 272 kb, repeating RHD's orange to green hues, and HG01258#2 132 kb, jumping from orange to green past RHD](../gallery/syng_rhd.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 library(patchwork)
 
 rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
-g <- bandage_layout(rhd_syng)
-rows <- bandage_walk_rows(rhd_syng, haplotypes = c("HG01258#2", "HG01106#1"))
-(autoplot(g) + guides(fill = "none", colour = "none", linetype = "none") + labs(caption = NULL)) /
-  autoplot(rows, ribbons = FALSE, hues = "bandage") +
-  plot_layout(heights = c(1.6, 1))
+haps <- c("HG01106#1", "HG01258#2")
+by_position <- lapply(c("grch38", haps), function(w) list(walk = w, color = list(field = "reference", scheme = "rainbow")))
+g <- bandage_layout(rhd_syng, walks = by_position)
+rows <- bandage_walk_rows(rhd_syng, haplotypes = haps)
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "bandage") + plot_layout(heights = c(1.6, 1))
 ```
 
 ## Your own colours: KIV-2 nodes by walk visits
