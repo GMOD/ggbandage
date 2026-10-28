@@ -13,6 +13,15 @@ test_that("a node's frequency sums its alleles' frequencies times their passes",
   expect_equal(f[c("7", "8", "9")], c("7" = 1, "8" = 1 / 3, "9" = 1))
 })
 
+test_that("an AF given as `.` falls back to the called genotypes", {
+  record <- c(
+    "chr1", "10", ".", "A", "G", ".", ".", "AT=>1>2>4,>1>3>4;AF=.;LV=0",
+    "GT", "0|1", "1|1"
+  )
+  expect_silent(f <- site_frequencies(record))
+  expect_equal(f[c("2", "3")], c("2" = 0.25, "3" = 0.75))
+})
+
 test_that("a nested site's alleles count only through its parent's", {
   f <- frequency_of(vcf_frequencies(sites))
   expect_equal(f[["2"]], 0.5)

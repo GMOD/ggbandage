@@ -63,15 +63,20 @@ vcf_records <- function(vcf, region) {
   records
 }
 
+# NULL where the record lacks the key or gives it as `.`, VCF's missing value
 info_field <- function(info, key) {
   m <- regmatches(info, regexpr(sprintf("(^|;)%s=[^;]*", key), info))
-  if (length(m)) sub("^;?[^=]*=", "", m) else NULL
+  value <- sub("^;?[^=]*=", "", m)
+  if (length(value) && value != ".") value
 }
 
 # Each allele's frequency, the reference's first
 allele_frequencies <- function(record, alleles) {
   info <- record[8]
-  num <- function(x) as.numeric(strsplit(x, ",", fixed = TRUE)[[1]])
+  num <- function(x) {
+    v <- strsplit(x, ",", fixed = TRUE)[[1]]
+    as.numeric(replace(v, v == ".", NA))
+  }
   af <- info_field(info, "AF")
   ac <- info_field(info, "AC")
   an <- info_field(info, "AN")
