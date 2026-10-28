@@ -6,7 +6,7 @@
 utils::globalVariables(c(
   "x", "y", "draw", "ink", "width", "angle", "halfWidth",
   "color", "alpha", "panel", "name", "stretch", "gene", "stops", "walk",
-  "note", "xmin", "xmax", "kind", "label", "readout", "id", "position",
+  "note", "xmin", "xmax", "kind", "label", "id", "position",
   "letter", "block", "key", "colour", "slide_x", "slide_y"
 ))
 

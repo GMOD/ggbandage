@@ -1,6 +1,10 @@
 # The core states widths in css px, 1/96 in, which is also R's lwd unit
 px_linewidth <- function(px) px / ggplot2::.pt
 
+px <- function(v) grid::unit(v / 96, "inches")
+
+width_px <- function(u) grid::convertWidth(u, "inches", valueOnly = TRUE) * 96
+
 #' @exportS3Method ggplot2::fortify
 fortify.bandage_layout <- function(model, data, ...) {
   structure(nodes_of(model), bandage = model)
@@ -49,35 +53,29 @@ in_draw_order <- function(d, id) {
 }
 
 nodes_of <- function(model, background = "white") {
-  n <- slid_back(model$nodes, model$meta, c("x", "y"))
+  n <- slid_back(model$nodes, model$meta, "x", "y")
   n$ink <- ink(n$color, n$alpha, background)
   in_draw_order(n, "stroke")
 }
 
 edges_of <- function(model, background = "white") {
-  e <- slid_back(model$edges, model$meta, c("x0", "y0", "cx0", "cy0"))
-  e <- slid_back(e, model$meta, c("cx1", "cy1", "x1", "y1"), end = TRUE)
+  e <- slid_back(model$edges, model$meta, c("x0", "cx0"), c("y0", "cy0"))
+  e <- slid_back(e, model$meta, c("cx1", "x1"), c("cy1", "y1"), end = "1")
   e <- bezier_points(e, model$meta$scaleX)
   e$ink <- ink(e$color, e$alpha, background)
   in_draw_order(e, "curve")
 }
 
-slid_back <- function(d, meta, xy, end = FALSE) {
-  cols <- if (end) c("nx1", "ny1", "offset1", "slide_x1", "slide_y1") else c("nx", "ny", "offset", "slide_x", "slide_y")
-  if (is.null(d[[cols[3]]])) {
-    d[[cols[4]]] <- if (end) d$slide_x else numeric(nrow(d))
-    d[[cols[5]]] <- if (end) d$slide_y else numeric(nrow(d))
-    return(d)
-  }
-  d[[cols[4]]] <- d[[cols[1]]] * d[[cols[3]]]
-  d[[cols[5]]] <- d[[cols[2]]] * d[[cols[3]]]
-  for (col in xy) {
-    d[[col]] <- d[[col]] - if (startsWith(col, "x") || startsWith(col, "cx")) {
-      d[[cols[4]]] / meta$scaleX
-    } else {
-      d[[cols[5]]] / meta$scaleY
-    }
-  }
+# slid_back takes a lane's px offset off its data coordinates and
+# GeomBandagePath adds it back in px, so lanes keep their spacing at any size
+slid_back <- function(d, meta, x, y, end = "") {
+  offset <- d[[paste0("offset", end)]]
+  slide_x <- d[[paste0("nx", end)]] * offset
+  slide_y <- d[[paste0("ny", end)]] * offset
+  for (col in x) d[[col]] <- d[[col]] - slide_x / meta$scaleX
+  for (col in y) d[[col]] <- d[[col]] - slide_y / meta$scaleY
+  d[[paste0("slide_x", end)]] <- slide_x
+  d[[paste0("slide_y", end)]] <- slide_y
   d
 }
 
@@ -122,8 +120,8 @@ GeomBandagePath <- ggplot2::ggproto("GeomBandagePath", ggplot2::Geom,
     d <- coord$transform(data[order(data$group), ], panel_params)
     first <- d[!duplicated(d$group), ]
     grid::polylineGrob(
-      grid::unit(d$x, "native") + grid::unit(d$slide_x / 96, "inches"),
-      grid::unit(d$y, "native") + grid::unit(d$slide_y / 96, "inches"),
+      grid::unit(d$x, "native") + px(d$slide_x),
+      grid::unit(d$y, "native") + px(d$slide_y),
       id = d$group,
       gp = grid::gpar(
         col = ggplot2::alpha(first$colour, first$alpha),
@@ -199,8 +197,8 @@ GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
     dy <- rbind(0, -uy * d$length + ux * d$halfwidth, -uy * notch, -uy * d$length - ux * d$halfwidth)
     n <- nrow(d)
     grid::polygonGrob(
-      x = grid::unit(rep(d$x, each = 4), "npc") + grid::unit(as.vector(dx) / 96, "inches"),
-      y = grid::unit(rep(d$y, each = 4), "npc") + grid::unit(as.vector(dy) / 96, "inches"),
+      x = grid::unit(rep(d$x, each = 4), "native") + px(as.vector(dx)),
+      y = grid::unit(rep(d$y, each = 4), "native") + px(as.vector(dy)),
       id = rep(seq_len(n), each = 4),
       gp = grid::gpar(col = NA, fill = ggplot2::alpha(d$fill, d$alpha))
     )
@@ -314,7 +312,6 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = EXON,
 }
 
 exon_key <- function(colour, label) {
-  px <- function(v) grid::unit(v / 96, "inches")
   text <- grid::textGrob(
     label,
     x = px(23), just = "left", gp = grid::gpar(fontsize = 9, col = "grey15")
@@ -331,6 +328,8 @@ exon_key <- function(colour, label) {
 
 FADED <- "#a0a0a0"
 EXON <- "#e8a200"
+CHARCOAL <- "#3c4148"
+DELETION <- "#18181c"
 
 keys_of <- function(model, exons = FALSE) {
   k <- model$keys
@@ -381,14 +380,12 @@ GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
 
 #' @exportS3Method grid::makeContent
 makeContent.bandage_keys <- function(x) {
-  room <- grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96
-  grid::setChildren(x, key_grobs(x$keys, x$text, room)$grobs)
+  grid::setChildren(x, key_grobs(x$keys, x$text, width_px(grid::unit(1, "npc")))$grobs)
 }
 
 key_font <- grid::gpar(fontsize = 8.25, col = "grey15")
 
 key_grobs <- function(data, text, room) {
-  px <- function(v) grid::unit(v / 96, "inches")
   grobs <- list()
   at <- 6
   line <- 0
@@ -407,7 +404,7 @@ key_grobs <- function(data, text, room) {
     wide <- bar + if (is.null(label)) {
       0
     } else {
-      5 + grid::convertWidth(grid::grobWidth(label), "inches", valueOnly = TRUE) * 96
+      5 + width_px(grid::grobWidth(label))
     }
     if (at > 6 && at + wide > room) {
       at <- 6
@@ -446,7 +443,7 @@ key_guide <- function(model) {
   keys <- keys_of(model, exons = TRUE)
   keys$label <- paste0(keys$walk, keys$note)
   ggplot2::guides(bandage_keys = ggplot2::guide_custom(
-    grid::gTree(keys = keys, cl = "bandage_key_guide"),
+    grid::gTree(keys = keys, text = TRUE, cl = c("bandage_key_guide", "bandage_keys")),
     position = "top"
   ))
 }
@@ -466,27 +463,21 @@ facet_key_guide <- function(model) {
   }
   keys$label <- keys$note
   ggplot2::guides(bandage_keys = ggplot2::guide_custom(
-    grid::gTree(keys = keys, cl = "bandage_key_guide"),
+    grid::gTree(keys = keys, text = TRUE, cl = c("bandage_key_guide", "bandage_keys")),
     position = "bottom"
   ))
 }
 
 key_room <- function() {
-  max(60, grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96 - KEY_INSET)
+  max(60, width_px(grid::unit(1, "npc")) - KEY_INSET)
 }
 
 #' @exportS3Method grid::widthDetails
-widthDetails.bandage_key_guide <- function(x) grid::unit(key_room() / 96, "inches")
+widthDetails.bandage_key_guide <- function(x) px(key_room())
 
 #' @exportS3Method grid::heightDetails
 heightDetails.bandage_key_guide <- function(x) {
-  grid::unit((6 + 16 * key_grobs(x$keys, TRUE, key_room())$lines) / 96, "inches")
-}
-
-#' @exportS3Method grid::makeContent
-makeContent.bandage_key_guide <- function(x) {
-  room <- grid::convertWidth(grid::unit(1, "npc"), "inches", valueOnly = TRUE) * 96
-  grid::setChildren(x, key_grobs(x$keys, TRUE, room)$grobs)
+  px(6 + 16 * key_grobs(x$keys, TRUE, key_room())$lines)
 }
 
 #' Each lifted walk's colour bar, as the Bandage view's key draws it

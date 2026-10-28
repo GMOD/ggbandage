@@ -129,17 +129,16 @@ layout_key <- function(object) {
     x = nodes$x[1], y = nodes$y[1],
     position = c(m$referenceRamp$start, m$referenceRamp$end)
   )
-  inks <- c(
-    if (!all(nodes$backbone)) stats::setNames("#3c4148", paste("off the", reference, "path")),
-    if (!is.null(m$deletionKey)) stats::setNames("#18181c", m$deletionKey),
-    if (nrow(object$exons)) stats::setNames(EXON, "exon")
-  )
-  widths <- c("#3c4148" = 2.5, "#18181c" = 0.8, "#e8a200" = 2.5)[inks]
-  lines <- stats::setNames(
-    c("#3c4148" = "solid", "#18181c" = "22", "#e8a200" = "solid")[inks], names(inks)
+  entry <- function(label, colour, linewidth, linetype) {
+    data.frame(label, colour, linewidth, linetype)
+  }
+  inks <- rbind(
+    if (!all(nodes$backbone)) entry(paste("off the", reference, "path"), CHARCOAL, 2.5, "solid"),
+    if (!is.null(m$deletionKey)) entry(m$deletionKey, DELETION, 0.8, "22"),
+    if (nrow(object$exons)) entry("exon", EXON, 2.5, "solid")
   )
   guide <- ggplot2::guide_legend(
-    order = 2, override.aes = list(alpha = 1, linewidth = unname(widths)),
+    order = 2, override.aes = list(alpha = 1, linewidth = inks$linewidth),
     theme = ggplot2::theme(legend.key.width = grid::unit(30, "pt"))
   )
   revisited <- unique(nodes$node[nodes$referenceVisits > 1])
@@ -149,19 +148,23 @@ layout_key <- function(object) {
       data = ramp, inherit.aes = FALSE, alpha = 0
     ),
     scale_fill_bandage_position(paste(reference, "position, Mb")),
-    if (length(inks)) {
+    if (!is.null(inks)) {
       list(
         ggplot2::geom_path(
           ggplot2::aes(x = x, y = y, colour = key, linetype = key, group = key),
           data = data.frame(
-            x = nodes$x[1], y = nodes$y[1], key = rep(names(inks), each = 2)
+            x = nodes$x[1], y = nodes$y[1], key = rep(inks$label, each = 2)
           ),
           inherit.aes = FALSE, alpha = 0
         ),
-        ggplot2::scale_colour_manual(NULL, values = inks, breaks = names(inks), guide = guide),
+        ggplot2::scale_colour_manual(
+          NULL,
+          values = stats::setNames(inks$colour, inks$label), breaks = inks$label, guide = guide
+        ),
         ggplot2::scale_linetype_manual(
           NULL,
-          values = lines, breaks = names(inks), guide = ggplot2::guide_legend(order = 2)
+          values = stats::setNames(inks$linetype, inks$label), breaks = inks$label,
+          guide = ggplot2::guide_legend(order = 2)
         )
       )
     },
@@ -186,7 +189,7 @@ frequency_key <- function(object) {
     ggplot2::geom_path(
       ggplot2::aes(x = x, y = y, linewidth = key, group = key),
       data = data.frame(x = nodes$x[1], y = nodes$y[1], key = key),
-      inherit.aes = FALSE, alpha = 0, colour = "#3c4148"
+      inherit.aes = FALSE, alpha = 0, colour = CHARCOAL
     ),
     ggplot2::scale_discrete_manual(
       "linewidth",

@@ -176,8 +176,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
                                        hues = c("viridis", "bandage", "walk"), layout = NULL) {
   hues <- match.arg(hues)
   inks <- walk_inks(object$rows, layout)
-  swatches <- inks[nzchar(inks$colour), c("row", "colour")]
   walk_hued <- hues == "walk"
+  swatches <- row_swatches(object$rows, if (!walk_hued) layout)
   if (walk_hued && !nrow(inks)) {
     stop(
       'hues = "walk" needs a `layout` that lifts the rows\' walks in flat colours or progress ramps',
@@ -213,8 +213,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   )
   more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
   labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted, more)
-  off_fill <- if (walk_hued) STRIP_FILL else "#3c4148"
-  off_ink <- if (walk_hued) NA else "#3c4148"
+  off_fill <- if (walk_hued) STRIP_FILL else CHARCOAL
+  off_ink <- if (walk_hued) NA else CHARCOAL
   block_fill <- if (walk_hued) NA else "#e8e8e8"
   keys <- stats::setNames(
     c(off_fill, rep("white", 3), "#cfe0f2", "#b9abdb", block_fill), labels
@@ -262,7 +262,6 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   plain$fill <- ifelse(walk_hued & plain$key == off, NA, keys[plain$key])
   if (walk_hued) {
     tiles$fill <- walk_fill(inks, rows, tiles$row, (tiles$xmin + tiles$xmax) / 2)
-    swatches <- swatches[0, ]
   }
   p <- ggplot2::ggplot()
   if (nrow(links)) {
