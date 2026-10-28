@@ -414,12 +414,12 @@ key_grobs <- function(data, text, room) {
     grobs[[length(grobs) + 1]] <- if (threads) {
       grid::segmentsGrob(
         px(at), top - px(c(1, 4, 7)), px(at + bar), top - px(c(1, 4, 7)),
-        gp = grid::gpar(col = "grey30", lwd = 2 * 72 / 96, lineend = "butt")
+        gp = grid::gpar(col = "grey30", lwd = 2, lineend = "butt")
       )
     } else if (identical(data$kind[i], "deletion")) {
       grid::segmentsGrob(
         px(at), top - px(4), px(at + bar), top - px(4),
-        gp = grid::gpar(col = colours, lwd = 2 * 72 / 96, lty = "22", lineend = "butt")
+        gp = grid::gpar(col = colours, lwd = 2, lty = "22", lineend = "butt")
       )
     } else {
       grid::rectGrob(
