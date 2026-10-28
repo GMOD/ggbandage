@@ -54,6 +54,7 @@ const noFs = {
 const { outputFiles } = await build({
   stdin: {
     contents: [
+      "import './scripts/v8-host.mjs'",
       "export { figure, walkRows } from './scripts/figure.mjs'",
       "export { cutWalks } from './scripts/walks-cut.mjs'",
       "export { cutTabix, indexedLines } from './scripts/tabix-cut.mjs'",
@@ -126,88 +127,9 @@ const decoder = `function bandageBase64(s) {
   return out;
 }`
 
-const textDecoder = `if (!globalThis.TextDecoder) {
-  globalThis.TextDecoder = class TextDecoder {
-    decode(bytes = new Uint8Array(0)) {
-      const b = ArrayBuffer.isView(bytes)
-        ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-        : new Uint8Array(bytes);
-      let out = '';
-      for (let i = 0; i < b.length; ) {
-        const c = b[i++];
-        const extra = c >= 0xf8 ? -1 : c >= 0xf0 ? 3 : c >= 0xe0 ? 2 : c >= 0xc0 ? 1 : 0;
-        if (extra < 0 || (c >= 0x80 && c < 0xc0) || i + extra > b.length) {
-          out += '\\ufffd';
-          continue;
-        }
-        let cp = extra === 0 ? c : c & (0x3f >> extra);
-        for (let k = 0; k < extra; k++) cp = (cp << 6) | (b[i++] & 0x3f);
-        out += cp > 0x10ffff ? '\\ufffd' : String.fromCodePoint(cp);
-      }
-      return out;
-    }
-  };
-}`
-
-const textEncoder = `if (!globalThis.TextEncoder) {
-  globalThis.TextEncoder = class TextEncoder {
-    encode(text = '') {
-      const out = [];
-      for (const ch of text) {
-        const cp = ch.codePointAt(0);
-        if (cp < 0x80) out.push(cp);
-        else if (cp < 0x800) out.push(0xc0 | (cp >> 6), 0x80 | (cp & 0x3f));
-        else if (cp < 0x10000) out.push(0xe0 | (cp >> 12), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
-        else out.push(0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 0x3f), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
-      }
-      return Uint8Array.from(out);
-    }
-    encodeInto(text, dest) {
-      const bytes = this.encode(text);
-      const written = Math.min(bytes.length, dest.length);
-      dest.set(bytes.subarray(0, written));
-      return { read: text.length, written };
-    }
-  };
-}`
-
-const abortController = `if (!globalThis.AbortController) {
-  class AbortSignal {
-    aborted = false;
-    reason = undefined;
-    listeners = [];
-    addEventListener(_type, fn) { this.listeners.push(fn); }
-    removeEventListener(_type, fn) { this.listeners = this.listeners.filter(f => f !== fn); }
-    throwIfAborted() { if (this.aborted) throw this.reason; }
-  }
-  globalThis.AbortController = class AbortController {
-    signal = new AbortSignal();
-    abort(reason = new Error('aborted')) {
-      if (this.signal.aborted) return;
-      this.signal.aborted = true;
-      this.signal.reason = reason;
-      for (const fn of this.signal.listeners) fn({ type: 'abort' });
-    }
-  };
-}`
-
-const dataFetch = `if (!globalThis.fetch) {
-  globalThis.fetch = async url => {
-    const m = /^data:[^,]*;base64,(.*)$/.exec(url);
-    if (!m) throw new Error('V8 has no network: cannot fetch ' + url);
-    const bytes = bandageBase64(m[1]);
-    return { ok: true, arrayBuffer: async () => bytes.buffer };
-  };
-}`
-
 const banner = [
   `// @jbrowse/bandage-core@${built}, bundled by scripts/build-js.mjs`,
-  'if (!globalThis.performance) globalThis.performance = { now: () => Date.now() };',
   decoder,
-  textDecoder,
-  textEncoder,
-  abortController,
-  dataFetch,
 ].join('\n')
 
 const js = base64Wasm(outputFiles[0].text).replace(

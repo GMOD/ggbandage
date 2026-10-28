@@ -28,11 +28,11 @@ fetches every byte it reads.
 bandage_layout()            R/engine.R
   is_tabix_graph()          R/tabix.R    the input is a segment index
   tabix_files()             R/tabix.R    the four files (segs, links and a .tbi or .csi each)
-  parse_region()            R/tabix.R    "chr6:1,001-2,000" to chr6, 1000, 2000
+  parse_region()            R/standalone-byte-ranges.R    "chr6:1,001-2,000" to chr6, 1000, 2000
   bandage.cutTabix()        scripts/tabix-cut.mjs, in V8
     @gmod/tabix             asks its filehandles for bytes
       console.r.call()      V8 calls back into R, synchronously
-        fetch_range()       R/tabix.R    reads a local file or sends a Range request
+        fetch_range()       R/standalone-byte-ranges.R    reads a local file or sends a Range request
     rgfaCut()               @jbrowse/graph-walks: the segments and links under
                             the region, as GFA text
   bandage.figure()          scripts/figure.mjs: bandage-core lays the GFA out,
@@ -93,7 +93,7 @@ home connection, with `layout = "auto"`:
 
 ## Why the bytes come from R
 
-V8 has no file system or network access, so `rangeFile` in `tabix-cut.mjs`
+V8 has no file system or network access, so `rangeFile` in `v8-host.mjs`
 gives `@gmod/tabix` a filehandle whose `read(length, position)` calls
 `ggbandage:::fetch_range` through `console.r.call`. Walk files and segment
 indexes both read through it.
@@ -103,16 +103,16 @@ indexes both read through it.
 - V8 passes every argument to R as a string, so `fetch_range` converts them
 - R returns a raw vector, and V8 hands it to JavaScript as a base64 string in
   an array, wrapped every 76 characters. `rangeFile` strips the whitespace and
-  decodes it with `bandageBase64`, defined in the bundle's banner
-- A URL becomes one `Range` request per call through `curl`. A local file is
-  read with `seek` and `readBin`
+  decodes it with `fromBase64`
+- A URL becomes one `Range` request per call through `curl`. A local file,
+  or a `file://` URL, is read with `seek` and `readBin`
 - A length of `-1` means the whole file, which the reader uses for the `.tbi`
 - A range that runs past the end of a file returns the bytes that exist, and
   an HTTP 416 reads as no bytes, because the reader asks for whole 64 kB
   blocks near the end of small files
 - A server without range support, such as `python -m http.server`, answers
-  `200` with the whole file. `url_range` cuts the asked-for bytes from it, so
-  the cut is right but downloads the file on every read
+  `200` with the whole file. `url_range` cuts the asked-for bytes from it and
+  keeps the body for later reads, up to 1 GB of bodies in all
 - An R error in `fetch_range`, such as a missing file or an HTTP error status,
   reaches the caller as the error message, and the V8 context stays usable
 
@@ -126,6 +126,27 @@ page walks one call through that loop. The two packages differ in the callback:
   reader needs
 - ggjbrowse defers the engine's warnings until the V8 call returns. ggbandage
   defers nothing, so an error in `fetch_range` ends the call
+
+## Code shared with ggtubemap and ggjbrowse
+
+ggbandage holds the one copy of the helpers its sibling packages share. The
+siblings import them with `usethis::use_standalone()` and check their copies
+against it.
+
+| File | Holds | Imported by |
+| ---- | ----- | ----------- |
+| `R/standalone-v8-host.R` | `is_url`, `beside`, `bare_name`, the V8 fork guard | ggtubemap, ggjbrowse |
+| `R/standalone-byte-ranges.R` | `parse_region`, `fetch_range` and its readers, `index_of`, `read_lines` | ggtubemap |
+| `scripts/v8-host.mjs` | V8's missing browser globals, `rangeFile` | ggtubemap, as `tools/v8-host.mjs` |
+
+- Change a helper here, push, then in each sibling run
+  `usethis::use_standalone("GMOD/ggbandage", "<name>", ref = "<sha>")`. For the
+  JS file, copy it with the same `// Source:` header the sibling's copy has
+- Each sibling's `check-standalone` workflow fails when a copy differs from
+  ggbandage at the commit its header names, and weekly when ggbandage's main
+  has moved past that commit
+- The shared files are under the Unlicense, a public-domain dedication, so a
+  GPL, MIT or Apache package can include them
 
 ## The engine bundle
 
@@ -163,16 +184,20 @@ on any other bundle, so main must not get one until the core is out:
 
 ### Browser globals the bundle defines
 
-`@gmod/tabix` and its bgzf wasm expect browser globals. The banner in
-`scripts/build-js.mjs` defines each one when V8 lacks it:
+`@gmod/tabix` and its bgzf wasm expect browser globals.
+`scripts/v8-host.mjs`, the bundle's first import, defines each one when V8
+lacks it:
 
 | Global | Needed by |
 | ------ | --------- |
 | `TextDecoder`, `TextEncoder` | line decoding and the wasm bindings |
 | `AbortController` | `@gmod/shared-read-cache` |
 | `fetch` | the bgzf wasm, which loads from a `data:` URL |
+| `performance`, `structuredClone` | timing and copying in the core |
 
 - `fetch` only reads `data:` URLs and throws on anything else
+- The build inlines the core's wasm as base64, which `bandageBase64` in the
+  bundle's banner decodes before any module runs
 - The cut passes `chunkCacheIdleTimeoutMs: 0`, which stops the chunk cache
   from starting a timer, since V8 has no `setInterval`
 - The build stubs `fs/promises`, which `generic-filehandle2` imports for a

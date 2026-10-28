@@ -2,6 +2,13 @@ engine <- local({
   ctx <- NULL
   function() {
     if (is.null(ctx)) {
+      if (engine_forked(loaded$pid)) {
+        stop(
+          "V8 hangs starting in a forked worker, such as parallel::mclapply()'s: ",
+          "lay out in a socket cluster, such as parallel::makeCluster()'s",
+          call. = FALSE
+        )
+      }
       fresh <- V8::v8()
       fresh$source(system.file("js", "bandage.js", package = "ggbandage"))
       ctx <<- fresh
@@ -10,17 +17,13 @@ engine <- local({
   }
 })
 
-read_text <- function(path) {
-  if (is_url(path)) {
-    local <- tempfile()
-    on.exit(unlink(local))
-    writeBin(url_range(path, 0, -1), local)
-    path <- local
-  }
-  con <- gzfile(path)
-  on.exit(close(con), add = TRUE, after = FALSE)
-  paste(readLines(con, warn = FALSE), collapse = "\n")
+loaded <- new.env(parent = emptyenv())
+
+.onLoad <- function(libname, pkgname) {
+  loaded$pid <- Sys.getpid()
 }
+
+read_text <- function(path) paste(read_lines(path), collapse = "\n")
 
 is_walk_file <- function(x) grepl("\\.walks\\.bed\\.gz$", x)
 
@@ -159,29 +162,13 @@ gene_source <- function(genes, gene_names = NULL) {
   if (is.null(genes)) {
     return(NULL)
   }
-  format <- if (grepl("\\.bed(\\.gz)?$", genes, ignore.case = TRUE)) "bed" else "gff3"
+  format <- if (grepl("\\.bed(\\.gz)?$", bare_name(genes), ignore.case = TRUE)) "bed" else "gff3"
   names <- if (length(gene_names)) list(refNames = as.list(gene_names))
   index <- index_of(genes)
   if (!is.null(index)) {
     return(c(list(file = genes, index = index, format = format), names))
   }
   c(list(text = read_text(genes), format = format), names)
-}
-
-# a bgzipped file's .tbi or .csi index, NULL when it has neither
-index_of <- function(file) {
-  for (ext in c(".tbi", ".csi")) {
-    if (exists_at(paste0(file, ext))) {
-      return(paste0(file, ext))
-    }
-  }
-  NULL
-}
-
-# the index a read needs, named as a .tbi in the error when there is none
-index_or_tbi <- function(file) {
-  index <- index_of(file)
-  if (is.null(index)) paste0(file, ".tbi") else index
 }
 
 unbound_genes <- function(genes, unbound) {
@@ -193,17 +180,6 @@ unbound_genes <- function(genes, unbound) {
     if (length(has)) paste("; it has", listed(has, 4)) else "",
     unbound$contigs[1],
     if (length(has)) has[1] else "NC_000006.12"
-  )
-}
-
-exists_at <- function(location) {
-  if (!is_url(location)) {
-    return(file.exists(location))
-  }
-  handle <- curl::new_handle(nobody = TRUE)
-  tryCatch(
-    curl::curl_fetch_memory(location, handle)$status_code < 400,
-    error = function(e) FALSE
   )
 }
 

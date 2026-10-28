@@ -84,15 +84,18 @@ test_that("a byte range reads the same from a file and from a URL", {
   }
 })
 
-test_that("a server that ignores Range still yields the bytes asked for", {
+test_that("a server that ignores Range is read once, and yields the bytes asked for", {
   file <- paste0(index, ".segs.bed.gz")
   whole <- readBin(file, "raw", file.size(file))
+  fetched <- 0
   local_mocked_bindings(
     curl_fetch_memory = function(url, handle) {
+      fetched <<- fetched + 1
       list(status_code = 200L, content = whole)
     },
     .package = "curl"
   )
+  whole_bodies$clear()
   url <- "https://example.org/x.segs.bed.gz"
   for (range in list(c(0, 100), c(10, 20), c(5, -1), c(0, 1e6))) {
     expect_identical(
@@ -100,6 +103,34 @@ test_that("a server that ignores Range still yields the bytes asked for", {
       file_range(file, range[1], range[2])
     )
   }
+  expect_equal(fetched, 1)
+  whole_bodies$clear()
+})
+
+test_that("a remote file's existence is asked with a one-byte GET, which a presigned URL allows", {
+  asked <- NULL
+  local_mocked_bindings(
+    curl_fetch_memory = function(url, handle) {
+      asked <<- curl::handle_data(handle)
+      list(status_code = if (grepl("vcf.gz.tbi", url, fixed = TRUE)) 206L else 403L, content = raw(1))
+    },
+    .package = "curl"
+  )
+  expect_equal(index_of("https://example.org/x.vcf.gz?token=1"), "https://example.org/x.vcf.gz.tbi?token=1")
+  expect_null(index_of("https://example.org/x.vcf"))
+  expect_false(isTRUE(asked$nobody))
+})
+
+test_that("a file:// URL reads as its local path, with or without a query", {
+  file <- paste0(index, ".segs.bed.gz")
+  url <- paste0("file://", normalizePath(file), "?v=1")
+  expect_identical(fetch_range(url, "10", "20"), file_range(file, 10, 20))
+  expect_error(fetch_range("/no/such.gz", 0, 10), "does not exist")
+})
+
+test_that("the engine refuses to start in a process other than the one that loaded it", {
+  expect_false(engine_forked(Sys.getpid()))
+  expect_true(engine_forked(Sys.getpid() + 1L))
 })
 
 test_that("a range past the end of a file is empty or short, never an error", {

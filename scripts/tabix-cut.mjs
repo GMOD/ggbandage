@@ -1,35 +1,15 @@
 import { TabixIndexedFile } from '@gmod/tabix'
 import { rgfaCut } from '@jbrowse/graph-walks'
 
-// V8 has no file system or network, so the filehandles get bytes from R
-// through console.r.call, as line-wrapped base64 that `bandageBase64` in the
-// banner decodes.
+import { rangeFile } from './v8-host.mjs'
 
-function fromR(fn, ...args) {
-  const [value] = console.r.call(`ggbandage:::${fn}`, args)
-  return value
-}
-
-export function rangeFile(location) {
-  const bytes = (position, length) =>
-    bandageBase64(
-      (fromR('fetch_range', location, position, length) ?? '').replace(
-        /\s/g,
-        '',
-      ),
-    )
-  return {
-    read: async (length, position) => bytes(position, length),
-    readFile: async () => bytes(0, -1),
-    close: async () => {},
-  }
-}
+const fetchRange = 'ggbandage:::fetch_range'
 
 export function openIndexed(file, index) {
   return new TabixIndexedFile({
-    filehandle: rangeFile(file),
-    [index.endsWith('.csi') ? 'csiFilehandle' : 'tbiFilehandle']:
-      rangeFile(index),
+    filehandle: rangeFile(fetchRange, file),
+    [/\.csi([?#]|$)/.test(index) ? 'csiFilehandle' : 'tbiFilehandle']:
+      rangeFile(fetchRange, index),
     chunkCacheIdleTimeoutMs: 0,
   })
 }
