@@ -139,12 +139,13 @@ against it.
 | `R/standalone-byte-ranges.R` | `parse_region`, `fetch_range` and its readers, `index_of`, `read_lines` | ggtubemap |
 | `scripts/v8-host.mjs` | V8's missing browser globals, `rangeFile` | ggtubemap, as `tools/v8-host.mjs` |
 
-- Change a helper here, push, then in each sibling run
-  `usethis::use_standalone("GMOD/ggbandage", "<name>", ref = "<sha>")`. For the
-  JS file, copy it with the same `// Source:` header the sibling's copy has
-- Each sibling's `check-standalone` workflow fails when a copy differs from
+- Change a helper here and push. Then in each sibling,
+  `check-standalone.sh --update <sha>` (in ggtubemap's `tools/`, ggjbrowse's
+  `scripts/`) copies every file again from that commit, with the header
+  `usethis::use_standalone()` writes
+- Each sibling's `Standalone files` workflow fails when a copy differs from
   ggbandage at the commit its header names, and weekly when ggbandage's main
-  has moved past that commit
+  has changed the file since
 - The shared files are under the Unlicense, a public-domain dedication, so a
   GPL, MIT or Apache package can include them
 
