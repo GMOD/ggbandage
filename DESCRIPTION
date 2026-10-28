@@ -22,6 +22,7 @@ Imports:
     V8
 Suggests:
     knitr,
+    parallel,
     patchwork,
     rmarkdown,
     testthat (>= 3.0.0)

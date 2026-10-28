@@ -156,6 +156,17 @@ test_that("the engine refuses to start in a process other than the one that load
   expect_true(engine_forked(Sys.getpid() + 1L))
 })
 
+test_that("a forked worker refuses to start the engine, and inherits a started one", {
+  skip_on_os("windows")
+  engine()
+  in_fork <- function(f) parallel::mccollect(parallel::mcparallel(f()))[[1]]
+  expect_equal(in_fork(function() engine()$eval("1 + 1")), "2")
+  expect_match(in_fork(function() {
+    assign("ctx", NULL, envir = environment(engine))
+    tryCatch(engine(), error = conditionMessage)
+  }), "forked worker")
+})
+
 test_that("a range past the end of a file is empty or short, never an error", {
   file <- paste0(index, ".segs.bed.gz")
   size <- file.size(file)
