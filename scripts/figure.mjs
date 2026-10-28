@@ -124,7 +124,6 @@ export function walkRows(text, name, spec) {
       sample: all.map(r => r.sample),
       bp: all.map(r => r.bp),
       offReferenceBp: all.map(r => r.offReferenceBp),
-      complete: all.map(r => r.complete),
       linked: all.map(r => r.complete),
       backward: all.map(r => !!r.axis?.reversed),
       contig: all.map(r => r.axis?.contig ?? null),

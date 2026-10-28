@@ -591,7 +591,7 @@ test_that("a walk the file abridged cuts in full, as from a file that did not", 
   expect_match(readLines(gzfile(abridged)), "\tabridged\t", all = FALSE)
   rows <- function(file) {
     w <- bandage_walk_rows(file, "chr:1004500-1004961", context = 0)$rows
-    w[order(w$name), c("name", "bp", "complete")]
+    w[order(w$name), c("name", "bp", "linked")]
   }
   expect_equal(rows(abridged), rows(walk_file), ignore_attr = TRUE)
 })
