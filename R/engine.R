@@ -126,22 +126,28 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     await = TRUE
   )
   d <- jsonlite::fromJSON(json)
-  missing <- unlist(d$unmatched)
-  if (length(missing)) {
-    warning(
-      sprintf(
-        "no walk named %s; the graph has %s%s",
-        paste(missing, collapse = ", "),
-        paste(utils::head(d$walkNames, 6), collapse = ", "),
-        if (length(d$walkNames) > 6) ", ..." else ""
-      ),
-      call. = FALSE
-    )
-  }
+  warn_unmatched(d)
   if (!is.null(d$unbound)) {
     warning(unbound_genes(genes, d$unbound), call. = FALSE)
   }
   as_bandage_layout(d)
+}
+
+warn_unmatched <- function(d) {
+  missing <- unlist(d$unmatched)
+  if (length(missing)) {
+    warning(
+      sprintf(
+        "no walk named %s; the graph has %s",
+        paste(missing, collapse = ", "), listed(d$walkNames, 6)
+      ),
+      call. = FALSE
+    )
+  }
+}
+
+listed <- function(x, n) {
+  paste0(paste(utils::head(x, n), collapse = ", "), if (length(x) > n) ", ...")
 }
 
 frequency_map <- function(x) {
@@ -184,15 +190,7 @@ unbound_genes <- function(genes, unbound) {
     "no sequence in %s names %s%s. Give gene_names the file's name for each, as c(\"%s\" = \"%s\")",
     genes,
     paste(unbound$contigs, collapse = ", "),
-    if (length(has)) {
-      sprintf(
-        "; it has %s%s",
-        paste(utils::head(has, 4), collapse = ", "),
-        if (length(has) > 4) ", ..." else ""
-      )
-    } else {
-      ""
-    },
+    if (length(has)) paste("; it has", listed(has, 4)) else "",
     unbound$contigs[1],
     if (length(has)) has[1] else "NC_000006.12"
   )

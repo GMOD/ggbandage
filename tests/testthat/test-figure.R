@@ -372,6 +372,14 @@ test_that("haplotypes picks a GFA's rows by sample or sample#haplotype", {
   expect_true(all(w$links$row < 2))
 })
 
+test_that("haplotypes picks a walk named without its range, as walks does, and warns on one matching none", {
+  expect_warning(
+    w <- bandage_walk_rows(pggb, haplotypes = c("IAI39#1#chr", "nope")),
+    "no walk named nope; the graph has K12#1#chr"
+  )
+  expect_equal(w$rows$label, c("K12", "IAI39"))
+})
+
 test_that("ribbons join neighbouring rows inside both bars", {
   w <- bandage_walk_rows(pggb)
   l <- w$links

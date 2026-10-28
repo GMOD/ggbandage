@@ -27,16 +27,21 @@ function geneSource({ file, index, ...rest } = {}) {
 }
 
 // A walk named in full, or every walk a prefix such as sample#haplotype begins
+function namesWalk(prefix, name) {
+  return (
+    name === prefix ||
+    name.startsWith(`${prefix}#`) ||
+    name.startsWith(`${prefix}:`)
+  )
+}
+
 function liftedWalks(graph, walks = []) {
   const names = [...new Set((graph.paths ?? []).map(p => p.name))]
   const lifted = walkLayers(walks).map(layer =>
     names.includes(layer.walk)
       ? [layer]
       : names
-          .filter(
-            n =>
-              n.startsWith(`${layer.walk}#`) || n.startsWith(`${layer.walk}:`),
-          )
+          .filter(n => namesWalk(layer.walk, n))
           .map(walk => ({ ...layer, walk })),
   )
   return {
@@ -85,10 +90,9 @@ export function walkRows(text, name, spec) {
       'walk rows need a reference walk and at least one other walk (P or W lines)',
     )
   }
+  const haplotypes = spec.haplotypes ?? []
   const picked = spec.haplotypes
-    ? cut.rows.filter(r =>
-        spec.haplotypes.some(h => r.name === h || r.name.startsWith(`${h}#`)),
-      )
+    ? cut.rows.filter(r => haplotypes.some(h => namesWalk(h, r.name)))
     : cut.rows
   const cutAll = [cut.reference, ...picked]
   const order =
@@ -111,6 +115,8 @@ export function walkRows(text, name, spec) {
   return {
     origin: cut.origin,
     reference: cut.reference.name,
+    unmatched: haplotypes.filter(h => !cut.rows.some(r => namesWalk(h, r.name))),
+    walkNames: [cut.reference, ...cut.rows].map(r => r.name),
     rows: {
       row: all.map((_, i) => i),
       name: all.map(r => r.name),

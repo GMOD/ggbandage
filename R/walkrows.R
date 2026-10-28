@@ -46,6 +46,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
     src$text, src$name, spec
   )
   d <- jsonlite::fromJSON(d)
+  warn_unmatched(d)
   rows <- frame(d$rows)
   runs <- frame(d$runs)
   runs$xmin <- runs$start
