@@ -25,7 +25,7 @@ loaded <- new.env(parent = emptyenv())
 
 read_text <- function(path) paste(read_lines(path), collapse = "\n")
 
-is_walk_file <- function(x) grepl("\\.walks\\.bed\\.gz$", x)
+is_walk_file <- function(x) grepl("\\.walks\\.bed\\.gz$", bare_name(x))
 
 # The graph as GFA text, its name, and the region a core reads it under: a
 # GFA as it is, or the part of an index or walk file under `region`
@@ -45,7 +45,7 @@ graph_source <- function(gfa, region, haplotypes, context) {
     return(list(text = cut_tabix(ctx, gfa, region), name = region, region = NULL))
   }
   list(
-    text = read_text(gfa), name = basename(gfa),
+    text = read_text(gfa), name = basename(bare_name(gfa)),
     region = if (!is.null(region)) core_region(region)
   )
 }

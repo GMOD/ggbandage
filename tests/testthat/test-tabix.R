@@ -38,6 +38,29 @@ test_that("a manifest names its index relative to itself", {
   expect_s3_class(g, "bandage_layout")
 })
 
+test_that("a URL's query, as a signed URL carries, stays on every file read beside it", {
+  skip_on_os("windows")
+  url <- function(path) paste0("file://", normalizePath(path), "?token=1")
+  walks <- test_path("testdata", "ecoli_pggb.K12.walks.bed.gz")
+  expect_s3_class(
+    bandage_layout(url(walks), region = "chr:1004500-1004961"),
+    "bandage_layout"
+  )
+  segs <- url(paste0(index, ".segs.bed.gz"))
+  expect_match(tabix_files(segs)$links, "\\.links\\.bed\\.gz\\?token=1$")
+  expect_match(tabix_files(segs)$linksIndex, "\\.links\\.bed\\.gz\\.tbi\\?token=1$")
+  expect_s3_class(
+    bandage_layout(segs, region = "K12#1#chr:1004500-1004961"),
+    "bandage_layout"
+  )
+  expect_equal(
+    sibling("https://host/d/x.graph.json?token=1", "sub/idx"),
+    "https://host/d/sub/idx?token=1"
+  )
+  gfa <- graph_source(url(test_path("testdata", "ecoli_pggb_subgraph.gfa")), NULL, NULL, 0)
+  expect_equal(gfa$name, "ecoli_pggb_subgraph.gfa")
+})
+
 test_that("an index without a region, or with one it lacks, says so", {
   expect_error(bandage_layout(index), "region")
   expect_error(bandage_layout(index, region = "chrZ:1-100"), "not in the index")
