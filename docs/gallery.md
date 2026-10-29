@@ -6,7 +6,7 @@ Every snippet runs on its own. `scripts/gallery.R` draws them all.
 
 | Variable | File | How it was made |
 | --- | --- | --- |
-| `walks` | HPRC v2.1 GRCh38 walk file | `gfa-to-tabix hprc-v2.1-mc-grch38.gfa.gz --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38-f5`, as in [Hosting your own graph](https://jbrowse.org/jb2/docs/tutorials/pangenome_prepare_graph/). `f5` is the walk file format, gfa-to-tabix's format 5 |
+| `walks` | HPRC v2.1 GRCh38 walk file | `gfa-to-tabix hprc-v2.1-mc-grch38.gfa.gz --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38-f5s`, as in [Hosting your own graph](https://jbrowse.org/jb2/docs/tutorials/pangenome_prepare_graph/). `f5s` is the walk file format, gfa-to-tabix's format 5, with the `skip` rows that gfa-to-tabix 1.5 and later write for a haplotype that jumps over a window |
 | `index` | HPRC v2.1 GRCh38 segment index | `gfa-to-tabix hprc-v2.1-mc-grch38.sv.gfa.gz --layout anchored -o hprc-v2.1-mc-grch38.anchored`. `anchored` is the layout: every node filed under the reference interval its bubble hangs from |
 | `genes` | UCSC hg38 ncbiRefSeq GFF3, bgzipped and tabix-indexed | Hosted by JBrowse, used as is |
 | `syng` | C4 syng graph from 90 haplotypes | [build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh) runs [impg](https://github.com/pangenome/impg) on odgi's C4 test haplotypes |
@@ -25,7 +25,7 @@ The HPRC graphs are the files behind the
 library(ggbandage)
 library(patchwork)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 cfh <- "chr1:196,640,001-196,900,000"
@@ -47,7 +47,7 @@ autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = 
 library(ggbandage)
 library(ggplot2)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 five <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
 
@@ -65,7 +65,7 @@ autoplot(rows) +
 ```r
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 
 amylase <- c("HG00128#1", "CHM13#0", "HG00097#2", "HG002#1", "HG00099#1", "HG00097#1", "HG00099#2")
 rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = amylase)
@@ -104,7 +104,7 @@ autoplot(g)
 library(ggbandage)
 library(patchwork)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 haps <- c("HG00133#2", "HG00097#1")
@@ -204,7 +204,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
 library(ggbandage)
 library(ggplot2)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 gstm1 <- "chr1:109,665,000-109,715,000"
@@ -239,7 +239,7 @@ Narrower cases, and other ways to draw the same loci.
 ```r
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 g <- bandage_layout(
@@ -303,7 +303,7 @@ autoplot(g)
 ```r
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 ugt2b17 <- "chr4:68,500,000-68,680,000"

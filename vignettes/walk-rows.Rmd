@@ -17,7 +17,7 @@ longer bar, which no node layout shows. The gallery has
 ```{r example, eval = FALSE}
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 haplotypes <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haplotypes)

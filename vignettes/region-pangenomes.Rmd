@@ -57,7 +57,7 @@ index.
 ```{r read, eval = FALSE}
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
 g <- bandage_layout(walks, region = "chr1:196,640,001-196,900,000", haplotypes = c("HG00097#1", "HG02055#1"))
 ```
 
