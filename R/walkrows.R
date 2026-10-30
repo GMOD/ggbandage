@@ -91,6 +91,14 @@ gap_kinds <- c(
   outside = "outside the extracted subgraph"
 )
 
+# Room past the longest bar for the readouts, as a share of it: 30%, or what
+# the readout reaching furthest takes at about 0.7% a character, which fits a
+# figure 10 in wide
+readout_room <- function(rows, span) {
+  reach <- (rows$xmax / span + 0.01 + nchar(rows$readout) * 0.007) - 1
+  max(0.3, reach)
+}
+
 # the share of the longest bar a block's stretch needs to be drawn and lettered
 letter_share <- 0.012
 
@@ -346,7 +354,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       "kb from the left flank",
       labels = function(x) format(x / 1000, big.mark = ",", scientific = FALSE, trim = TRUE),
       expand = ggplot2::expansion(
-        mult = c(if (nrow(swatches)) 0.045 else 0.01, if (readouts) 0.3 else 0.02)
+        mult = c(if (nrow(swatches)) 0.045 else 0.01, if (readouts) readout_room(rows, span) else 0.02)
       )
     ) +
     ggplot2::labs(y = NULL) +

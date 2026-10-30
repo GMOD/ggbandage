@@ -626,6 +626,13 @@ test_that("a gap in a walk row says what the walk file states of it", {
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
 
+test_that("the room past the bars fits the readout reaching furthest", {
+  rows <- data.frame(xmax = c(100, 50), readout = c("1 kb", strrep("x", 80)))
+  expect_equal(readout_room(rows, 100), 0.3)
+  rows$xmax[2] <- 100
+  expect_equal(readout_room(rows, 100), 0.01 + 80 * 0.007)
+})
+
 # gfa-to-tabix --walks --refs REF --chunk 1000 of seven 1 kb nodes: REF walks
 # them all, DEL >1>6>7 and SNP >1>2>3>5>6>7, so both skip chr1:3000-4000
 skips <- test_path("testdata", "skip.REF.walks.bed.gz")
@@ -637,7 +644,7 @@ test_that("a haplotype whose deletion spans the window draws as a deletion row",
   expect_equal(as.character(gaps$kind), rep("deleted in this haplotype", 2))
   expect_equal(gaps$xmax - gaps$xmin, rep(w$rows$bp[1], 2))
   expect_equal(w$rows$xmax, rep(w$rows$bp[1], 3))
-  expect_match(w$rows$readout[2], "deleted in this haplotype$")
+  expect_equal(w$rows$readout[-1], c("inside a 4 kb deletion", "inside a 1 kb deletion"))
   expect_equal(bandage_walk_rows(skips, "chr1:3201-3800", "DEL", context = 0)$rows$label, c("REF#0", "DEL#1"))
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
