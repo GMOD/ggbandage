@@ -26,12 +26,16 @@ index.
 | ---------- | ------------------------------------------- | --------------------------------------------------- |
 | Input GFA  | base-level, with W or P lines               | an rGFA (`*.sv.gfa.gz`), or a plain GFA with `--reference` |
 | Command    | `gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph` | `gfa-to-tabix graph.sv.gfa.gz -o graph` |
-| Files      | `graph.GRCh38.walks.bed.gz` and its `.tbi`  | `graph.segs.bed.gz`, `graph.links.bed.gz` and a `.tbi` each |
+| Files      | `graph.GRCh38.walks.bed.gz` and its `.tbi`  | `graph.graph.bed.gz` and its `.tbi`                 |
 | Holds      | every haplotype's walk through the region   | the segments and links under the region             |
 | Draw it as | walks lifted or faceted, and walk rows      | the graph's shape, over megabases                   |
 
 `bandage_layout()` and `bandage_gfa()` read either file, given a `region`.
 `bandage_walk_rows()` needs a walk file.
+
+gfa-to-tabix before 2.0, or with `--format 1`, writes a segment index as two
+files, `graph.segs.bed.gz` and `graph.links.bed.gz`. ggbandage reads that
+pair too, given the `.segs.bed.gz` or the prefix `graph`.
 
 ## Making a walk file
 

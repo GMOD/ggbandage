@@ -7,7 +7,7 @@ Every snippet runs on its own. `scripts/gallery.R` draws them all.
 | Variable | File | How it was made |
 | --- | --- | --- |
 | `walks` | HPRC v2.1 GRCh38 walk file | `gfa-to-tabix hprc-v2.1-mc-grch38.gfa.gz --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38-f5s`, as in [Hosting your own graph](https://jbrowse.org/jb2/docs/tutorials/pangenome_prepare_graph/). `f5s` is the walk file format, gfa-to-tabix's format 5, with the `skip` rows that gfa-to-tabix 1.5 and later write for a haplotype that jumps over a window |
-| `index` | HPRC v2.1 GRCh38 segment index | `gfa-to-tabix hprc-v2.1-mc-grch38.sv.gfa.gz --layout anchored -o hprc-v2.1-mc-grch38.anchored`. `anchored` is the layout: every node filed under the reference interval its bubble hangs from |
+| `index` | HPRC v2.1 GRCh38 segment index | `gfa-to-tabix hprc-v2.1-mc-grch38.sv.gfa.gz --layout anchored -o hprc-v2.1-mc-grch38.anchored`, with gfa-to-tabix 2.0.0, which writes format 2: nodes and links in one `.graph.bed.gz`. `anchored` is the layout: every node filed under the reference interval its bubble hangs from |
 | `genes` | UCSC hg38 ncbiRefSeq GFF3, bgzipped and tabix-indexed | Hosted by JBrowse, used as is |
 | `syng` | C4 syng graph from 90 haplotypes | [build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh) runs [impg](https://github.com/pangenome/impg) on odgi's C4 test haplotypes |
 
@@ -81,7 +81,7 @@ autoplot(rows)
 ```r
 library(ggbandage)
 
-index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.graph.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 g <- bandage_layout(index, region = "chr22:42,118,000-42,136,000", engine = "stress", genes = genes)
@@ -260,7 +260,7 @@ autoplot(g, ncol = 2)
 ```r
 library(ggbandage)
 
-index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.graph.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
@@ -277,7 +277,7 @@ autoplot(g)
 ```r
 library(ggbandage)
 
-index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.segs.bed.gz"
+index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.graph.bed.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 
 g <- bandage_layout(
