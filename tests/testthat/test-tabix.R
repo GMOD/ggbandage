@@ -1,12 +1,13 @@
 pggb <- test_path("testdata", "ecoli_pggb_subgraph.gfa")
 index <- test_path("testdata", "ecoli_pggb")
 rgfa_index <- test_path("testdata", "ecoli_rgfa.segs.bed.gz")
+format2 <- test_path("testdata", "ecoli_pggb_format2.graph.bed.gz")
+bare_nodes <- function(g) sub("[+-]$", "", unique(g$nodes$node))
 
 test_that("a window over a whole index draws the graph the GFA does", {
   whole <- bandage_layout(pggb)
   cut <- bandage_layout(index, region = "K12#1#chr:1004500-1004961")
-  bare <- function(g) sub("[+-]$", "", unique(g$nodes$node))
-  expect_setequal(bare(cut), bare(whole))
+  expect_setequal(bare_nodes(cut), bare_nodes(whole))
   expect_equal(length(unique(cut$edges$edge)), length(unique(whole$edges$edge)))
 })
 
@@ -17,7 +18,7 @@ test_that("a window cuts the graph to what lies under it", {
     region = "K12#1#chr:993,301-1,000,000"
   )
   expect_setequal(
-    sub("[+-]$", "", unique(g$nodes$node)),
+    bare_nodes(g),
     c("s322", "s323", "s324", "s325", "s1727", "s1728")
   )
 })
@@ -36,6 +37,51 @@ test_that("a manifest names its index relative to itself", {
   writeLines('{"schema": 1, "index": "ecoli_pggb"}', manifest)
   g <- bandage_layout(manifest, region = "K12#1#chr:1004500-1004961")
   expect_s3_class(g, "bandage_layout")
+})
+
+test_that("a format 2 index draws the graph its format 1 pair does", {
+  region <- "K12#1#chr:1004500-1004961"
+  one <- bandage_layout(index, region = region)
+  two <- bandage_layout(format2, region = region)
+  expect_setequal(bare_nodes(two), bare_nodes(one))
+  expect_equal(length(unique(two$edges$edge)), length(unique(one$edges$edge)))
+})
+
+test_that("a .graph.bed.gz file, its prefix, or a format 2 manifest names a format 2 index", {
+  prefix <- sub("\\.graph\\.bed\\.gz$", "", format2)
+  expect_true(is_tabix_graph(format2))
+  expect_true(is_tabix_graph(prefix))
+  expect_true(is_tabix_graph("https://host/x.graph.bed.gz?token=1"))
+  expect_equal(tabix_files(prefix), tabix_files(format2))
+
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  file.copy(Sys.glob(paste0(index, ".*.bed.gz*")), dir)
+  for (f in Sys.glob(paste0(format2, "*"))) {
+    file.copy(f, file.path(dir, sub("ecoli_pggb_format2", "ecoli_pggb", basename(f))))
+  }
+  both <- file.path(dir, "ecoli_pggb")
+  expect_named(tabix_files(both), c("graph", "graphIndex"))
+  expect_named(tabix_files(paste0(both, ".segs.bed.gz"))[1], "segments")
+
+  manifest <- file.path(dir, "x.graph.json")
+  writeLines('{"schema": 1, "format": 2, "index": "ecoli_pggb"}', manifest)
+  expect_named(tabix_files(manifest), c("graph", "graphIndex"))
+  expect_setequal(
+    bare_nodes(bandage_layout(manifest, region = "K12#1#chr:1004500-1004961")),
+    bare_nodes(bandage_layout(format2, region = "K12#1#chr:1004500-1004961"))
+  )
+  writeLines('{"schema": 1, "format": 3, "index": "ecoli_pggb"}', manifest)
+  expect_error(tabix_files(manifest), "format 3")
+})
+
+test_that("a signed .graph.bed.gz URL keeps its query on the index", {
+  skip_on_os("windows")
+  signed <- paste0("file://", normalizePath(format2), "?token=1")
+  expect_equal(tabix_files(signed)$graph, signed)
+  expect_match(tabix_files(signed)$graphIndex, "\\.graph\\.bed\\.gz\\.tbi\\?token=1$")
+  expect_s3_class(bandage_layout(signed, region = "K12#1#chr:1004500-1004961"), "bandage_layout")
 })
 
 test_that("a URL's query, as a signed URL carries, stays on every file read beside it", {
@@ -80,10 +126,9 @@ test_that("a missing index file is named in the error, and the engine recovers",
 
 test_that("a contig-layout index draws what the anchored one does, one hop out", {
   region <- "K12#1#chr:1004500-1004961"
-  bare <- function(g) sub("[+-]$", "", unique(g$nodes$node))
   expect_setequal(
-    bare(bandage_layout(test_path("testdata", "ecoli_contig"), region = region)),
-    bare(bandage_layout(index, region = region))
+    bare_nodes(bandage_layout(test_path("testdata", "ecoli_contig"), region = region)),
+    bare_nodes(bandage_layout(index, region = region))
   )
 })
 

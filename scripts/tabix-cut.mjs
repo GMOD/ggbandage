@@ -32,10 +32,12 @@ function resolveName(names, refName) {
   )
 }
 
-// The graph under a region of a gfa-to-tabix segment index, as GFA text, cut
-// as the JBrowse graph plugin cuts it: one hop past the window on a
-// contig-layout index
+// The graph under a region of a gfa-to-tabix index, as GFA text, cut as the
+// JBrowse graph plugin cuts it: one hop past the window on a contig-layout
+// index. Format 2 is one graph file, format 1 a segments and links pair
 export async function cutTabix({
+  graph,
+  graphIndex,
   segments,
   segmentsIndex,
   links,
@@ -44,12 +46,14 @@ export async function cutTabix({
   start,
   end,
 }) {
-  const files = {
-    segments: openIndexed(segments, segmentsIndex),
-    links: openIndexed(links, linksIndex),
-  }
+  const files = graph
+    ? { graph: openIndexed(graph, graphIndex) }
+    : {
+        segments: openIndexed(segments, segmentsIndex),
+        links: openIndexed(links, linksIndex),
+      }
   const name = resolveName(
-    await files.segments.getReferenceSequenceNames(),
+    await (files.graph ?? files.segments).getReferenceSequenceNames(),
     refName,
   )
   return rgfaCut(files, { refName: name, start, end }, { hops: 1 })

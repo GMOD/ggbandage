@@ -71,9 +71,10 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' Lay out a GFA graph with the Bandage engine
 #'
 #' @param gfa path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix
-#'   index (the `.graph.json` manifest, a `.segs.bed.gz` file, or the prefix of
-#'   a local pair); or of a gfa-to-tabix `--walks` file (`.walks.bed.gz`). An
-#'   index or walk file needs `region`
+#'   index (the `.graph.json` manifest, a format 2 `.graph.bed.gz` file, a
+#'   format 1 `.segs.bed.gz` file, or a local prefix of either); or of a
+#'   gfa-to-tabix `--walks` file (`.walks.bed.gz`). An index or walk file
+#'   needs `region`
 #' @param layout `"force"`, `"auto"`, `"ordered"` or `"samplerows"`
 #' @param walks walks (P/W lines) to lift out of the drawing, each named in
 #'   full or by a prefix such as `"HG00097#1"` or `"HG00097"`, which lifts

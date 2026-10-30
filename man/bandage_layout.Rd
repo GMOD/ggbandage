@@ -21,9 +21,10 @@ bandage_layout(
 }
 \arguments{
 \item{gfa}{path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix
-index (the \code{.graph.json} manifest, a \code{.segs.bed.gz} file, or the prefix of
-a local pair); or of a gfa-to-tabix \code{--walks} file (\code{.walks.bed.gz}). An
-index or walk file needs \code{region}}
+index (the \code{.graph.json} manifest, a format 2 \code{.graph.bed.gz} file, a
+format 1 \code{.segs.bed.gz} file, or a local prefix of either); or of a
+gfa-to-tabix \code{--walks} file (\code{.walks.bed.gz}). An index or walk file
+needs \code{region}}
 
 \item{layout}{\code{"force"}, \code{"auto"}, \code{"ordered"} or \code{"samplerows"}}
 

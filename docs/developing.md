@@ -27,7 +27,8 @@ fetches every byte it reads.
 ```
 bandage_layout()            R/engine.R
   is_tabix_graph()          R/tabix.R    the input is a segment index
-  tabix_files()             R/tabix.R    the four files (segs, links and a .tbi or .csi each)
+  tabix_files()             R/tabix.R    the files: format 2's .graph.bed.gz, or format 1's
+                                         segs and links, each with a .tbi or .csi
   parse_region()            R/standalone-byte-ranges.R    "chr6:1,001-2,000" to chr6, 1000, 2000
   bandage.cutTabix()        scripts/tabix-cut.mjs, in V8
     @gmod/tabix             asks its filehandles for bytes
@@ -41,11 +42,16 @@ bandage_layout()            R/engine.R
 
 - The cut gives each segment `LN`, `SN`, `SO` and `SR` tags and `SM` where the
   index has it; the `auto` layout anchors on the reference through them
-- `<prefix>.segs.bed.gz` has a row per segment, and `<prefix>.links.bed.gz` a
-  row per link, each with a `.tbi` or `.csi`
+- gfa-to-tabix 2.0 writes format 2, one `<prefix>.graph.bed.gz` with a row
+  per node and per link. Format 1, from earlier versions or `--format 1`, puts
+  them in `<prefix>.segs.bed.gz` and `<prefix>.links.bed.gz`. Each file has a
+  `.tbi` or `.csi`
+- ggbandage reads either. A local prefix reads `.graph.bed.gz` where that
+  exists, and a `.graph.json` manifest's `format` field names the format, 1
+  where the field is missing
 - The default `anchored` layout files every row under the reference interval
-  its bubble hangs from, so one query on each file returns the whole graph under
-  a region, however deeply alleles nest
+  its bubble hangs from, so one query per file returns the whole graph under a
+  region, however deeply alleles nest
 - A `contig` index files rows by the segment's own coordinate. The cut follows
   links one hop past the region and reads once more to close each allele it
   reached, as the JBrowse graph plugin's view does
@@ -54,10 +60,10 @@ bandage_layout()            R/engine.R
 
 ### Which links a segment-index cut keeps
 
-On an anchored index, a query on the link file returns links the drawing does
-not need along with those it does. The cut keeps a link when:
+On an anchored index, a query returns links the drawing does not need along
+with those it does. The cut keeps a link when:
 
-- one of its segments came back from the segment file
+- one of its segments came back from the same query
 - its two ends are backbone on opposite sides of the region, as a deletion
   spanning the region is
 - both its segments are already in the cut
@@ -71,23 +77,28 @@ same `rgfaCut`, so the two draw the same cut.
 jbrowse.org hosts the release 2.1 Minigraph-Cactus graph's anchored index for
 the [JBrowse HPRC tutorial](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/),
 and a [README.txt](https://jbrowse.org/demos/hprc/README.txt) that records how
-it was built. The index has 759,223 segments, an 11 MB segment file, a 20 MB
-link file and a `.tbi` of about 240 kB for each. Timed on 2026-10-12 over a
-home connection, with `layout = "auto"`:
+it was built. The index has 759,223 segments, and its format 2 file,
+`hprc-v2.1-mc-grch38.anchored.graph.bed.gz`, is 29 MB with a 290 kB `.tbi`.
+Timed on 2026-10-30 over a home connection, with `layout = "auto"`:
 
-| Region                           | Span    | Nodes drawn | Downloaded | Time  |
-| -------------------------------- | ------- | ----------- | ---------- | ----- |
-| chr6:160,616,004-160,646,753     | 31 kb   | 29          | 0.7 MB     | 0.5 s |
-| chr6:160,000,000-161,500,000     | 1.5 Mb  | 395         | 0.7 MB     | 0.2 s |
-| chr6:29,700,000-33,200,000       | 3.5 Mb  | 1,311       | 1.0 MB     | 0.3 s |
-| chr6:28,000,000-34,000,000       | 6 Mb    | 1,702       | 1.0 MB     | 0.3 s |
-| chr1:100,000,000-110,000,000     | 10 Mb   | 1,421       | 0.8 MB     | 0.3 s |
+| Region                                | Span   | Nodes drawn | Downloaded | Time  |
+| ------------------------------------- | ------ | ----------- | ---------- | ----- |
+| chr6:160,616,004-160,646,753          | 31 kb  | 29          | 0.5 MB     | 0.2 s |
+| chr6:160,000,000-161,500,000          | 1.5 Mb | 395         | 0.5 MB     | 0.2 s |
+| chr6:29,700,000-33,200,000            | 3.5 Mb | 1,311       | 0.6 MB     | 0.2 s |
+| chr6:28,000,000-34,000,000            | 6 Mb   | 1,702       | 0.6 MB     | 0.3 s |
+| GRCh38#0#chr1:100,000,000-110,000,000 | 10 Mb  | 1,421       | 0.6 MB     | 0.3 s |
 
-- Each cut is four range requests: the two `.tbi` files whole, 0.5 MB that
-  every cut pays, then one read of the segment file and one of the link file
+- Each cut makes three range requests, for the whole `.tbi`, which every cut
+  pays, the header block and the rows under the region
+- The format 1 pair beside it, an 11 MB segment file and a 20 MB link file,
+  costs four requests and 0.7 to 1.0 MB for the same cuts
+- The chr1 row names GRCh38 in full, because gfa-to-tabix 2.0 also filed rows
+  of the format 2 file under `CHM13#0#chr1` and `HG002#1#chr1`, which a bare
+  `chr1` matches too
 - The 3.5 Mb plot is too dense to read as a figure, so the table times the
   fetch and the cut, not a layout of that many nodes
-- At the KIV-2 window, htslib's `tabix` returns 27 segment rows and 46 link
+- At the KIV-2 window, htslib's `tabix` returns 27 node rows and 46 link
   rows. The drawing has those 27 segments plus 2 that links reach, and 42 edge
   curves, because the cut drops the links that touch nothing in it
 
@@ -257,3 +268,10 @@ gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_co
 
 `ecoli_pggb_csi.*` copies `ecoli_pggb`'s two files with a `.csi` in place of
 each `.tbi`, from `tabix -C -p bed`.
+
+`ecoli_pggb_format2.graph.bed.gz` is the pggb GFA's index in format 2, made
+with gfa-to-tabix 2.0.0:
+
+```console
+gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 -o ecoli_pggb_format2
+```
