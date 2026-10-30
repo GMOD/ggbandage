@@ -5,3 +5,4 @@ allowBuilds:
 minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - '@jbrowse/*'
+  - '@gmod/tabix@3.13.1'
