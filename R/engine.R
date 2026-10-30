@@ -39,7 +39,8 @@ graph_source <- function(gfa, region, haplotypes, context) {
       cut <- cut_walks(ctx, gfa, region, haplotypes, context)
       return(list(
         text = cut$gfa, name = region,
-        region = core_region(region, cut$refName)
+        region = core_region(region, cut$refName),
+        skips = if (length(cut$skips$names)) cut$skips
       ))
     }
     return(list(text = cut_tabix(ctx, gfa, region), name = region, region = NULL))

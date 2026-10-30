@@ -39,6 +39,7 @@ autoplot(rows)
 | Letter | A block of non-reference nodes that two or more drawn rows walk. A is the block with the most bp; `autoplot()` fills the three largest |
 | White, dashed | Graph sequence outside the extracted subgraph. From a walk file, the readout names where, e.g. `34 kb on nodes filed near chr22:20.3 Mb` |
 | White, solid dark | Not in the graph: the walk's record ends and the contig's next record starts past it. Walk files only |
+| White, solid dark, the whole row | Deleted in this haplotype: its deletion spans the window, so it has no walk there and the file names it in a skip row. Walk files only |
 | White, dotted | Gap of unknown cause. Walk files only |
 | Pale blue ribbon | Neighbouring rows walk the same graph nodes |
 | Violet ribbon | Neighbouring rows walk the same graph nodes backwards |

@@ -2,7 +2,9 @@
 #'
 #' The reference walk on the top row and every other walk below it, each a bar
 #' of the sequence it carries between the reference nodes flanking the region.
-#' A repeat expansion reads as bar length, which no node layout shows.
+#' A repeat expansion reads as bar length, which no node layout shows. On a
+#' walk file, a haplotype whose deletion spans the whole window draws as a row
+#' of deletion.
 #' @inheritParams bandage_layout
 #' @param haplotypes the walks to draw under the reference, by sample or
 #'   `sample#haplotype`, every one when `NULL`. On a walk file, also the walks
@@ -20,7 +22,8 @@
 #'   no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
 #'   in bp from the left flank, with `kind` and, on the reference's path,
 #'   `referenceStart` and `reversed`, and on a gap, the `cause` a walk file
-#'   states: `missing`, `elsewhere` or `unknown`, else `outside`; and `links`, a row per ribbon from row
+#'   states: `missing`, `elsewhere`, `unknown` or `deleted`, else `outside`;
+#'   and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
 #'   per stretch of a block of nodes off the reference's path that two or more
@@ -39,7 +42,8 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
     if (!is.null(src$region)) list(region = src$region),
     if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
     if (!is.null(referencePath)) list(referencePath = referencePath),
-    if (!is.null(join)) list(join = join)
+    if (!is.null(join)) list(join = join),
+    if (!is.null(src$skips)) list(skips = src$skips)
   )
   d <- engine()$call(
     "(text, name, spec) => JSON.stringify(bandage.walkRows(text, name, spec))",
@@ -57,7 +61,9 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
     levels = c("on the reference's path", "off the reference's path", gap_kinds)
   )
   runs$label <- rows$label[runs$row + 1]
-  rows$xmax <- rows$bp
+  # a deletion row has no bp, so its readout goes past its deletion
+  ends <- tapply(runs$xmax, runs$row, max)
+  rows$xmax <- pmax(rows$bp, ends[as.character(rows$row)], na.rm = TRUE)
   rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "\u00b7 no ribbons"))
   blocks <- frame(d$blocks)
   big <- sort(unique(blocks$block[blocks$bp >= max(rows$bp) * letter_share]))
@@ -81,6 +87,7 @@ gap_kinds <- c(
   missing = "not in the graph",
   elsewhere = "on nodes filed elsewhere",
   unknown = "gap, cause unknown",
+  deleted = "deleted in this haplotype",
   outside = "outside the extracted subgraph"
 )
 
@@ -148,8 +155,9 @@ bar_tiles <- function(runs, tile) {
 #' blocks are filled and the rest grey, except under `hues = "walk"`, which
 #' outlines every block. White is sequence the extracted subgraph does not hold:
 #' dashed where the graph holds it outside the subgraph, and for a cut from a
-#' walk file, solid dark where a record break says the graph lacks it and
-#' dotted where the file leaves it open. The readout says where a walk went
+#' walk file, solid dark where a record break says the graph lacks it or a
+#' skip row says the haplotype jumps over the window, and dotted where the
+#' file leaves it open. The readout says where a walk went
 #' on nodes filed elsewhere in the file. Ribbons join the graph nodes
 #' neighbouring rows share, violet where one row walks them backwards. Inside
 #' a repeat, the ribbons show one pairing of the copies that keeps both rows in
@@ -212,17 +220,17 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ifelse(plain$kind %in% gap_kinds, plain$kind, off)
   )
   more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
-  labels <- c(off, gap_kinds[c("outside", "missing", "unknown")], ribbon, inverted, more)
+  labels <- c(off, gap_kinds[c("outside", "missing", "deleted", "unknown")], ribbon, inverted, more)
   off_fill <- if (walk_hued) STRIP_FILL else CHARCOAL
   off_ink <- if (walk_hued) NA else CHARCOAL
   block_fill <- if (walk_hued) NA else "#e8e8e8"
   keys <- stats::setNames(
-    c(off_fill, rep("white", 3), "#cfe0f2", "#b9abdb", block_fill), labels
+    c(off_fill, rep("white", 4), "#cfe0f2", "#b9abdb", block_fill), labels
   )
   outlines <- stats::setNames(
-    c(off_ink, "#9a9a9a", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb", "#7a7a7a"), labels
+    c(off_ink, "#9a9a9a", "#6e6e6e", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb", "#7a7a7a"), labels
   )
-  dashes <- stats::setNames(c("solid", "22", "solid", "12", "solid", "solid", "solid"), labels)
+  dashes <- stats::setNames(c("solid", "22", "solid", "solid", "12", "solid", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- if (walk_hued) character() else c("#d4785f", "#d9a94e", "#c98aa3")

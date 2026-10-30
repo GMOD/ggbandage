@@ -50,7 +50,8 @@ end, and \code{linked}, \code{FALSE} for a walk measured from one flank, which g
 no ribbons or letters; \code{runs}, a row per stretch of a bar, \code{xmin} and \code{xmax}
 in bp from the left flank, with \code{kind} and, on the reference's path,
 \code{referenceStart} and \code{reversed}, and on a gap, the \code{cause} a walk file
-states: \code{missing}, \code{elsewhere} or \code{unknown}, else \code{outside}; and \code{links}, a row per ribbon from row
+states: \code{missing}, \code{elsewhere}, \code{unknown} or \code{deleted}, else \code{outside};
+and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
 lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row
 per stretch of a block of nodes off the reference's path that two or more
@@ -62,5 +63,7 @@ another row can split one.
 \description{
 The reference walk on the top row and every other walk below it, each a bar
 of the sequence it carries between the reference nodes flanking the region.
-A repeat expansion reads as bar length, which no node layout shows.
+A repeat expansion reads as bar length, which no node layout shows. On a
+walk file, a haplotype whose deletion spans the whole window draws as a row
+of deletion.
 }

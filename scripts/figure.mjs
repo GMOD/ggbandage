@@ -81,9 +81,22 @@ function columns(records, keys) {
 
 // cutRows' rows and runs, with ribbons joining the nodes neighbouring rows
 // share and blocks lettering the stretches off the reference several rows walk
+// R unboxes a vector of one, so each column may arrive as a bare value
+function skipTable({ names, starts, ends }) {
+  const column = x => [x].flat()
+  return {
+    names: column(names),
+    starts: Float64Array.from(column(starts)),
+    ends: Float64Array.from(column(ends)),
+  }
+}
+
 export function walkRows(text, name, spec) {
   const region = spec.region ? parseRegion(spec.region) : undefined
-  const graph = loadGraph(text, name, { referencePath: spec.referencePath })
+  const loaded = loadGraph(text, name, { referencePath: spec.referencePath })
+  const graph = spec.skips
+    ? { ...loaded, skips: skipTable(spec.skips) }
+    : loaded
   const cut = cutRows(graph, region, undefined, { visits: true })
   if (!cut) {
     throw new Error(
