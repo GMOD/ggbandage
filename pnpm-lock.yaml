@@ -9,14 +9,14 @@ importers:
   .:
     devDependencies:
       '@gmod/tabix':
-        specifier: 3.12.0
-        version: 3.12.0
+        specifier: 3.13.1
+        version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: 12.5.0
-        version: 12.5.0
+        specifier: 12.5.1
+        version: 12.5.1
       '@jbrowse/graph-walks':
-        specifier: 4.4.0
-        version: 4.4.0
+        specifier: 4.6.0
+        version: 4.6.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -189,14 +189,11 @@ packages:
   '@gmod/shared-read-cache@2.1.0':
     resolution: {integrity: sha512-AyiUt0hiEGl7lWc1fuigbXR/RToIw3h72dalaRoSNau9WL9ux9rEfkcsXDYTgSDudehfAEQac1jTvn2zrfnELQ==}
 
-  '@gmod/tabix@3.12.0':
-    resolution: {integrity: sha512-19y7iXpo7IRgdxe5+nz8dM5S7zrM+xCdLoJq9AVLbVIAD56wvcW3s5o5WO99Me/Yn0QMwzI8SMWzI63CnvqH2Q==}
-
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@12.5.0':
-    resolution: {integrity: sha512-DepPr/FMnhDM/Qopdg//SSmfhgr6SSbI2lkFOyUweuhk8cUxQtGh9c/mSQ25k+cyO2NeTgL0is8BYoTfcSecpA==}
+  '@jbrowse/bandage-core@12.5.1':
+    resolution: {integrity: sha512-qreLECAMw5XV2jxBeVt9/+uDUD8gryYX3DHLfmZNCf8HtCjDtZYWio3C9Pu2WRrxxgPV2eh6Q5ttmnI0yEEkvg==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -208,8 +205,8 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-walks@4.4.0':
-    resolution: {integrity: sha512-WtrpuUjachNC1xC9ZIoh2/OVbfIQQ5O89xxXir82e5QtvuND8+dr4aD9w25k5oyj2lSgso4xGhWNorTeFVrvvg==}
+  '@jbrowse/graph-walks@4.6.0':
+    resolution: {integrity: sha512-haKxTI/qGQQc1NAhR2064XCq4miv1arvMDs2BcOd8iwus/Tno1A5xpbM/nqocXWfiEQ3OxtDb8aKR6lvMwV9Dw==}
     engines: {node: '>=20'}
 
   '@jbrowse/quick-lru@8.0.0':
@@ -321,13 +318,6 @@ snapshots:
 
   '@gmod/shared-read-cache@2.1.0': {}
 
-  '@gmod/tabix@3.12.0':
-    dependencies:
-      '@gmod/bgzf-filehandle': 6.8.2
-      '@gmod/shared-read-cache': 2.1.0
-      '@jbrowse/quick-lru': 8.0.0
-      generic-filehandle2: 2.5.1
-
   '@gmod/tabix@3.13.1':
     dependencies:
       '@gmod/bgzf-filehandle': 6.8.2
@@ -335,7 +325,7 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@12.5.0':
+  '@jbrowse/bandage-core@12.5.1':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
@@ -347,7 +337,7 @@ snapshots:
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
-  '@jbrowse/graph-walks@4.4.0': {}
+  '@jbrowse/graph-walks@4.6.0': {}
 
   '@jbrowse/quick-lru@8.0.0': {}
 
