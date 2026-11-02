@@ -87,7 +87,7 @@ gap_kinds <- c(
   missing = "not in the graph",
   elsewhere = "on nodes filed elsewhere",
   unknown = "gap, cause unknown",
-  deleted = "deleted in this haplotype",
+  deleted = "no step on the reference",
   outside = "outside the extracted subgraph"
 )
 

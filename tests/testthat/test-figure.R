@@ -637,14 +637,14 @@ test_that("the room past the bars fits the readout reaching furthest", {
 # them all, DEL >1>6>7 and SNP >1>2>3>5>6>7, so both skip chr1:3000-4000
 skips <- test_path("testdata", "skip.REF.walks.bed.gz")
 
-test_that("a haplotype whose deletion spans the window draws as a deletion row", {
+test_that("a haplotype with no step on the reference across the window draws as a skip row", {
   w <- bandage_walk_rows(skips, "chr1:3201-3800", context = 0)
   expect_equal(w$rows$label, c("REF#0", "DEL#1", "SNP#1"))
   gaps <- w$runs[w$runs$row > 0, ]
-  expect_equal(as.character(gaps$kind), rep("deleted in this haplotype", 2))
+  expect_equal(as.character(gaps$kind), rep("no step on the reference", 2))
   expect_equal(gaps$xmax - gaps$xmin, rep(w$rows$bp[1], 2))
   expect_equal(w$rows$xmax, rep(w$rows$bp[1], 3))
-  expect_equal(w$rows$readout[-1], c("inside a 4 kb deletion", "inside a 1 kb deletion"))
+  expect_equal(w$rows$readout[-1], c("no step on the reference across 4 kb", "no step on the reference across 1 kb"))
   expect_equal(bandage_walk_rows(skips, "chr1:3201-3800", "DEL", context = 0)$rows$label, c("REF#0", "DEL#1"))
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
