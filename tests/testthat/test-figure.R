@@ -586,6 +586,14 @@ test_that("a walk file cut keeps the haplotypes asked for, and names its sequenc
   )
 })
 
+test_that("a format 5 walk file asks for a rebuild", {
+  old <- test_path("testdata", "ecoli_pggb_format5.K12.walks.bed.gz")
+  expect_error(
+    bandage_walk_rows(old, "chr:1004500-1004961"),
+    "format 5; .* rebuild it with gfa-to-tabix 3.0 or later"
+  )
+})
+
 test_that("a walk the file abridged cuts in full, as from a file that did not", {
   abridged <- test_path("testdata", "ecoli_pggb_abridged.K12.walks.bed.gz")
   expect_match(readLines(gzfile(abridged)), "\tabridged\t", all = FALSE)
@@ -602,8 +610,8 @@ test_that("a region is a 1-based locus on a GFA and a walk file alike", {
     "K12#1#chr:1004500-1004961"
   )
   expect_equal(
-    graph_source(walk_file, "chr:1004501-1004961", NULL, 0)$region,
-    "K12#1#chr:1004500-1004961"
+    graph_source(walk_file, "chr:1004501-1004961", NULL, 0)$source$walks[c("refName", "start", "end")],
+    list(refName = "chr", start = 1004500, end = 1004961)
   )
   g <- bandage_layout(walk_file, region = "chr:1004600-1004600", context = 50)
   expect_s3_class(g, "bandage_layout")
@@ -611,19 +619,28 @@ test_that("a region is a 1-based locus on a GFA and a walk file alike", {
 
 records <- test_path("testdata", "records.GRCh38.walks.bed.gz")
 
-test_that("a gap in a walk row says what the walk file states of it", {
+test_that("a gap in a walk row says what the walk file's departures state of it", {
   w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
   gaps <- w$runs[w$runs$gap, ]
   expect_equal(as.character(gaps$kind[gaps$label == "HG003#1"]), "on nodes filed elsewhere")
   expect_match(w$rows$readout[w$rows$label == "HG003#1"], "1.0 kb on nodes filed near chr1:9 kb$")
-  # HG002's records break 500 bp and 800 bp either side of a third, which
-  # visits no GRCh38 node, so the 700 bp between the breaks stay open
+  # HG002 leaves GRCh38 after 2 kb and rejoins it at 3 kb, with 2 kb of its
+  # own: 1.3 kb between its W lines, and 700 bp on a node the cut did not read
   expect_equal(
     as.character(gaps$kind[gaps$label == "HG002#1"]),
-    c("not in the graph", "gap, cause unknown", "not in the graph")
+    c("not in the graph", "of its own, not read")
   )
-  expect_equal(gaps$bp[gaps$label == "HG002#1"], c(500, 700, 800))
+  expect_equal(gaps$bp[gaps$label == "HG002#1"], c(1300, 700))
+  expect_equal(
+    w$rows$readout[w$rows$label == "HG002#1"],
+    "5.0 kb (+1.0 kb) · 1.3 kb not in the graph · 0.7 kb of its own, not read"
+  )
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
+})
+
+test_that("a layout of a walk file keys a walk by what its departures state", {
+  g <- bandage_layout(records, region = "chr1:1001-5000", walks = "HG002#1", context = 0)
+  expect_equal(g$keys$note, " +1 kb, 1.3 kb not in the graph, 700 bp of its own, not read")
 })
 
 test_that("the room past the bars fits the readout reaching furthest", {
@@ -633,23 +650,29 @@ test_that("the room past the bars fits the readout reaching furthest", {
   expect_equal(readout_room(rows, 100), 0.01 + 80 * 0.007)
 })
 
-# gfa-to-tabix --walks --refs REF --chunk 1000 of seven 1 kb nodes: REF walks
-# them all, DEL >1>6>7 and SNP >1>2>3>5>6>7, so both skip chr1:3000-4000
-skips <- test_path("testdata", "skip.REF.walks.bed.gz")
+# REF walks seven 1 kb nodes, DEL >1>6>7, INS >1>8>6>7 through a 2 kb node of
+# its own, and SNP >1>2>3>5>6>7, so none steps on chr1:3000-4000
+stepless <- test_path("testdata", "stepless.REF.walks.bed.gz")
 
-test_that("a haplotype with no step on the reference across the window draws as a skip row", {
-  w <- bandage_walk_rows(skips, "chr1:3201-3800", context = 0)
-  expect_equal(w$rows$label, c("REF#0", "DEL#1", "SNP#1"))
+test_that("a haplotype with no step on the reference across the window draws as a stepless row", {
+  w <- bandage_walk_rows(stepless, "chr1:3201-3800", context = 0)
+  expect_equal(w$rows$label, c("REF#0", "DEL#1", "INS#1", "SNP#1"))
+  expect_equal(w$rows$stepless, c(FALSE, TRUE, TRUE, TRUE))
+  expect_equal(w$rows$offReferenceBp, c(0, 0, 2000, 0))
   gaps <- w$runs[w$runs$row > 0, ]
-  expect_equal(as.character(gaps$kind), rep("no step on the reference", 2))
-  expect_equal(gaps$xmax - gaps$xmin, rep(w$rows$bp[1], 2))
-  expect_equal(w$rows$xmax, rep(w$rows$bp[1], 3))
-  expect_equal(w$rows$readout[-1], c("no step on the reference across 4 kb", "no step on the reference across 1 kb"))
-  expect_equal(bandage_walk_rows(skips, "chr1:3201-3800", "DEL", context = 0)$rows$label, c("REF#0", "DEL#1"))
+  expect_equal(as.character(gaps$kind), rep("no step on the reference", 3))
+  expect_equal(gaps$xmax - gaps$xmin, rep(w$rows$bp[1], 3))
+  expect_equal(w$rows$xmax, rep(w$rows$bp[1], 4))
+  expect_equal(w$rows$readout[-1], c(
+    "no step on REF across 4 kb · 0 bp of its own",
+    "no step on REF across 4 kb · 2 kb of its own",
+    "no step on REF across 1 kb · 0 bp of its own"
+  ))
+  expect_equal(bandage_walk_rows(stepless, "chr1:3201-3800", "DEL", context = 0)$rows$label, c("REF#0", "DEL#1"))
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
 
-test_that("a gap a record break spans is not in the graph, and untagged gaps read as before", {
+test_that("a gap in a GFA's walk is outside the extracted subgraph, whatever its W lines' tags", {
   gfa <- function(...) {
     f <- tempfile(fileext = ".gfa")
     writeLines(c(
@@ -659,18 +682,17 @@ test_that("a gap a record break spans is not in the graph, and untagged gaps rea
     ), f)
     f
   }
-  tagged <- bandage_walk_rows(gfa(
-    "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:end\twe:Z:break,bp=1000",
-    "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:end"
-  ), referencePath = "GRCh38#0#chr1")
-  expect_equal(as.character(tagged$runs$kind[tagged$runs$gap]), "not in the graph")
-  expect_match(tagged$rows$readout[2], "1.0 kb not in the graph$")
   plain <- bandage_walk_rows(gfa(
     "W\tHG002\t1\tchr1\t0\t2000\t>1>2",
     "W\tHG002\t1\tchr1\t3000\t5000\t>4>5"
   ), referencePath = "GRCh38#0#chr1")
   expect_equal(as.character(plain$runs$kind[plain$runs$gap]), "outside the extracted subgraph")
   expect_match(plain$rows$readout[2], "1.0 kb outside the extracted subgraph$")
+  tagged <- bandage_walk_rows(gfa(
+    "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:end\twe:Z:break,bp=1000",
+    "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:end"
+  ), referencePath = "GRCh38#0#chr1")
+  expect_equal(tagged$runs, plain$runs)
 })
 
 test_that("a walk the graph lacks warns, naming the ones it has", {

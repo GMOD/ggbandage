@@ -1,11 +1,14 @@
-import {
-  figureData,
-  laidOutGraph,
-  walkLayers,
-} from '@jbrowse/bandage-core/figureData'
+import { figureData, walkLayers } from '@jbrowse/bandage-core/figureData'
 import { parseRegion } from '@jbrowse/bandage-core/gbzCut'
 import { backboneGenes } from '@jbrowse/bandage-core/genes/backboneGenes'
-import { walkRowReadout } from '@jbrowse/bandage-core/layout/walkRowDraw'
+import {
+  GAP_CAUSE_TEXT,
+  OUTSIDE_TEXT,
+} from '@jbrowse/bandage-core/gfa/departures'
+import {
+  barEnd,
+  walkRowReadout,
+} from '@jbrowse/bandage-core/layout/walkRowDraw'
 import {
   ribbonJoin,
   sharedRowOrder,
@@ -13,10 +16,34 @@ import {
   walkRowLinks,
 } from '@jbrowse/bandage-core/layout/walkRowLinks'
 import { walkRows as cutRows } from '@jbrowse/bandage-core/layout/walkRows'
-import { loadGraph } from '@jbrowse/bandage-core/pipeline'
+import { layoutEngine } from '@jbrowse/bandage-core/layoutEngines'
+import { layoutModeByValue } from '@jbrowse/bandage-core/layoutModes'
+import { withFrequencies } from '@jbrowse/bandage-core/nodeWidths'
+import {
+  engineSettingsOf,
+  forceLayout,
+  loadGraph,
+} from '@jbrowse/bandage-core/pipeline'
 import { walkHighlight } from '@jbrowse/bandage-core/walkHighlight'
 
 import { openIndexed } from './tabix-cut.mjs'
+import { walkCut } from './walks-cut.mjs'
+
+// The graph a source holds and the region it is read under: GFA text, with
+// the region R names, or a walk file's cut as tables, which keep the
+// departures and trimmed bp GFA text has no line for, under the region on the
+// sequence the cut anchored to
+async function loaded(source, name, spec) {
+  const options = { referencePath: spec.referencePath }
+  if (source.walks) {
+    const { tables, region } = await walkCut(source.walks)
+    return { graph: loadGraph(tables, name, options), region }
+  }
+  return {
+    graph: loadGraph(source.text, name, options),
+    region: spec.region ? parseRegion(spec.region) : undefined,
+  }
+}
 
 // R sends NULL as {}
 function geneSource({ file, index, ...rest } = {}) {
@@ -50,11 +77,20 @@ function liftedWalks(graph, walks = []) {
   }
 }
 
-export async function figure(text, name, spec, genes) {
-  const region = spec.region ? parseRegion(spec.region) : undefined
-  const { graph, layout } = await laidOutGraph(text, name, region, spec)
-  const source = geneSource(genes)
-  const read = source ? await backboneGenes(graph, source) : { genes: [] }
+// bandage-core's laidOutGraph, over a loaded graph, since it takes text only
+async function laidOut(source, name, spec) {
+  const { graph: plain, region } = await loaded(source, name, spec)
+  const graph = withFrequencies(plain, spec.frequencies)
+  const layout =
+    layoutModeByValue(spec.layout ?? 'force').run(graph, region) ??
+    (await forceLayout(graph, engineSettingsOf(spec), layoutEngine)).result
+  return { graph, layout, region }
+}
+
+export async function figure(source, name, spec, genes) {
+  const { graph, layout, region } = await laidOut(source, name, spec)
+  const pins = geneSource(genes)
+  const read = pins ? await backboneGenes(graph, pins) : { genes: [] }
   const { walks, unmatched } = liftedWalks(graph, spec.walks)
   return {
     ...figureData(graph, layout, {
@@ -81,22 +117,8 @@ function columns(records, keys) {
 
 // cutRows' rows and runs, with ribbons joining the nodes neighbouring rows
 // share and blocks lettering the stretches off the reference several rows walk
-// R unboxes a vector of one, so each column may arrive as a bare value
-function skipTable({ names, starts, ends }) {
-  const column = x => [x].flat()
-  return {
-    names: column(names),
-    starts: Float64Array.from(column(starts)),
-    ends: Float64Array.from(column(ends)),
-  }
-}
-
-export function walkRows(text, name, spec) {
-  const region = spec.region ? parseRegion(spec.region) : undefined
-  const loaded = loadGraph(text, name, { referencePath: spec.referencePath })
-  const graph = spec.skips
-    ? { ...loaded, skips: skipTable(spec.skips) }
-    : loaded
+export async function walkRows(source, name, spec) {
+  const { graph, region } = await loaded(source, name, spec)
   const cut = cutRows(graph, region, undefined, { visits: true })
   if (!cut) {
     throw new Error(
@@ -130,14 +152,18 @@ export function walkRows(text, name, spec) {
     reference: cut.reference.name,
     unmatched: haplotypes.filter(h => !cut.rows.some(r => namesWalk(h, r.name))),
     walkNames: [cut.reference, ...cut.rows].map(r => r.name),
+    causes: { ...GAP_CAUSE_TEXT, outside: OUTSIDE_TEXT },
     rows: {
       row: all.map((_, i) => i),
       name: all.map(r => r.name),
       label: all.map(r => r.label),
       sample: all.map(r => r.sample),
       bp: all.map(r => r.bp),
+      end: all.map(barEnd),
       offReferenceBp: all.map(r => r.offReferenceBp),
       linked: all.map(r => r.complete),
+      stepless: all.map(r => !!r.stepless),
+      placementChoice: all.map(r => !!r.placementChoice),
       backward: all.map(r => !!r.axis?.reversed),
       contig: all.map(r => r.axis?.contig ?? null),
       contigStart: all.map(r => r.axis?.start ?? null),

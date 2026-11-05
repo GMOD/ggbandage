@@ -9,18 +9,29 @@ fetches every byte it reads.
 
 ### Walk files
 
-- **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, with
-  its `.tbi` or `.csi`, and a `region`
-- **Out:** the reference over the region, `context` bp past each end, and the
-  walks of the `haplotypes` asked for, as GFA with W lines
-- `cutWalks` in `scripts/walks-cut.mjs` calls
+- **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, in
+  walk format 6 (gfa-to-tabix 3.0 or later), with its `.tbi` or `.csi`, and a
+  `region`. An older file fails with graph-walks' `WalkFormatError`, which
+  asks for a rebuild
+- **Out:** the reference over the region, `context` bp past each end, the
+  walks of the `haplotypes` asked for, and every departure from the reference
+  over the cut, as graph tables
+- `walkCut` in `scripts/walks-cut.mjs` calls
   [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)' `cutRegion`,
   as BandageJS does, over the R byte-range callback below
-- BandageJS caps a cut's bytes and nodes and draws an abridged walk as a
-  block. R asks for one region and waits, so ggbandage sets no cap and reads
-  every abridged walk in full
-- A cut at KIV-2 with five HPRC haplotypes takes about 3 s from the hosted
-  1.2 GB file
+- `bandage_layout()` and `bandage_walk_rows()` send the cut's request, not
+  its text: `bandage.figure` and `bandage.walkRows` cut in V8 and hand the
+  tables to bandage-core's `loadGraph`. GFA has no line for a departure or
+  for the bp a cut trimmed off a walk, which walk rows and the layout's walk
+  keys read. `bandage_gfa()` writes the cut as GFA with `graphTablesGFA`,
+  which drops both
+- bandage-core's `laidOutGraph` takes GFA text only, so `scripts/figure.mjs`
+  lays out the loaded graph with the same calls
+- BandageJS caps a cut's reads and draws an abridged walk as a block. R asks
+  for one region and waits, so ggbandage lifts graph-walks' step, byte and
+  departure-read budgets and reads every abridged walk in full
+- A cut at KIV-2 with five HPRC haplotypes took about 3 s from the hosted
+  format 5 file
 
 ### Segment indexes
 
@@ -258,13 +269,27 @@ gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 -o ecoli_pggb
 gfa-to-tabix ecoli_rgfa_slice.gfa.gz -o ecoli_rgfa
 ```
 
-`ecoli_pggb.K12.walks.bed.gz` is the pggb GFA's walk file, and `ecoli_contig.*`
-the same graph in the contig layout, made with gfa-to-tabix 1.0.0:
+`ecoli_contig.*` is the same graph in the contig layout, made with
+gfa-to-tabix 1.0.0:
+
+```console
+gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_contig
+```
+
+The walk files are format 6, made with gfa-to-tabix 3.0.0 from the GFAs
+beside them: the pggb GFA's, the same with its two costliest paths abridged,
+the departures `records.GRCh38.gfa` states (graph-walks' fixture of that
+name), and haplotypes with no step on the reference across a window:
 
 ```console
 gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 -o ecoli_pggb
-gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_contig
+gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 --abridge-steps 20 -o ecoli_pggb_abridged
+gfa-to-tabix records.GRCh38.gfa --walks --refs GRCh38 --chunk 1000 -o records
+gfa-to-tabix stepless.REF.gfa --walks --refs REF --chunk 1000 -o stepless
 ```
+
+`ecoli_pggb_format5.K12.walks.bed.gz` is the pggb GFA's format 5 walk file, as
+ggbandage read it before format 6, kept for the test that ggbandage refuses it.
 
 `ecoli_pggb_csi.*` copies `ecoli_pggb`'s two files with a `.csi` in place of
 each `.tbi`, from `tabix -C -p bed`.

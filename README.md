@@ -25,7 +25,7 @@ remotes::install_github("GMOD/ggbandage")
 ```r
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f6.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 g <- bandage_layout(
@@ -44,11 +44,12 @@ The walk file comes from HPRC's v2.1 graph, prepared as in JBrowse's
 
 ```console
 vg convert -f hprc-v2.1-mc-grch38.gbz > hprc-v2.1-mc-grch38.gfa
-gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38,CHM13 -o hprc-v2.1-mc-grch38-f5s
+gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f6
 ```
 
-`f5s` is the walk file format, gfa-to-tabix's format 5, with the `skip` rows that
-gfa-to-tabix 1.5 and later write for a haplotype that jumps over a window.
+`f6` is the walk file format, gfa-to-tabix 3.0's format 6, which records every
+place a haplotype leaves GRCh38 and rejoins it as a departure. ggbandage reads
+format 6 only; rebuild an older walk file with gfa-to-tabix 3.0 or later.
 
 [Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
 `engine` and `genes`.

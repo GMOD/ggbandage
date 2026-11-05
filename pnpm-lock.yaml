@@ -12,11 +12,11 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: 12.7.1
-        version: 12.7.1
+        specifier: file:/home/cdiesh/src/port/jbrowse-bandage-core-13.0.0.tgz
+        version: file:../jbrowse-bandage-core-13.0.0.tgz
       '@jbrowse/graph-walks':
-        specifier: 4.6.0
-        version: 4.6.0
+        specifier: 5.0.0
+        version: 5.0.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -192,8 +192,9 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@12.7.1':
-    resolution: {integrity: sha512-VD3MYLvMX2f8ejxPzne0an0x1+WaHVLIMQQ5IHClLgnNZ/hxu2FyyzIGWvNunigDwO7hdiDLPSPxnUd98wEVOA==}
+  '@jbrowse/bandage-core@file:../jbrowse-bandage-core-13.0.0.tgz':
+    resolution: {integrity: sha512-aLz7VTH5BD0AdCH1isRzMY270LOhF10tMda+yJWbP7fQFJRx9Bw8OBbHPMEBZHUsBpzQ/MuaCfMs5fIw1Pjo4g==, tarball: file:../jbrowse-bandage-core-13.0.0.tgz}
+    version: 13.0.0
     engines: {node: '>=20'}
     hasBin: true
 
@@ -205,8 +206,8 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-walks@4.6.0':
-    resolution: {integrity: sha512-haKxTI/qGQQc1NAhR2064XCq4miv1arvMDs2BcOd8iwus/Tno1A5xpbM/nqocXWfiEQ3OxtDb8aKR6lvMwV9Dw==}
+  '@jbrowse/graph-walks@5.0.0':
+    resolution: {integrity: sha512-9HoFUtZ9RNseTNObbOcA9MUnAlD8KSVTZC7UQpEZPoN6Hix5yOz++g8vP5QYHnnGffnD7XM199lBvjC36HjR/Q==}
     engines: {node: '>=20'}
 
   '@jbrowse/quick-lru@8.0.0':
@@ -325,7 +326,7 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@12.7.1':
+  '@jbrowse/bandage-core@file:../jbrowse-bandage-core-13.0.0.tgz':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
@@ -337,7 +338,7 @@ snapshots:
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
-  '@jbrowse/graph-walks@4.6.0': {}
+  '@jbrowse/graph-walks@5.0.0': {}
 
   '@jbrowse/quick-lru@8.0.0': {}
 

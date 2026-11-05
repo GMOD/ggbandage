@@ -27,34 +27,33 @@ read_text <- function(path) paste(read_lines(path), collapse = "\n")
 
 is_walk_file <- function(x) grepl("\\.walks\\.bed\\.gz$", bare_name(x))
 
-# The graph as GFA text, its name, and the region a core reads it under: a
-# GFA as it is, or the part of an index or walk file under `region`
+# The graph, its name, and the region a core reads it under. The `source` is
+# GFA text: a GFA as it is, or the part of a segment index under `region`. For
+# a walk file it is the cut to make, which the engine reads as tables, since
+# GFA text has no line for the cut's departures, and anchors the region to
+# the sequence it resolves
 graph_source <- function(gfa, region, haplotypes, context) {
   if (is_walk_file(gfa) || is_tabix_graph(gfa)) {
     if (is.null(region)) {
       stop("an index holds a whole genome's graph; give the `region` to draw")
     }
-    ctx <- engine()
-    if (is_walk_file(gfa)) {
-      cut <- cut_walks(ctx, gfa, region, haplotypes, context)
-      return(list(
-        text = cut$gfa, name = region,
-        region = core_region(region, cut$refName),
-        skips = if (length(cut$skips$names)) cut$skips
-      ))
+    source <- if (is_walk_file(gfa)) {
+      list(walks = walk_request(gfa, region, haplotypes, context))
+    } else {
+      list(text = cut_tabix(engine(), gfa, region))
     }
-    return(list(text = cut_tabix(ctx, gfa, region), name = region, region = NULL))
+    return(list(source = source, name = region, region = NULL))
   }
   list(
-    text = read_text(gfa), name = basename(bare_name(gfa)),
+    source = list(text = read_text(gfa)), name = basename(bare_name(gfa)),
     region = if (!is.null(region)) core_region(region)
   )
 }
 
 # The core reads a region as 0-based and half-open
-core_region <- function(region, refName = parse_region(region)$refName) {
+core_region <- function(region) {
   locus <- parse_region(region)
-  sprintf("%s:%.0f-%.0f", refName, locus$start, locus$end)
+  sprintf("%s:%.0f-%.0f", locus$refName, locus$start, locus$end)
 }
 
 #' The GFA a figure is drawn from
@@ -66,7 +65,12 @@ core_region <- function(region, refName = parse_region(region)$refName) {
 #' @return GFA text, one string
 #' @export
 bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
-  graph_source(gfa, region, haplotypes, context)$text
+  source <- graph_source(gfa, region, haplotypes, context)$source
+  if (is.null(source$walks)) {
+    source$text
+  } else {
+    engine()$call("bandage.cutWalks", source$walks, await = TRUE)
+  }
 }
 
 #' Lay out a GFA graph with the Bandage engine
@@ -126,8 +130,8 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     list(...)
   )
   json <- engine()$call(
-    "(text, name, spec, genes) => bandage.figure(text, name, spec, genes).then(JSON.stringify)",
-    src$text, src$name, spec, gene_source(genes, gene_names),
+    "(source, name, spec, genes) => bandage.figure(source, name, spec, genes).then(JSON.stringify)",
+    src$source, src$name, spec, gene_source(genes, gene_names),
     await = TRUE
   )
   d <- jsonlite::fromJSON(json)
@@ -185,15 +189,11 @@ unbound_genes <- function(genes, unbound) {
   )
 }
 
-cut_walks <- function(ctx, file, region, haplotypes, context) {
-  ctx$call(
-    "bandage.cutWalks",
-    c(
-      list(file = file, index = index_or_tbi(file), context = context),
-      if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
-      parse_region(region)
-    ),
-    await = TRUE
+walk_request <- function(file, region, haplotypes, context) {
+  c(
+    list(file = file, index = index_or_tbi(file), context = context),
+    if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
+    parse_region(region)
   )
 }
 

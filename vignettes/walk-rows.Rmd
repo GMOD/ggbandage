@@ -17,7 +17,7 @@ longer bar, which no node layout shows. The gallery has
 ```{r example, eval = FALSE}
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f5s.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f6.GRCh38.walks.bed.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 haplotypes <- c("HG00097#1", "HG00099#1", "HG00133#2", "HG01123#1", "HG02055#1")
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haplotypes)
@@ -38,9 +38,9 @@ autoplot(rows)
 | Charcoal | Sequence on non-reference nodes. It can still resemble the reference, as an extra repeat copy does |
 | Letter | A block of non-reference nodes that two or more drawn rows walk. A is the block with the most bp; `autoplot()` fills the three largest |
 | White, dashed | Graph sequence outside the extracted subgraph. From a walk file, the readout names where, e.g. `34 kb on nodes filed near chr22:20.3 Mb` |
-| White, solid dark | Not in the graph: the walk's record ends and the contig's next record starts past it. Walk files only |
-| White, solid dark, the whole row | Deleted in this haplotype: its deletion spans the window, so it has no walk there and the file names it in a skip row. Walk files only |
-| White, dotted | Gap of unknown cause. Walk files only |
+| White, solid dark | Not in the graph: bp of the walk's contig between its W lines, which its departure from the reference says the graph lacks. Walk files only |
+| White, solid dark, the whole row | No step on the reference: the haplotype has no step on the reference across the window. The readout states the stretch between its departure's ends and its own bp there, e.g. `no step on GRCh38 across 54 kb · 120 kb of its own`. Walk files only |
+| White, dotted | Of its own, not read: the walk's own sequence between a departure's ends that the cut did not read. Walk files only |
 | Pale blue ribbon | Neighbouring rows walk the same graph nodes |
 | Violet ribbon | Neighbouring rows walk the same graph nodes backwards |
 
@@ -74,5 +74,11 @@ autoplot(rows)
   share nothing
 - **One-flank walks:** a walk measured from one flank gets no ribbons or
   letters, and its readout ends `· no ribbons`
-- **Dotted gaps:** the file leaves the gap open, as between two record breaks
-  with a record the reference never visits between them
+- **Dotted gaps:** the walk's own sequence between a departure's ends, on
+  nodes the cut did not read, such as those of a W line that visits no
+  reference node, which the walk file leaves out
+- **Placement choice:** a readout ends `placement choice` where an end of a
+  departure lies on a node the reference passes more than once. The walk file
+  writer chose which pass the step takes, so another pass would put the
+  departure elsewhere or make it none, as where a walk follows one copy of a
+  collapsed repeat

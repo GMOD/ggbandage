@@ -3,8 +3,9 @@
 #' The reference walk on the top row and every other walk below it, each a bar
 #' of the sequence it carries between the reference nodes flanking the region.
 #' A repeat expansion reads as bar length, which no node layout shows. On a
-#' walk file, a haplotype whose deletion spans the whole window draws as a row
-#' of deletion.
+#' walk file, a haplotype with no step on the reference across the window
+#' draws as a stepless row under the reference's bar, its readout stating the
+#' stretch of reference between its departure's ends and its own bp there.
 #' @inheritParams bandage_layout
 #' @param haplotypes the walks to draw under the reference, by sample or
 #'   `sample#haplotype`, every one when `NULL`. On a walk file, also the walks
@@ -18,11 +19,17 @@
 #'   of the longest bar
 #' @return a `bandage_walk_rows`: `rows`, a row per walk with its `label`,
 #'   `bp`, `readout`, `backward`, `TRUE` where the bar reads the walk from its
-#'   end, and `linked`, `FALSE` for a walk measured from one flank, which gets
-#'   no ribbons or letters; `runs`, a row per stretch of a bar, `xmin` and `xmax`
-#'   in bp from the left flank, with `kind` and, on the reference's path,
-#'   `referenceStart` and `reversed`, and on a gap, the `cause` a walk file
-#'   states: `missing`, `elsewhere`, `unknown` or `deleted`, else `outside`;
+#'   end, `linked`, `FALSE` for a walk measured from one flank, which gets
+#'   no ribbons or letters, `stepless`, `TRUE` for a haplotype with no step on
+#'   the reference across the window, whose `offReferenceBp` is its own bp
+#'   between its departure's ends, and `placementChoice`, `TRUE` where an end
+#'   of one of its departures lies on a node the reference passes more than
+#'   once, so which pass it takes was the walk file writer's choice; `runs`, a
+#'   row per stretch of a bar, `xmin` and `xmax` in bp from the left flank,
+#'   with `kind` and, on the reference's path, `referenceStart` and
+#'   `reversed`, and on a gap, the `cause` a walk file's departures state:
+#'   `missing`, `elsewhere`, `own` or `departure`, else `outside`; `causes`,
+#'   the words bandage-core gives each cause, which a gap's `kind` takes;
 #'   and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
@@ -42,28 +49,28 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
     if (!is.null(src$region)) list(region = src$region),
     if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
     if (!is.null(referencePath)) list(referencePath = referencePath),
-    if (!is.null(join)) list(join = join),
-    if (!is.null(src$skips)) list(skips = src$skips)
+    if (!is.null(join)) list(join = join)
   )
   d <- engine()$call(
-    "(text, name, spec) => JSON.stringify(bandage.walkRows(text, name, spec))",
-    src$text, src$name, spec
+    "(source, name, spec) => bandage.walkRows(source, name, spec).then(JSON.stringify)",
+    src$source, src$name, spec,
+    await = TRUE
   )
   d <- jsonlite::fromJSON(d)
   warn_unmatched(d)
   rows <- frame(d$rows)
   runs <- frame(d$runs)
+  causes <- unlist(d$causes)
   runs$xmin <- runs$start
   runs$xmax <- runs$start + runs$bp
   kind <- ifelse(runs$onReference, "on the reference's path", "off the reference's path")
   runs$kind <- factor(
-    ifelse(runs$gap, gap_kinds[as.character(runs$cause)], kind),
-    levels = c("on the reference's path", "off the reference's path", gap_kinds)
+    ifelse(runs$gap, causes[as.character(runs$cause)], kind),
+    levels = c("on the reference's path", "off the reference's path", causes)
   )
   runs$label <- rows$label[runs$row + 1]
-  # a deletion row has no bp, so its readout goes past its deletion
-  ends <- tapply(runs$xmax, runs$row, max)
-  rows$xmax <- pmax(rows$bp, ends[as.character(rows$row)], na.rm = TRUE)
+  rows$xmax <- rows$end
+  rows$end <- NULL
   rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "\u00b7 no ribbons"))
   blocks <- frame(d$blocks)
   big <- sort(unique(blocks$block[blocks$bp >= max(rows$bp) * letter_share]))
@@ -75,21 +82,11 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   structure(
     list(
       rows = rows, runs = runs, links = frame(d$links), blocks = blocks,
-      origin = d$origin, reference = d$reference
+      causes = causes, origin = d$origin, reference = d$reference
     ),
     class = "bandage_walk_rows"
   )
 }
-
-# What a walk file's cut says of a gap between two pieces of a walk, and
-# "outside" for a gap from another source, which says nothing
-gap_kinds <- c(
-  missing = "not in the graph",
-  elsewhere = "on nodes filed elsewhere",
-  unknown = "gap, cause unknown",
-  deleted = "no step on the reference",
-  outside = "outside the extracted subgraph"
-)
 
 # Room past the longest bar for the readouts, as a share of it: 30%, or what
 # the readout reaching furthest takes at about 0.7% a character, which fits a
@@ -163,10 +160,11 @@ bar_tiles <- function(runs, tile) {
 #' blocks are filled and the rest grey, except under `hues = "walk"`, which
 #' outlines every block. White is sequence the extracted subgraph does not hold:
 #' dashed where the graph holds it outside the subgraph, and for a cut from a
-#' walk file, solid dark where a record break says the graph lacks it or a
-#' skip row says the haplotype jumps over the window, and dotted where the
-#' file leaves it open. The readout says where a walk went
-#' on nodes filed elsewhere in the file. Ribbons join the graph nodes
+#' walk file, solid dark where a departure says the graph lacks it or the
+#' haplotype has no step on the reference across the window, and dotted where
+#' it is the walk's own sequence the cut did not read. The readout says where
+#' a walk went on nodes filed elsewhere in the file, and "placement choice"
+#' where a departure's place was the walk file writer's choice. Ribbons join the graph nodes
 #' neighbouring rows share, violet where one row walks them backwards. Inside
 #' a repeat, the ribbons show one pairing of the copies that keeps both rows in
 #' order, and a missing ribbon does not mean the rows share nothing there.
@@ -223,12 +221,13 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   off <- paste(if (walk_hued) "grey above: on the" else "off the", reference, "path")
   ribbon <- "ribbon: next row walks the same nodes"
   inverted <- "ribbon: next row walks them backwards"
+  causes <- object$causes
   plain$key <- ifelse(
-    plain$kind == gap_kinds[["elsewhere"]], gap_kinds[["outside"]],
-    ifelse(plain$kind %in% gap_kinds, plain$kind, off)
+    plain$kind == causes[["elsewhere"]], causes[["outside"]],
+    ifelse(plain$kind %in% causes, plain$kind, off)
   )
   more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
-  labels <- c(off, gap_kinds[c("outside", "missing", "deleted", "unknown")], ribbon, inverted, more)
+  labels <- c(off, causes[c("outside", "missing", "departure", "own")], ribbon, inverted, more)
   off_fill <- if (walk_hued) STRIP_FILL else CHARCOAL
   off_ink <- if (walk_hued) NA else CHARCOAL
   block_fill <- if (walk_hued) NA else "#e8e8e8"

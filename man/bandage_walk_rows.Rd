@@ -46,11 +46,17 @@ of the longest bar}
 \value{
 a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
 \code{bp}, \code{readout}, \code{backward}, \code{TRUE} where the bar reads the walk from its
-end, and \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
-no ribbons or letters; \code{runs}, a row per stretch of a bar, \code{xmin} and \code{xmax}
-in bp from the left flank, with \code{kind} and, on the reference's path,
-\code{referenceStart} and \code{reversed}, and on a gap, the \code{cause} a walk file
-states: \code{missing}, \code{elsewhere}, \code{unknown} or \code{deleted}, else \code{outside};
+end, \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
+no ribbons or letters, \code{stepless}, \code{TRUE} for a haplotype with no step on
+the reference across the window, whose \code{offReferenceBp} is its own bp
+between its departure's ends, and \code{placementChoice}, \code{TRUE} where an end
+of one of its departures lies on a node the reference passes more than
+once, so which pass it takes was the walk file writer's choice; \code{runs}, a
+row per stretch of a bar, \code{xmin} and \code{xmax} in bp from the left flank,
+with \code{kind} and, on the reference's path, \code{referenceStart} and
+\code{reversed}, and on a gap, the \code{cause} a walk file's departures state:
+\code{missing}, \code{elsewhere}, \code{own} or \code{departure}, else \code{outside}; \code{causes},
+the words bandage-core gives each cause, which a gap's \code{kind} takes;
 and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
 lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row
@@ -64,6 +70,7 @@ another row can split one.
 The reference walk on the top row and every other walk below it, each a bar
 of the sequence it carries between the reference nodes flanking the region.
 A repeat expansion reads as bar length, which no node layout shows. On a
-walk file, a haplotype whose deletion spans the whole window draws as a row
-of deletion.
+walk file, a haplotype with no step on the reference across the window
+draws as a stepless row under the reference's bar, its readout stating the
+stretch of reference between its departure's ends and its own bp there.
 }

@@ -49,10 +49,11 @@ walk, the same letter wherever the block recurs, and the three largest
 blocks are filled and the rest grey, except under \code{hues = "walk"}, which
 outlines every block. White is sequence the extracted subgraph does not hold:
 dashed where the graph holds it outside the subgraph, and for a cut from a
-walk file, solid dark where a record break says the graph lacks it or a
-skip row says the haplotype jumps over the window, and dotted where the
-file leaves it open. The readout says where a walk went
-on nodes filed elsewhere in the file. Ribbons join the graph nodes
+walk file, solid dark where a departure says the graph lacks it or the
+haplotype has no step on the reference across the window, and dotted where
+it is the walk's own sequence the cut did not read. The readout says where
+a walk went on nodes filed elsewhere in the file, and "placement choice"
+where a departure's place was the walk file writer's choice. Ribbons join the graph nodes
 neighbouring rows share, violet where one row walks them backwards. Inside
 a repeat, the ribbons show one pairing of the copies that keeps both rows in
 order, and a missing ribbon does not mean the rows share nothing there.

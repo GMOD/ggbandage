@@ -8,8 +8,8 @@
   },
   "devDependencies": {
     "@gmod/tabix": "3.13.1",
-    "@jbrowse/bandage-core": "12.7.1",
-    "@jbrowse/graph-walks": "4.6.0",
+    "@jbrowse/bandage-core": "file:/home/cdiesh/src/port/jbrowse-bandage-core-13.0.0.tgz",
+    "@jbrowse/graph-walks": "5.0.0",
     "esbuild": "^0.28.2"
   }
 }
