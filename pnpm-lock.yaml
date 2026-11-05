@@ -193,7 +193,7 @@ packages:
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
   '@jbrowse/bandage-core@file:../bandage-core-candidate.tgz':
-    resolution: {integrity: sha512-XCB5Djus7D+p0IrDZvp7WbF1goopIFy3P8qr7KenCc8uLBJ4LIUA+T1ijpuoOBtxa4WokNmT4pDYvh5am7vQHA==, tarball: file:../bandage-core-candidate.tgz}
+    resolution: {integrity: sha512-Zi4/XLElGFLm+ANv8Rn8eP8Ohu47V6ZjosY13Ysvq78uxuvgWx7tmRPD3ksg/smx5+9FpA1NT+Y74Lf3lg83hg==, tarball: file:../bandage-core-candidate.tgz}
     version: 13.0.0
     engines: {node: '>=20'}
     hasBin: true
