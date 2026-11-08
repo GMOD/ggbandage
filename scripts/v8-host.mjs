@@ -13,7 +13,8 @@ globalThis.performance ??= { now: () => Date.now() }
 // a bundle clones only parsed JSON, which a JSON round trip copies exactly
 globalThis.structuredClone ??= value => JSON.parse(JSON.stringify(value))
 
-const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+const BASE64 =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 export function fromBase64(s) {
   const text = s.replace(/[\s=]+/g, '')
@@ -35,7 +36,7 @@ globalThis.TextDecoder ??= class TextDecoder {
       ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
       : new Uint8Array(bytes)
     let out = ''
-    for (let i = 0; i < b.length; ) {
+    for (let i = 0; i < b.length;) {
       const c = b[i++]
       const extra =
         c >= 0xf8 ? -1 : c >= 0xf0 ? 3 : c >= 0xe0 ? 2 : c >= 0xc0 ? 1 : 0
@@ -120,13 +121,16 @@ if (!globalThis.AbortController) {
 }
 
 // a bgzip reader's inlined WASM loads through fetch on a data: URL
-globalThis.fetch ??= async url => {
+globalThis.fetch ??= url => {
   const m = /^data:[^,]*;base64,(.*)$/.exec(url)
   if (!m) {
-    throw new Error(`V8 has no network: cannot fetch ${url}`)
+    return Promise.reject(new Error(`V8 has no network: cannot fetch ${url}`))
   }
   const bytes = fromBase64(m[1])
-  return { ok: true, arrayBuffer: async () => bytes.buffer }
+  return Promise.resolve({
+    ok: true,
+    arrayBuffer: () => Promise.resolve(bytes.buffer),
+  })
 }
 
 // A file handle whose bytes come from `rangeFunction`, such as
@@ -141,15 +145,16 @@ export function rangeFile(rangeFunction, sizeFunction, location) {
   }
   return {
     source: location,
-    read: async (length, position) => bytes(position, length),
-    readFile: async options => {
-      const encoding =
-        typeof options === 'string' ? options : options?.encoding
-      return encoding ? new TextDecoder().decode(bytes(0, -1)) : bytes(0, -1)
+    read: (length, position) => Promise.resolve(bytes(position, length)),
+    readFile: options => {
+      const encoding = typeof options === 'string' ? options : options?.encoding
+      return Promise.resolve(
+        encoding ? new TextDecoder().decode(bytes(0, -1)) : bytes(0, -1),
+      )
     },
-    stat: async () => {
+    stat: () => {
       const [size] = console.r.call(sizeFunction, [location])
-      return { size: Number(size) }
+      return Promise.resolve({ size: Number(size) })
     },
     close: async () => {},
   }

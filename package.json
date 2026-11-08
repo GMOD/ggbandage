@@ -4,12 +4,19 @@
   "type": "module",
   "description": "Builds inst/js/bandage.js, the bandage-core bundle the R package runs in V8",
   "scripts": {
-    "build": "node scripts/build-js.mjs"
+    "build": "node scripts/build-js.mjs",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check"
   },
   "devDependencies": {
     "@gmod/tabix": "3.13.1",
     "@jbrowse/bandage-core": "^13.3.1",
     "@jbrowse/graph-walks": "^6.2.0",
-    "esbuild": "^0.28.2"
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "oxfmt": "^0.76.0",
+    "oxlint": "^1.92.0",
+    "tsrs": "0.23.0-ts7.1.0-beta"
   }
 }

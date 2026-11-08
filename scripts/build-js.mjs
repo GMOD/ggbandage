@@ -24,13 +24,16 @@ const built = local
 const localCore = {
   name: 'local-core',
   setup(b) {
-    b.onResolve({ filter: /^@jbrowse\/bandage-core(\/.*)?$/ }, args => ({
-      path: path.join(
-        path.resolve(local),
-        'src',
-        `${args.path.replace(/^@jbrowse\/bandage-core\/?/, '') || 'index'}.ts`,
-      ),
-    }))
+    b.onResolve({ filter: /^@jbrowse\/bandage-core(\/.*)?$/ }, args => {
+      const subpath = args.path.replace(/^@jbrowse\/bandage-core\/?/, '')
+      return {
+        path: path.join(
+          path.resolve(local),
+          'src',
+          `${subpath === '' ? 'index' : subpath}.ts`,
+        ),
+      }
+    })
   },
 }
 
@@ -93,6 +96,34 @@ function templateEnd(text, start) {
   throw new Error('the inlined wasm literal never closes')
 }
 
+const SINGLE_ESCAPES = {
+  b: '\b',
+  f: '\f',
+  n: '\n',
+  r: '\r',
+  t: '\t',
+  v: '\v',
+  0: '\0',
+}
+
+function cookTemplate(raw) {
+  return raw
+    .replaceAll(/\r\n?/g, '\n')
+    .replaceAll(
+      /\\(?:x([\da-fA-F]{2})|u\{([\da-fA-F]+)\}|u([\da-fA-F]{4})|([\n\u2028\u2029])|([\s\S]))/g,
+      (_, hex, codePoint, unit, continuation, ch) =>
+        hex !== undefined
+          ? String.fromCharCode(Number.parseInt(hex, 16))
+          : codePoint !== undefined
+            ? String.fromCodePoint(Number.parseInt(codePoint, 16))
+            : unit !== undefined
+              ? String.fromCharCode(Number.parseInt(unit, 16))
+              : continuation !== undefined
+                ? ''
+                : (SINGLE_ESCAPES[ch] ?? ch),
+    )
+}
+
 function base64Wasm(js) {
   const start = js.indexOf(DECODE)
   if (start < 0 || js.indexOf(DECODE, start + 1) >= 0) {
@@ -100,7 +131,7 @@ function base64Wasm(js) {
   }
   const body = start + DECODE.length
   const end = templateEnd(js, body)
-  const cooked = new Function(`return \`${js.slice(body, end)}\``)()
+  const cooked = cookTemplate(js.slice(body, end))
   const bytes = Uint8Array.from(cooked, ch => {
     const c = ch.charCodeAt(0)
     return (~c >> 8) & c
@@ -136,7 +167,7 @@ const js = base64Wasm(outputFiles[0].text).replace(
   /"[^"\n]*?node_modules\/(?=\.pnpm\/)/g,
   '"node_modules/',
 )
-if (/[^\x09\x0a\x0d\x20-\x7e]/.test(js)) {
+if (/[^\t\n\r\x20-\x7e]/.test(js)) {
   throw new Error('the bundle is not printable ASCII')
 }
 writeFileSync(OUT, `${banner}\n${js}`)

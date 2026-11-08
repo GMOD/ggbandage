@@ -6,3 +6,7 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - '@jbrowse/*'
   - '@gmod/tabix@3.13.1'
+  - oxlint@1.92.0
+  - '@oxlint/*'
+  - tsrs@0.23.0-ts7.1.0-beta
+  - '@tsrs/*'

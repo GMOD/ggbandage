@@ -70,6 +70,7 @@ and ggbandage reads one region at a time:
 
    A graph shipped as `.gbz`, as HPRC's are, converts to GFA first with
    `vg convert -f graph.gbz > graph.gfa`
+
 2. Pass `graph.GRCh38.walks.gz`, a path or a url, to `bandage_layout()` with
    a `region`; its directory, `graph.GRCh38.walks.gz.idx`, is read beside it.
    From a url, ggbandage fetches the tiles under the region by range request

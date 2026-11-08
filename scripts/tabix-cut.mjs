@@ -5,7 +5,11 @@ import { rangeFile } from './v8-host.mjs'
 
 // A file R serves every byte of, by path or URL
 export function openFile(location) {
-  return rangeFile('ggbandage:::fetch_range', 'ggbandage:::fetch_size', location)
+  return rangeFile(
+    'ggbandage:::fetch_range',
+    'ggbandage:::fetch_size',
+    location,
+  )
 }
 
 export function openIndexed(file, index) {

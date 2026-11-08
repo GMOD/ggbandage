@@ -166,11 +166,11 @@ ggbandage holds the one copy of the helpers its sibling packages share. The
 siblings import them with `usethis::use_standalone()` and check their copies
 against it.
 
-| File | Holds | Imported by |
-| ---- | ----- | ----------- |
-| `R/standalone-v8-host.R` | `is_url`, `beside`, `bare_name`, the V8 fork guard | ggtubemap, ggjbrowse |
-| `R/standalone-byte-ranges.R` | `parse_region`, `fetch_range` and its readers, `index_of`, `read_lines` | ggtubemap |
-| `scripts/v8-host.mjs` | V8's missing browser globals, `rangeFile` | ggtubemap, as `tools/v8-host.mjs` |
+| File                         | Holds                                                                   | Imported by                       |
+| ---------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
+| `R/standalone-v8-host.R`     | `is_url`, `beside`, `bare_name`, the V8 fork guard                      | ggtubemap, ggjbrowse              |
+| `R/standalone-byte-ranges.R` | `parse_region`, `fetch_range` and its readers, `index_of`, `read_lines` | ggtubemap                         |
+| `scripts/v8-host.mjs`        | V8's missing browser globals, `rangeFile`                               | ggtubemap, as `tools/v8-host.mjs` |
 
 - Change a helper here and push. Then in each sibling,
   `check-standalone.sh --update <sha>` (in ggtubemap's `tools/`, ggjbrowse's
@@ -222,12 +222,12 @@ on any other bundle, so main must not get one until the core is out:
 `scripts/v8-host.mjs`, the bundle's first import, defines each one when V8
 lacks it:
 
-| Global | Needed by |
-| ------ | --------- |
-| `TextDecoder`, `TextEncoder` | line decoding and the wasm bindings |
-| `AbortController` | `@gmod/shared-read-cache` |
-| `fetch` | the bgzf wasm, which loads from a `data:` URL |
-| `performance`, `structuredClone` | timing and copying in the core |
+| Global                           | Needed by                                     |
+| -------------------------------- | --------------------------------------------- |
+| `TextDecoder`, `TextEncoder`     | line decoding and the wasm bindings           |
+| `AbortController`                | `@gmod/shared-read-cache`                     |
+| `fetch`                          | the bgzf wasm, which loads from a `data:` URL |
+| `performance`, `structuredClone` | timing and copying in the core                |
 
 - `fetch` only reads `data:` URLs and throws on anything else
 - The build inlines the core's wasm as base64, which `bandageBase64` in the

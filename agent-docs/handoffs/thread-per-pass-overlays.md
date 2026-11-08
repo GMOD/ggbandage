@@ -5,6 +5,7 @@
 **Request:** the gallery's "Three KIV-2 haplotypes overlaid" figure, then the CFHR3/CFHR1 and C4 overlays, should use gradients, with walk rows below. The C4 extra copy was invisible because every copy shares nodes.
 
 **Gallery**
+
 - The README shows eight figures, four wide then four tall: `cfh_overlay`, `kiv2_rows`, `amylase_rows`, `cyp2d6_stress`, `kiv2_overlay`, `syng_overlay`, `syng_rhd` and `own_colours`. `docs/gallery.md` shows them first and the other four under "More examples". `deletions`, `syng_ramp`, `syng_kiv2` and `syng_amy` were cut as duplicates, with the KIV-2 and amylase syng graphs they drew. `readme = TRUE` in `scripts/gallery.R` marks the core set.
 - `kiv2_overlay`, `cfh_overlay` and `syng_overlay` sit above walk rows.
 - In all three each walk has a separate colour ramp, and each row repeats its walk's ramp unbroken along the bar, under a grey strip where it runs on the GRCh38 path. `cfh_overlay`'s ribbons break across the 85 kb HG02055#1 lacks.
@@ -14,6 +15,7 @@
   - `kiv2_walks` and `own_colours` were drawn from the `-f4` walk file, which jbrowse.org no longer serves.
 
 **Core (`bandage-core` 11.8.0, released 2026-10-21)**
+
 - First session: `ff8651f`..`a28924f` draw a thread per pass, cap the band at 48 px and add walk, pass and offset columns to `figureData`.
 - `1aacd82`: `keys` gains `field`, so a host can tell a progress ramp from a reference-position one.
 - `4f69312`: lanes cut only a curl shorter than π times the band. The old 2π cut straightened C4's HERV-K loop away once ten walks widened the band.
@@ -26,6 +28,7 @@
 - `0ba03af`: walk rows widen P-line labels to sample#haplotype where two would match.
 
 **ggbandage**
+
 - `hues = "walk"` takes progress ramps as well as flat colours, runs a ramp from the bar's end where the row reads its walk backwards, and outlines blocks so their fills leave the walk colours visible.
 - Rows a passed `layout` lifts take the key's names, and blocks past the three filled ones are keyed.
 - `autoplot.bandage_layout` draws with `clip = "off"`, and the position colourbar lays out horizontally wherever its legend sits.
@@ -43,12 +46,12 @@
 
 **Performance**, as a fraction of 11.8.0's time on the 20k-node lift bench. Builds ran interleaved in one process on a loaded box, since ada refused ssh all session; ratios hold to about ±7%.
 
-| Lift | whole graph | zoomed to a twentieth |
-| --- | --- | --- |
-| 2 walks | 0.98 | 0.69 |
-| 20 walks | 1.05 | 0.40 |
-| 2 walks, one repeating | 0.89 | 0.52 |
-| 20 walks, one repeating | 0.76 | 0.49 |
+| Lift                    | whole graph | zoomed to a twentieth |
+| ----------------------- | ----------- | --------------------- |
+| 2 walks                 | 0.98        | 0.69                  |
+| 20 walks                | 1.05        | 0.40                  |
+| 2 walks, one repeating  | 0.89        | 0.52                  |
+| 20 walks, one repeating | 0.76        | 0.49                  |
 
 - `1aa75b9`: the edge loop culls a lifted link against the viewport before building lanes. The margin is the widest band times the longest mitred normal plus the largest smoothing shift.
 - `5f0d540`, `dff2834`, `88056b8`: `laneLines` sums in typed arrays, `walkThreads` interns nodes and keys link threads from → to, and `laneRuns` claims each node with one lookup.

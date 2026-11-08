@@ -11,3 +11,6 @@
 ^docs$
 ^gallery$
 ^agent-docs$
+^\.oxlintrc\.json$
+^\.oxfmtrc\.json$
+^tsconfig\.json$

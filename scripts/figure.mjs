@@ -57,8 +57,7 @@ function geneSource({ file, index, ...rest } = {}) {
 function namesWalk(prefix, name) {
   return (
     name === prefix ||
-    name.startsWith(`${prefix}#`) ||
-    name.startsWith(`${prefix}:`)
+    [`${prefix}#`, `${prefix}:`].some(start => name.startsWith(start))
   )
 }
 
@@ -150,7 +149,9 @@ export async function walkRows(source, name, spec) {
   return {
     origin: cut.origin,
     reference: cut.reference.name,
-    unmatched: haplotypes.filter(h => !cut.rows.some(r => namesWalk(h, r.name))),
+    unmatched: haplotypes.filter(
+      h => !cut.rows.some(r => namesWalk(h, r.name)),
+    ),
     walkNames: [cut.reference, ...cut.rows].map(r => r.name),
     causes: { ...GAP_CAUSE_TEXT, outside: OUTSIDE_TEXT },
     rows: {
