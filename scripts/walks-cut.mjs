@@ -32,7 +32,6 @@ export async function walkCut({
       byteBudget: Infinity,
       departureByteBudget: Infinity,
       attachBp: Infinity,
-      attachFetches: Infinity,
     },
   )
   return { tables, region: { refName: anchor, start, end } }
