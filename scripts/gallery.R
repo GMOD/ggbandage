@@ -6,7 +6,7 @@
 #                                        that doesn't exist, or on stale docs
 
 definitions <- list(
-  walks = 'walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f6.GRCh38.walks.bed.gz"',
+  walks = 'walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"',
   index = 'index <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.anchored.graph.bed.gz"',
   genes = 'genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"',
   kiv2 = 'kiv2 <- "chr6:160,616,004-160,646,753"',
@@ -246,7 +246,7 @@ docs_text <- function() {
     "",
     "| Variable | File | How it was made |",
     "| --- | --- | --- |",
-    "| `walks` | HPRC v2.1 GRCh38 walk file | `gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f6`, as in [Hosting your own graph](https://jbrowse.org/jb2/docs/tutorials/pangenome_prepare_graph/). `f6` is the walk file format, gfa-to-tabix 3.0's format 6, which records every place a haplotype leaves GRCh38 and rejoins it as a departure |",
+    "| `walks` | HPRC v2.1 GRCh38 walk file | `gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38`, as in [Hosting your own graph](https://jbrowse.org/jb2/docs/tutorials/pangenome_prepare_graph/), with gfa-to-tabix 4.0, which writes walk format 7: the `.walks.gz` with its `.idx` directory, recording every place a haplotype leaves GRCh38 and rejoins it as a departure |",
     "| `index` | HPRC v2.1 GRCh38 segment index | `gfa-to-tabix hprc-v2.1-mc-grch38.sv.gfa.gz --layout anchored -o hprc-v2.1-mc-grch38.anchored`, with gfa-to-tabix 2.0.0, which writes format 2: nodes and links in one `.graph.bed.gz`. `anchored` is the layout: every node filed under the reference interval its bubble hangs from |",
     "| `genes` | UCSC hg38 ncbiRefSeq GFF3, bgzipped and tabix-indexed | Hosted by JBrowse, used as is |",
     "| `syng` | C4 syng graph from 90 haplotypes | [build.sh](https://github.com/GMOD/jbrowse-plugin-graphgenomeviewer/blob/main/test_data/syng/build.sh) runs [impg](https://github.com/pangenome/impg) on odgi's C4 test haplotypes |",

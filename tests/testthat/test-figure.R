@@ -1,6 +1,6 @@
 pggb <- test_path("testdata", "ecoli_pggb_subgraph.gfa")
 rgfa <- test_path("testdata", "ecoli_rgfa_slice.gfa.gz")
-walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.bed.gz")
+walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.gz")
 lifted <- c("K12#1#chr:1004500-1004961", "IAI39#1#chr:2249412-2249872")
 
 drawn_keys <- function(plot, width) {
@@ -586,16 +586,16 @@ test_that("a walk file cut keeps the haplotypes asked for, and names its sequenc
   )
 })
 
-test_that("a format 5 walk file asks for a rebuild", {
+test_that("a walk file of format 6 or earlier asks for a rebuild", {
   old <- test_path("testdata", "ecoli_pggb_format5.K12.walks.bed.gz")
   expect_error(
     bandage_walk_rows(old, "chr:1004500-1004961"),
-    "format 5; .* rebuild it with gfa-to-tabix 3.0 or later"
+    "format 6 or earlier, which has no .idx directory; .* rebuild it with gfa-to-tabix 4.0 or later"
   )
 })
 
 test_that("a walk the file abridged cuts in full, as from a file that did not", {
-  abridged <- test_path("testdata", "ecoli_pggb_abridged.K12.walks.bed.gz")
+  abridged <- test_path("testdata", "ecoli_pggb_abridged.K12.walks.gz")
   expect_match(readLines(gzfile(abridged)), "\tabridged\t", all = FALSE)
   rows <- function(file) {
     w <- bandage_walk_rows(file, "chr:1004500-1004961", context = 0)$rows
@@ -617,7 +617,7 @@ test_that("a region is a 1-based locus on a GFA and a walk file alike", {
   expect_s3_class(g, "bandage_layout")
 })
 
-records <- test_path("testdata", "records.GRCh38.walks.bed.gz")
+records <- test_path("testdata", "records.GRCh38.walks.gz")
 
 test_that("a gap in a walk row says what the walk file's departures state of it", {
   w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
@@ -652,7 +652,7 @@ test_that("the room past the bars fits the readout reaching furthest", {
 
 # REF walks seven 1 kb nodes, DEL >1>6>7, INS >1>8>6>7 through a 2 kb node of
 # its own, and SNP >1>2>3>5>6>7, so none steps on chr1:3000-4000
-stepless <- test_path("testdata", "stepless.REF.walks.bed.gz")
+stepless <- test_path("testdata", "stepless.REF.walks.gz")
 
 test_that("a haplotype with no step on the reference across the window draws as a stepless row", {
   w <- bandage_walk_rows(stepless, "chr1:3201-3800", context = 0)
@@ -702,4 +702,21 @@ test_that("a walk the graph lacks warns, naming the ones it has", {
 test_that("the stress engine lays the graph out", {
   g <- bandage_layout(pggb, engine = "stress")
   expect_setequal(unique(g$nodes$node), unique(bandage_layout(pggb)$nodes$node))
+})
+
+test_that("a walk file whose directory states another file is refused by its size", {
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  copy <- file.path(dir, "ecoli_pggb.K12.walks.gz")
+  file.copy(walk_file, copy)
+  file.copy(paste0(walk_file, ".idx"), paste0(copy, ".idx"))
+  con <- file(copy, "ab")
+  writeBin(as.raw(0), con)
+  close(con)
+  expect_error(
+    bandage_walk_rows(copy, "chr:1004500-1004961"),
+    sprintf("directory states %d bytes, the data holds %d", file.size(walk_file), file.size(copy))
+  )
+  expect_error(bandage_walk_rows(file.path(dir, "nowhere.K12.walks.gz"), "chr:1-100"), "nowhere.K12.walks.gz.idx does not exist")
 })

@@ -9,16 +9,20 @@ fetches every byte it reads.
 
 ### Walk files
 
-- **In:** a `<prefix>.<sample>.walks.bed.gz` from `gfa-to-tabix --walks`, in
-  walk format 6 (gfa-to-tabix 3.0 or later), with its `.tbi` or `.csi`, and a
-  `region`. An older file fails with graph-walks' `WalkFormatError`, which
-  asks for a rebuild
+- **In:** a `<prefix>.<sample>.walks.gz` from `gfa-to-tabix --walks`, in
+  walk format 7 (gfa-to-tabix 4.0 or later), with its directory
+  `<prefix>.<sample>.walks.gz.idx` beside it, and a `region`. An older file,
+  a `.walks.bed.gz`, fails with graph-walks' `WalkFormatError`, which asks
+  for a rebuild
 - **Out:** the reference over the region, `context` bp past each end, the
   walks of the `haplotypes` asked for, and every departure from the reference
   over the cut, as graph tables
-- `walkCut` in `scripts/walks-cut.mjs` calls
-  [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)' `cutRegion`,
-  as BandageJS does, over the R byte-range callback below
+- `walkCut` in `scripts/walks-cut.mjs` opens the file with
+  [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)'
+  `WalkReader.open(file, openFile)`, where `openFile` gives the reader a
+  handle over the R byte-range callback below for the file and for its
+  `.idx`, which the reader names from the file's location, before any query
+  string. It then calls `cutRegion`, as BandageJS does
 - `bandage_layout()` and `bandage_walk_rows()` send the cut's request, not
   its text: `bandage.figure` and `bandage.walkRows` cut in V8 and hand the
   tables to bandage-core's `loadGraph`. GFA has no line for a departure or
@@ -27,9 +31,11 @@ fetches every byte it reads.
   which drops both
 - bandage-core's `laidOutGraph` takes GFA text only, so `scripts/figure.mjs`
   lays out the loaded graph with the same calls
-- BandageJS caps a cut's reads and draws an abridged walk as a block. R asks
-  for one region and waits, so ggbandage lifts graph-walks' step, byte and
-  departure-read budgets and reads every abridged walk in full
+- BandageJS caps a cut's reads, draws an abridged walk as a block, and
+  attaches a departure's own steps only up to `attachBp` of own sequence and
+  `attachFetches` tiles. R asks for one region and waits, so ggbandage lifts
+  graph-walks' step, byte, departure-read and attach budgets and reads every
+  abridged walk in full
 - A cut at KIV-2 with five HPRC haplotypes took about 3 s from the hosted
   format 5 file
 
@@ -116,9 +122,10 @@ Timed on 2026-10-30 over a home connection, with `layout = "auto"`:
 ## Why the bytes come from R
 
 V8 has no file system or network access, so `rangeFile` in `v8-host.mjs`
-gives `@gmod/tabix` a filehandle whose `read(length, position)` calls
-`ggbandage:::fetch_range` through `console.r.call`. Walk files and segment
-indexes both read through it.
+gives `@gmod/tabix` and graph-walks' `WalkReader` a filehandle whose
+`read(length, position)` calls `ggbandage:::fetch_range` through
+`console.r.call`, and whose `stat()` calls `ggbandage:::fetch_size`. Walk
+files, their `.idx` directories and segment indexes all read through it.
 
 - `console.r.call` is synchronous, so the tabix promises settle without an event
   loop
@@ -128,7 +135,12 @@ indexes both read through it.
   decodes it with `fromBase64`
 - A URL becomes one `Range` request per call through `curl`. A local file,
   or a `file://` URL, is read with `seek` and `readBin`
-- A length of `-1` means the whole file, which the reader uses for the `.tbi`
+- A length of `-1` means the whole file, which the readers use for the `.tbi`
+  and the `.idx`
+- `fetch_size` answers a local file's size, or the total a server's
+  `Content-Range` states for a one-byte GET, which a presigned URL allows
+  where a HEAD is not. graph-walks checks it against the byte count the
+  `.idx` states, and takes 0, which a server stating no size gives, as unknown
 - A range that runs past the end of a file returns the bytes that exist, and
   an HTTP 416 reads as no bytes, because the reader asks for whole 64 kB
   blocks near the end of small files
@@ -276,20 +288,16 @@ gfa-to-tabix 1.0.0:
 gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_contig
 ```
 
-The walk files are format 6, made with gfa-to-tabix 3.0.0 from the GFAs
-beside them: the pggb GFA's, the same with its two costliest paths abridged,
-the departures `records.GRCh38.gfa` states (graph-walks' fixture of that
-name), and haplotypes with no step on the reference across a window:
-
-```console
-gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 -o ecoli_pggb
-gfa-to-tabix ecoli_pggb_subgraph.gfa --walks --refs K12 --abridge-steps 20 -o ecoli_pggb_abridged
-gfa-to-tabix records.GRCh38.gfa --walks --refs GRCh38 --chunk 1000 -o records
-gfa-to-tabix stepless.REF.gfa --walks --refs REF --chunk 1000 -o stepless
-```
+The walk files are format 7, made with gfa-to-tabix 4.0.0 by
+`tests/testthat/testdata/build.sh <gfa-to-tabix>` from the GFAs beside them:
+the pggb GFA's, the same with its two costliest paths abridged, the
+departures `records.GRCh38.gfa` states (graph-walks' fixture of that name),
+and haplotypes with no step on the reference across a window. Each is a
+`.walks.gz` with its `.idx` directory.
 
 `ecoli_pggb_format5.K12.walks.bed.gz` is the pggb GFA's format 5 walk file, as
-ggbandage read it before format 6, kept for the test that ggbandage refuses it.
+ggbandage read it before format 6, kept for the test that ggbandage refuses a
+`.walks.bed.gz`, which has no directory, as format 6 or earlier.
 
 `ecoli_pggb_csi.*` copies `ecoli_pggb`'s two files with a `.csi` in place of
 each `.tbi`, from `tabix -C -p bed`.

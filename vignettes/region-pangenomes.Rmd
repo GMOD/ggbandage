@@ -26,7 +26,7 @@ index.
 | ---------- | ------------------------------------------- | --------------------------------------------------- |
 | Input GFA  | base-level, with W or P lines               | an rGFA (`*.sv.gfa.gz`), or a plain GFA with `--reference` |
 | Command    | `gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph` | `gfa-to-tabix graph.sv.gfa.gz -o graph` |
-| Files      | `graph.GRCh38.walks.bed.gz` and its `.tbi`  | `graph.graph.bed.gz` and its `.tbi`                 |
+| Files      | `graph.GRCh38.walks.gz` and its `.idx`      | `graph.graph.bed.gz` and its `.tbi`                 |
 | Holds      | every haplotype's walk through the region   | the segments and links under the region             |
 | Draw it as | walks lifted or faceted, and walk rows      | the graph's shape, over megabases                   |
 
@@ -45,15 +45,18 @@ pair too, given the `.segs.bed.gz` or the prefix `graph`.
    vg convert -f graph.gbz > graph.gfa
    ```
 
-2. Index it with gfa-to-tabix 3.0 or later, which writes walk format 6, the
+2. Index it with gfa-to-tabix 4.0 or later, which writes walk format 7, the
    one ggbandage reads, naming the genome whose coordinates `region` will use:
 
    ```console
    gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph
    ```
 
-3. Read it from disk, or put the `.walks.bed.gz` and `.tbi` on a web server.
-   A server that answers range requests, as Amazon S3 does, sends each block
+   That writes `graph.GRCh38.walks.gz` and its directory
+   `graph.GRCh38.walks.gz.idx`
+
+3. Read it from disk, or put the `.walks.gz` and its `.idx` on a web server.
+   A server that answers range requests, as Amazon S3 does, sends each tile
    ggbandage asks for. One without range support, such as
    `python -m http.server`, sends the whole file on every read
 
@@ -62,7 +65,7 @@ pair too, given the `.segs.bed.gz` or the prefix `graph`.
 ```{r read, eval = FALSE}
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f6.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"
 g <- bandage_layout(walks, region = "chr1:196,640,001-196,900,000", haplotypes = c("HG00097#1", "HG02055#1"))
 ```
 

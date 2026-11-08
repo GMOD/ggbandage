@@ -87,7 +87,7 @@ test_that("a signed .graph.bed.gz URL keeps its query on the index", {
 test_that("a URL's query, as a signed URL carries, stays on every file read beside it", {
   skip_on_os("windows")
   url <- function(path) paste0("file://", normalizePath(path), "?token=1")
-  walks <- test_path("testdata", "ecoli_pggb.K12.walks.bed.gz")
+  walks <- test_path("testdata", "ecoli_pggb.K12.walks.gz")
   expect_s3_class(
     bandage_layout(url(walks), region = "chr:1004500-1004961"),
     "bandage_layout"
@@ -247,4 +247,33 @@ test_that("the bundle's TextDecoder reads long ASCII runs and UTF-8 alike", {
     ctx$eval("new TextDecoder().decode(new Uint8Array([0x61, 0xff, 0x62]))"),
     "a�b"
   )
+})
+
+test_that("a file's size is asked of a local path, a file:// URL, or the server's Content-Range", {
+  file <- paste0(index, ".segs.bed.gz")
+  size <- sprintf("%.0f", file.size(file))
+  expect_identical(fetch_size(file), size)
+  expect_identical(fetch_size(paste0("file://", normalizePath(file), "?v=1")), size)
+  expect_error(fetch_size("/no/such.gz"), "does not exist")
+  asked <- NULL
+  local_mocked_bindings(
+    curl_fetch_memory = function(url, handle) {
+      asked <<- curl::handle_data(handle)
+      if (grepl("whole", url)) {
+        list(status_code = 200L, content = as.raw(1:7), headers = raw())
+      } else {
+        list(
+          status_code = 206L, content = raw(1),
+          headers = charToRaw("HTTP/1.1 206 Partial Content\r\nContent-Range: bytes 0-0/12345\r\n\r\n")
+        )
+      }
+    },
+    .package = "curl"
+  )
+  whole_bodies$clear()
+  expect_identical(fetch_size("https://example.org/x.walks.gz?token=1"), "12345")
+  expect_false(isTRUE(asked$nobody))
+  expect_identical(fetch_size("https://example.org/whole.walks.gz"), "7")
+  expect_identical(url_range("https://example.org/whole.walks.gz", 2, 3), as.raw(3:5))
+  whole_bodies$clear()
 })

@@ -3,13 +3,16 @@ import { rgfaCut } from '@jbrowse/graph-walks'
 
 import { rangeFile } from './v8-host.mjs'
 
-const fetchRange = 'ggbandage:::fetch_range'
+// A file R serves every byte of, by path or URL
+export function openFile(location) {
+  return rangeFile('ggbandage:::fetch_range', 'ggbandage:::fetch_size', location)
+}
 
 export function openIndexed(file, index) {
   return new TabixIndexedFile({
-    filehandle: rangeFile(fetchRange, file),
+    filehandle: openFile(file),
     [/\.csi([?#]|$)/.test(index) ? 'csiFilehandle' : 'tbiFilehandle']:
-      rangeFile(fetchRange, index),
+      openFile(index),
     chunkCacheIdleTimeoutMs: 0,
   })
 }

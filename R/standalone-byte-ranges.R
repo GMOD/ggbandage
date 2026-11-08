@@ -1,13 +1,13 @@
 # ---
 # repo: GMOD/ggbandage
 # file: standalone-byte-ranges.R
-# last-updated: 2026-10-28
+# last-updated: 2026-11-07
 # license: https://unlicense.org
 # dependencies: standalone-v8-host.R
 # imports: curl
 # ---
 #
-# Byte ranges and lines of a local or remote file, for a JavaScript reader in
+# Byte ranges, size and lines of a local or remote file, for a JavaScript reader in
 # V8 that asks R for every byte through console.r.call, and the 1-based
 # locus a user writes as the 0-based range such a reader answers.
 
@@ -142,6 +142,44 @@ url_range <- function(url, position, length) {
     return(res$content[position + seq_len(range_bytes(length(res$content), position, length))])
   }
   res$content
+}
+
+# A file's size in bytes, which V8 asks through console.r.call for a reader
+# that checks a file against its directory. It goes back as a string, since
+# the engine reads a number from it either way
+fetch_size <- function(location) {
+  size <- if (is_remote(location)) {
+    url_size(location)
+  } else {
+    path <- local_path(location)
+    if (!file.exists(path)) {
+      stop(sprintf("%s does not exist", path), call. = FALSE)
+    }
+    file.size(path)
+  }
+  sprintf("%.0f", size)
+}
+
+# The size a server states in Content-Range for a one-byte range, or the
+# whole body's length where it answers 200 with the whole file; 0 where it
+# states none, which the reader takes as unknown
+url_size <- function(url) {
+  body <- whole_bodies$get(url)
+  if (!is.null(body)) {
+    return(length(body))
+  }
+  handle <- curl::new_handle(range = "0-0")
+  res <- curl::curl_fetch_memory(url, handle)
+  if (res$status_code >= 400 && res$status_code != 416) {
+    stop(sprintf("HTTP %d reading %s", res$status_code, url), call. = FALSE)
+  }
+  if (res$status_code == 200) {
+    whole_bodies$put(url, res$content)
+    return(length(res$content))
+  }
+  stated <- curl::parse_headers_list(res$headers)[["content-range"]]
+  total <- sub("^.*/", "", if (is.null(stated)) "" else stated)
+  if (grepl("^[0-9]+$", total)) as.numeric(total) else 0
 }
 
 # The whole bodies servers without range support sent, newest last, dropping

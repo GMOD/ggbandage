@@ -129,17 +129,28 @@ globalThis.fetch ??= async url => {
   return { ok: true, arrayBuffer: async () => bytes.buffer }
 }
 
-// A file handle whose bytes come from `rFunction`, such as
+// A file handle whose bytes come from `rangeFunction`, such as
 // 'ggbandage:::fetch_range', called through console.r.call with the
-// location, position and length; jsonlite sends the raw vector as base64
-export function rangeFile(rFunction, location) {
+// location, position and length, and whose size comes from `sizeFunction`,
+// such as 'ggbandage:::fetch_size'; jsonlite sends the raw vector as base64
+// and the size as a string
+export function rangeFile(rangeFunction, sizeFunction, location) {
   const bytes = (position, length) => {
-    const [value] = console.r.call(rFunction, [location, position, length])
+    const [value] = console.r.call(rangeFunction, [location, position, length])
     return fromBase64(value ?? '')
   }
   return {
+    source: location,
     read: async (length, position) => bytes(position, length),
-    readFile: async () => bytes(0, -1),
+    readFile: async options => {
+      const encoding =
+        typeof options === 'string' ? options : options?.encoding
+      return encoding ? new TextDecoder().decode(bytes(0, -1)) : bytes(0, -1)
+    },
+    stat: async () => {
+      const [size] = console.r.call(sizeFunction, [location])
+      return { size: Number(size) }
+    },
     close: async () => {},
   }
 }

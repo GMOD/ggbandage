@@ -18,8 +18,8 @@ bandage_walk_rows(
 \item{gfa}{path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix
 index (the \code{.graph.json} manifest, a format 2 \code{.graph.bed.gz} file, a
 format 1 \code{.segs.bed.gz} file, or a local prefix of either); or of a
-gfa-to-tabix \code{--walks} file (\code{.walks.bed.gz}). An index or walk file
-needs \code{region}}
+gfa-to-tabix \code{--walks} file (\code{.walks.gz}, with its \code{.walks.gz.idx}
+directory beside it). An index or walk file needs \code{region}}
 
 \item{region}{a 1-based locus, as a genome browser writes it, such as
 \code{"GRCh38#0#chr6:31,000,001-31,100,000"}, \code{"chr6:31000001..31100000"} or

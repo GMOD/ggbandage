@@ -25,7 +25,7 @@ remotes::install_github("GMOD/ggbandage")
 ```r
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f6.GRCh38.walks.bed.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 g <- bandage_layout(
@@ -44,12 +44,14 @@ The walk file comes from HPRC's v2.1 graph, prepared as in JBrowse's
 
 ```console
 vg convert -f hprc-v2.1-mc-grch38.gbz > hprc-v2.1-mc-grch38.gfa
-gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38-f6
+gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch38
 ```
 
-`f6` is the walk file format, gfa-to-tabix 3.0's format 6, which records every
-place a haplotype leaves GRCh38 and rejoins it as a departure. ggbandage reads
-format 6 only; rebuild an older walk file with gfa-to-tabix 3.0 or later.
+That writes `hprc-v2.1-mc-grch38.GRCh38.walks.gz` and its directory
+`hprc-v2.1-mc-grch38.GRCh38.walks.gz.idx`, in walk format 7, gfa-to-tabix
+4.0's, which records every place a haplotype leaves GRCh38 and rejoins it as a
+departure. ggbandage reads format 7 only; rebuild an older walk file, a
+`.walks.bed.gz`, with gfa-to-tabix 4.0 or later.
 
 [Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
 `engine` and `genes`.
@@ -68,9 +70,9 @@ and ggbandage reads one region at a time:
 
    A graph shipped as `.gbz`, as HPRC's are, converts to GFA first with
    `vg convert -f graph.gbz > graph.gfa`
-2. Pass `graph.GRCh38.walks.bed.gz`, a path or a url, to `bandage_layout()`
-   with a `region`. From a url, ggbandage fetches the blocks under the region
-   by range request
+2. Pass `graph.GRCh38.walks.gz`, a path or a url, to `bandage_layout()` with
+   a `region`; its directory, `graph.GRCh38.walks.gz.idx`, is read beside it.
+   From a url, ggbandage fetches the tiles under the region by range request
 
 [Region-specific pangenomes](vignettes/region-pangenomes.Rmd) covers the two
 kinds of index, exporting a region as GFA, and building a region's syng graph.

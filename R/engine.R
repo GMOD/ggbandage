@@ -25,7 +25,9 @@ loaded <- new.env(parent = emptyenv())
 
 read_text <- function(path) paste(read_lines(path), collapse = "\n")
 
-is_walk_file <- function(x) grepl("\\.walks\\.bed\\.gz$", bare_name(x))
+# A format 7 walk file, or an older .walks.bed.gz, which graph-walks refuses
+# by name, asking for a rebuild
+is_walk_file <- function(x) grepl("\\.walks(\\.bed)?\\.gz$", bare_name(x))
 
 # The graph, its name, and the region a core reads it under. The `source` is
 # GFA text: a GFA as it is, or the part of a segment index under `region`. For
@@ -78,8 +80,8 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #' @param gfa path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix
 #'   index (the `.graph.json` manifest, a format 2 `.graph.bed.gz` file, a
 #'   format 1 `.segs.bed.gz` file, or a local prefix of either); or of a
-#'   gfa-to-tabix `--walks` file (`.walks.bed.gz`). An index or walk file
-#'   needs `region`
+#'   gfa-to-tabix `--walks` file (`.walks.gz`, with its `.walks.gz.idx`
+#'   directory beside it). An index or walk file needs `region`
 #' @param layout `"force"`, `"auto"`, `"ordered"` or `"samplerows"`
 #' @param walks walks (P/W lines) to lift out of the drawing, each named in
 #'   full or by a prefix such as `"HG00097#1"` or `"HG00097"`, which lifts
@@ -189,9 +191,11 @@ unbound_genes <- function(genes, unbound) {
   )
 }
 
+# The engine reads the file's directory, `.idx` after its name, by the same
+# location
 walk_request <- function(file, region, haplotypes, context) {
   c(
-    list(file = file, index = index_or_tbi(file), context = context),
+    list(file = file, context = context),
     if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
     parse_region(region)
   )
