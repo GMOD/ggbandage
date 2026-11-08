@@ -36,7 +36,7 @@ test_that("the key names each lifted walk, then the faded rest and the deletions
   k <- drawn_keys(ggplot2::autoplot(g), 8)
   expect_equal(k$labels, c(
     paste0(c("K12", "IAI39"), g$keys$note),
-    "only in other haplotypes", "skips K12 chr sequence (a deletion)"
+    "only in other haplotypes", "skips K12 chr sequence"
   ))
 })
 
@@ -301,7 +301,7 @@ test_that("faceted, one key below the panels names the shading, the faded rest a
   guide <- ggplot2::autoplot(g)$guides$guides$bandage_keys
   expect_equal(guide$params$position, "bottom")
   expect_equal(guide$params$grob$keys$label, c(
-    "each walk, start to end", "only in other haplotypes", "skips K12 chr sequence (a deletion)"
+    "each walk, start to end", "only in other haplotypes", "skips K12 chr sequence"
   ))
 })
 
