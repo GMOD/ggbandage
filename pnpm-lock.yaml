@@ -12,11 +12,11 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: ^13.1.1
-        version: 13.1.1
+        specifier: ^13.2.0
+        version: 13.2.0
       '@jbrowse/graph-walks':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.1.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -192,8 +192,8 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@13.1.1':
-    resolution: {integrity: sha512-YQmNFX3UxIFMjpUWaHHuuBVLNpq7AJ9pYPc41TuxZsyo6Q7e2Sud9qB3WGzN3cKAGRXGPpNQ84csLN6d1qKZqw==}
+  '@jbrowse/bandage-core@13.2.0':
+    resolution: {integrity: sha512-LPRxDhBZ/tzevrp9pLHn3vUMPsuBklC9ABqb/MOMmOd6k7FtBakfsM7Dul7Cfww0sbYJPg/WobnA1bWe7peqZQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -205,8 +205,8 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-walks@6.0.0':
-    resolution: {integrity: sha512-LuDbMk0cNrm/R4iYezTzPisY6ySutFi39GE8FeqTcOgPUiD9vs5DT0p2yXp6+p/u1tafJ0I2SSOQu9+8chcbWQ==}
+  '@jbrowse/graph-walks@6.1.0':
+    resolution: {integrity: sha512-bRrY23UWptS5zAyrWd3ifRZcFxtw54bXQFU6gu/1SM9YindiXxPNGXP6L4RVBIRrVZ1J9ha2u4tVTg0/K35dhw==}
     engines: {node: '>=20'}
 
   '@jbrowse/quick-lru@8.0.0':
@@ -325,7 +325,7 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@13.1.1':
+  '@jbrowse/bandage-core@13.2.0':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
@@ -337,7 +337,7 @@ snapshots:
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
-  '@jbrowse/graph-walks@6.0.0':
+  '@jbrowse/graph-walks@6.1.0':
     dependencies:
       '@gmod/bgzf-filehandle': 6.8.4
       generic-filehandle2: 2.5.1

@@ -27,9 +27,10 @@
 #'   once, so which pass it takes was the walk file writer's choice; `runs`, a
 #'   row per stretch of a bar, `xmin` and `xmax` in bp from the left flank,
 #'   with `kind` and, on the reference's path, `referenceStart` and
-#'   `reversed`, and on a gap, the `cause` a walk file's departures state:
-#'   `missing`, `elsewhere`, `own` or `departure`, else `outside`; `causes`,
-#'   the words bandage-core gives each cause, which a gap's `kind` takes;
+#'   `reversed`, and on a gap, the `cause` a walk-file cut states:
+#'   `missing`, `elsewhere`, `own`, `mixed`, `unread`, `abridged` or
+#'   `departure`, else `outside`; `causes`, the words bandage-core gives each
+#'   cause, which a gap's `kind` takes;
 #'   and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
@@ -278,17 +279,17 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ifelse(plain$kind %in% causes, plain$kind, off)
   )
   more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
-  labels <- c(off, causes[c("outside", "missing", "departure", "own")], ribbon, inverted, more)
+  labels <- c(off, causes[c("outside", "missing", "departure", "own", "mixed", "unread")], ribbon, inverted, more)
   off_fill <- if (walk_hued) STRIP_FILL else CHARCOAL
   off_ink <- if (walk_hued) NA else CHARCOAL
   block_fill <- if (walk_hued) NA else "#e8e8e8"
   keys <- stats::setNames(
-    c(off_fill, rep("white", 4), "#cfe0f2", "#b9abdb", block_fill), labels
+    c(off_fill, rep("white", 6), "#cfe0f2", "#b9abdb", block_fill), labels
   )
   outlines <- stats::setNames(
-    c(off_ink, "#9a9a9a", "#6e6e6e", "#6e6e6e", "#9a9a9a", "#cfe0f2", "#b9abdb", "#7a7a7a"), labels
+    c(off_ink, "#9a9a9a", "#6e6e6e", "#6e6e6e", "#9a9a9a", "#6e6e6e", "#6e6e6e", "#cfe0f2", "#b9abdb", "#7a7a7a"), labels
   )
-  dashes <- stats::setNames(c("solid", "22", "solid", "solid", "12", "solid", "solid", "solid"), labels)
+  dashes <- stats::setNames(c("solid", "22", "solid", "solid", "12", "12", "22", "solid", "solid", "solid"), labels)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- if (walk_hued) character() else c("#d4785f", "#d9a94e", "#c98aa3")
