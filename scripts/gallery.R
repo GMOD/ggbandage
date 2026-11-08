@@ -333,7 +333,7 @@ ggplot(g) +
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
-    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, and a grey dashed link that neither walk takes skips the loop at the top. The panel titles give HG00097 113 kb and GRCh38 90.8 kb, each span the region plus 30 kb of flank either side, and a key below the panels names the shading, the faded nodes and the dashes",
+    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, drawn faded in GRCh38's panel, and a short grey dashed link at the loop's base skips GRCh38 sequence that both walks take. The panel titles give HG00097 113 kb and GRCh38 90.8 kb, each span the region plus 30 kb of flank either side, and a key below the panels names the shading, the faded nodes and the dashes",
     r"(g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = "HG00097#1", context = 30000,
