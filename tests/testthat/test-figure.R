@@ -568,6 +568,54 @@ test_that("a bar on the reference's path is coloured by the reference position i
   expect_true(all(diff(bar_tiles(backwards, 10)$position) < 0))
 })
 
+test_that("walk steps cover each walk end to end, a row per pass", {
+  s <- bandage_walk_steps(test_path("testdata", "records.GRCh38.gfa"))
+  expect_equal(max(s$end[s$walk == "GRCh38#0#chr1:0-10000"]), 10000)
+  expect_equal(max(s$end[s$walk == "HG002#1#chr1:0-2000"]), 2000)
+  expect_equal(s$start[-1][s$step[-1] > 1], s$end[-nrow(s)][s$step[-1] > 1])
+
+  gfa <- tempfile(fileext = ".gfa")
+  writeLines(c("S\ta\t*\tLN:i:10", "S\tb\tACGTA", "P\tloop\ta+,b+,a+\t*"), gfa)
+  loop <- bandage_walk_steps(gfa)
+  expect_equal(loop$pass, c(0, 0, 1))
+  expect_equal(loop$start, c(0, 10, 15))
+
+  writeLines(c("S\ta\t*", "S\tb\tACGT", "P\th:0-4\ta+,z+\t*", "P\th:4-8\tb+,a+\t*", "P\tq\t\t*"), gfa)
+  pieces <- bandage_walk_steps(gfa)
+  expect_equal(pieces$walk, c("h:0-4", "h:0-4", "h:4-8", "h:4-8"))
+  expect_equal(pieces$end, c(0, 0, 4, 4))
+  expect_equal(pieces$pass, c(0, 0, 0, 1))
+})
+
+test_that("a block's nodes are those off the reference under its stretch of the first forward row", {
+  rows <- list(
+    reference = "ref#0#c",
+    rows = data.frame(
+      row = 0:2, name = c("ref#0#c", "h1#1#c", "h2#1#c"), contigStart = c(0, 100, 0),
+      linked = TRUE, backward = c(FALSE, FALSE, TRUE)
+    ),
+    blocks = data.frame(row = c(2, 1), xmin = c(0, 10), xmax = c(5, 30), letter = "A")
+  )
+  steps <- data.frame(
+    walk = c(rep("ref#0#c:0-20", 2), rep("h1#1#c:100-140", 4)),
+    node = c("r1", "r2", "r1", "b1", "b2", "r2"),
+    start = c(0, 10, 0, 10, 20, 30), end = c(10, 20, 10, 20, 30, 40)
+  )
+  expect_equal(block_nodes(rows, steps), data.frame(letter = "A", node = c("b1", "b2")))
+
+  split <- list(
+    reference = "ref[0-30]",
+    rows = data.frame(row = 0:1, name = c("ref[0-30]", "h1[100-120]"), contigStart = c(0, 100), linked = TRUE, backward = FALSE),
+    blocks = data.frame(row = 1, xmin = c(0, 30), xmax = c(10, 40), letter = "A")
+  )
+  pieces <- data.frame(
+    walk = c("ref[0-30]", "h1[100-120]", "h1[100-120]", "h1[120-140]", "h1[120-140]"),
+    node = c("r1", "b1", "r1", "x", "b2"),
+    start = c(0, 0, 10, 0, 10), end = c(30, 10, 20, 10, 20)
+  )
+  expect_equal(block_nodes(split, pieces)$node, c("b1", "b2"))
+})
+
 test_that("a walk file cuts the walks under a region", {
   region <- "chr:1004500-1004961"
   gfa <- bandage_gfa(walk_file, region, context = 0)

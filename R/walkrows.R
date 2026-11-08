@@ -113,6 +113,57 @@ print.bandage_walk_rows <- function(x, ...) {
   invisible(x)
 }
 
+#' Walk-row block letters, on the graph
+#'
+#' Letters each block that [autoplot()] letters on walk rows at the block's
+#' node furthest from the middle of the drawing, so block A in the rows can be
+#' found in the graph above them. Add it to the plot of a [bandage_layout()]
+#' of the same graph. It finds a block's nodes on a row that reads its walk
+#' forwards, so a block that only backward rows walk gets no letter.
+#' @param rows a [bandage_walk_rows()] result
+#' @param steps [bandage_walk_steps()] of the same graph, with the rows'
+#'   haplotypes
+#' @param size text size in mm
+#' @export
+geom_bandage_blocks <- function(rows, steps, size = 4) {
+  nodes <- block_nodes(rows, steps)
+  ggplot2::layer(
+    geom = ggplot2::GeomLabel, stat = "identity", position = "identity",
+    data = function(plot_data) block_spots(layout_of(plot_data), nodes),
+    mapping = ggplot2::aes(x = x, y = y, label = letter),
+    inherit.aes = FALSE, show.legend = FALSE,
+    params = list(size = size, fontface = "bold", colour = "grey15", fill = "white")
+  )
+}
+
+# The nodes off the reference's path under each block, read from every
+# stretch of it on the first row that walks it forwards. A row's bp count from
+# contigStart on its contig, and a step's from the start its piece's name
+# gives, or 0
+block_nodes <- function(rows, steps) {
+  base <- walk_base(steps$walk)
+  reference <- steps$node[base == walk_base(rows$reference)]
+  forward <- rows$rows[rows$rows$linked & !rows$rows$backward, c("row", "name", "contigStart")]
+  blocks <- merge(rows$blocks, forward, by = "row")
+  blocks <- blocks[blocks$row == stats::ave(blocks$row, blocks$letter, FUN = min), ]
+  middle <- walk_origin(steps$walk) + (steps$start + steps$end) / 2
+  found <- lapply(seq_len(nrow(blocks)), function(i) {
+    b <- blocks[i, ]
+    x <- middle - b$contigStart
+    under <- base == walk_base(b$name) & x >= b$xmin & x <= b$xmax & !(steps$node %in% reference)
+    data.frame(letter = rep(b$letter, sum(under)), node = steps$node[under])
+  })
+  nodes <- do.call(rbind, c(list(data.frame(letter = character(), node = character())), found))
+  nodes[!duplicated(nodes), ]
+}
+
+block_spots <- function(model, nodes) {
+  all <- slid_back(model$nodes, model$meta, "x", "y")
+  n <- merge(all, nodes, by.x = "name", by.y = "node")
+  n <- n[order(-((n$x - stats::median(all$x))^2 + (n$y - stats::median(all$y))^2)), ]
+  n[!duplicated(paste(n$panel, n$letter)), ]
+}
+
 #' @exportS3Method ggplot2::fortify
 fortify.bandage_walk_rows <- function(model, data, ...) model$runs
 

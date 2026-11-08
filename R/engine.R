@@ -75,6 +75,65 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
   }
 }
 
+#' Each walk's steps, with the bp each covers
+#'
+#' The walks (W and P lines) of the GFA that [bandage_gfa()] returns, a row
+#' per step in walk order. A walk that passes a node more than once has a row
+#' per pass, numbered from 0 in walk order across all the lines that hold
+#' pieces of it, as [bandage_layout()] numbers a lifted walk's threads, so a
+#' step joins to its thread on `name` and `pass`. A step on a segment with no
+#' length, or with no S line, covers 0 bp.
+#' @inheritParams bandage_gfa
+#' @return a data frame of `walk`, as `sample#haplotype#contig:start-end` for
+#'   a W line or the path's name for a P line; `step`, from 1 in each line;
+#'   `node`; `pass`; and `start` and `end`, bp from the line's first base
+#' @export
+bandage_walk_steps <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
+  lines <- strsplit(bandage_gfa(gfa, region, haplotypes, context), "\n", fixed = TRUE)[[1]]
+  records <- function(tag) strsplit(lines[startsWith(lines, tag)], "\t", fixed = TRUE)
+  segments <- records("S\t")
+  bp <- stats::setNames(vapply(segments, segment_bp, 0), vapply(segments, `[`, "", 2))
+  walks <- c(
+    lapply(records("W\t"), function(f) {
+      ranged <- grepl("^[0-9]+$", f[5]) && grepl("^[0-9]+$", f[6])
+      list(
+        name = paste0(f[2], "#", f[3], "#", f[4], if (ranged) paste0(":", f[5], "-", f[6])),
+        nodes = regmatches(f[7], gregexpr("[^<>]+", f[7]))[[1]]
+      )
+    }),
+    lapply(records("P\t"), function(f) {
+      list(name = f[2], nodes = sub("[+-]$", "", strsplit(f[3], ",", fixed = TRUE)[[1]]))
+    })
+  )
+  empty <- data.frame(walk = character(), step = integer(), node = character(), start = numeric(), end = numeric())
+  steps <- do.call(rbind, c(list(empty), lapply(Filter(function(w) length(w$nodes) > 0, walks), function(w) {
+    length <- unname(bp[w$nodes])
+    length[is.na(length)] <- 0
+    data.frame(
+      walk = w$name, step = seq_along(w$nodes), node = w$nodes,
+      start = cumsum(length) - length, end = cumsum(length)
+    )
+  })))
+  steps$pass <- stats::ave(seq_len(nrow(steps)), walk_base(steps$walk), steps$node, FUN = seq_along) - 1L
+  steps[c("walk", "step", "node", "pass", "start", "end")]
+}
+
+segment_bp <- function(fields) {
+  tag <- grep("^LN:i:", fields[-(1:3)], value = TRUE)
+  if (length(tag)) as.numeric(substring(tag[1], 6)) else if (fields[3] == "*") 0 else nchar(fields[3])
+}
+
+# A piece of a walk names its range on the contig as `:start-end`, or as
+# `[start-end]` the way vg writes it
+walk_range <- "(:([0-9]+)-[0-9]+|\\[([0-9]+)-[0-9]+\\])$"
+
+walk_base <- function(walk) sub(walk_range, "", walk)
+
+walk_origin <- function(walk) {
+  found <- regmatches(walk, regexec(walk_range, walk))
+  vapply(found, function(m) if (length(m)) as.numeric(paste0(m[3], m[4])) else 0, 0)
+}
+
 #' Lay out a GFA graph with the Bandage engine
 #'
 #' @param gfa path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix

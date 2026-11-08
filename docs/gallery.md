@@ -41,6 +41,9 @@ autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = 
 
 `chr6:160,616,004-160,646,753`
 
+- GRCh38 is the shortest row, and 462 of the 463 HPRC haplotypes in the walk
+  file are longer than GRCh38 here
+
 ![Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two](../gallery/kiv2_rows.png)
 
 ```r
@@ -92,13 +95,16 @@ autoplot(g)
 
 `chr6:160,616,004-160,646,753`
 
+- `geom_bandage_blocks()` letters each block of the walk rows on the graph, at
+  the block's node furthest from the middle, so block A in the rows is the
+  lower right loop. It finds the block's nodes from `bandage_walk_steps()`
 - `context = 30000` keeps 30 kb of GRCh38 past each end of the region, so the
   reference runs in straight before it reaches the array
 - `bubbleSpread = "compress"` pulls node lengths towards the mean, so HG00133's
   extra copies no longer dwarf the rest. Loop size stops tracking bp, so read
   lengths off the walk rows below
 
-![Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 133 kb longer, and HG00097 yellow to red-orange, 22.4 kb longer. GRCh38 runs straight in along 30 kb of flank from either side to a knot of loops at the array. Where walks share nodes their lanes run side by side. All three walks run the loops at the top, HG00133 and HG00097 run the loop at the lower right together, and HG00133 alone runs the loop at the lower left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with the lower right loop outlined as block A in both](../gallery/kiv2_overlay.png)
+![Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 133 kb longer, and HG00097 yellow to red-orange, 22.4 kb longer. GRCh38 runs straight in along 30 kb of flank from either side to a knot of loops at the array. Where walks share nodes their lanes run side by side. All three walks run the loops at the top, HG00133 and HG00097 run the loop at the lower right together, and HG00133 alone runs the loop at the lower left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with block A outlined in both. A boxed letter A sits at the tip of the lower right loop, the block's nodes in the graph](../gallery/kiv2_overlay.png)
 
 ```r
 library(ggbandage)
@@ -111,10 +117,224 @@ haps <- c("HG00133#2", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
 g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000, bubbleSpread = "compress")
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1))
+steps <- bandage_walk_steps(walks, kiv2, haplotypes = haps)
+(autoplot(g) + geom_bandage_blocks(rows, steps)) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1))
 ```
 
-## C4 copies as threads round an impg syng graph
+## RHD deletion and duplication in an impg syng graph
+
+`chr1:25,250,000-25,450,000`
+
+The RHD syng graph is a region-specific pangenome.
+`scripts/build-syng-region.sh` cuts the region from the HPRC walk file to find
+each haplotype's contig span, fetches those spans from GenBank, and builds the
+graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
+`inst/extdata`.
+
+- The Rhesus boxes either side of RHD share many of their nodes, so GRCh38
+  walks them twice
+- The snippet colours HG01106#1 by its pass through each node, in the graph and
+  in the strip. From 85 to 160 kb, HG01106#1 walks nodes it walked earlier. That
+  stretch is close to the 69 kb by which HG01106#1 is longer than grch38, and
+  holds a second RHD, the blue thread round the RHD loop, and a third pass
+  through the Rhesus box
+- `bandage_walk_steps()` gives the pass of each step for the strip, and the
+  layout's node table gives the pass of each thread for the graph
+- Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and
+  skip RHD, the deletion that most often makes blood RhD-negative. HG01258#2, in
+  purple, is one
+
+![Force-directed syng graph of RHD from 19 HPRC haplotypes with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 coloured by its pass through each node, orange the first time, blue the second and green the third. Round the loop at the top, labelled RHD, run a grey grch38 thread, an orange first-pass thread and a blue thread labelled second pass, HG01106#1's second RHD. A short green thread labelled third pass runs through the Rhesus box at the left. HG01258#2 skips the RHD loop and runs straight on to TMEM50A and RHCE. A strip below shows HG01106#1's 272 kb by pass, orange except blue from 85 to 155 kb and green to 160 kb, and walk rows give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
+
+```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+
+rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
+dup <- "HG01106#1"
+del <- "HG01258#2"
+passes <- c("first pass" = "#D55E00", "second pass" = "#0072B2", "third pass" = "#009E73")
+lifted <- list(
+  list(walk = "grch38", color = list(field = "walk", scheme = "grey")),
+  list(walk = dup),
+  list(walk = del, color = list(field = "walk", scheme = "purple"))
+)
+g <- bandage_layout(rhd_syng, walks = lifted, genes = genes)
+g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
+g$exons <- g$exons[0, ]
+mine <- g$nodes$walk %in% 1
+g$nodes$pass_name <- ifelse(mine, names(passes)[pmax(0, g$nodes$pass, na.rm = TRUE) + 1], NA)
+g$nodes$color[mine] <- passes[g$nodes$pass_name[mine]]
+reach <- (g$nodes$x - stats::median(g$nodes$x))^2 + (g$nodes$y - stats::median(g$nodes$y))^2
+later <- g$nodes[mine & g$nodes$pass_name != "first pass", ][order(-reach[mine & g$nodes$pass_name != "first pass"]), ]
+later <- later[!duplicated(later$pass_name), ]
+steps <- bandage_walk_steps(rhd_syng)
+steps <- steps[startsWith(steps$walk, paste0(dup, "#")), ]
+steps$kb <- floor((steps$start + steps$end) / 2000)
+cover <- stats::aggregate(cbind(bp = end - start) ~ kb + pass, steps, sum)
+cover <- cover[order(cover$kb, -cover$bp), ]
+cover <- cover[!duplicated(cover$kb), ]
+cover$pass <- names(passes)[cover$pass + 1]
+rows <- bandage_walk_rows(rhd_syng, haplotypes = c(dup, del))
+along <- ggplot(cover) +
+  geom_rect(aes(xmin = kb, xmax = kb + 1, ymin = 0, ymax = 1, fill = pass)) +
+  scale_fill_manual(NULL, values = passes) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(x = sprintf("kb along %s, coloured by its pass through each node", dup)) +
+  theme_minimal(10) +
+  theme(panel.grid = element_blank(), legend.position = "top")
+autoplot(g) + guides(bandage_keys = "none") +
+  geom_label(aes(x, y, label = pass_name, colour = I(passes[pass_name])), data = later, size = 3.2, fontface = "bold", fill = "white", hjust = 1.05) +
+  along + autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) +
+  plot_layout(ncol = 1, heights = c(5, 0.35, 1.2))
+```
+
+## C4 in two graph builders, the same haplotype in each
+
+`chr6:31,972,047-32,055,647`
+
+- The left graph is cut from the HPRC Minigraph-Cactus walk file, and the right
+  is the syng graph of [C4 copies as threads](#c4-copies-as-threads-round-an-impg-syng-graph)
+- The snippet finds HG01978#2's three C4 copies in the syng graph, where each is
+  one pass round the ring, and colours the same bp of HG01978#2 in both graphs
+  and in the strip below
+- `bandage_walk_steps()` gives each step's bp along its walk and its pass, which
+  joins the step to the layout's thread for that pass
+- In the Minigraph-Cactus graph, copy 1 is a loop off GRCh38's path, copy 2
+  starts at GRCh38's C4A and copy 3 at its C4B. In the syng graph, all three are
+  passes round the ring, which GRCh38 runs twice
+- The Minigraph-Cactus cut keeps about 1 kb of flank past each end, so the
+  snippet centres that walk on the syng walk before matching bp
+- The snippet turns off each graph's key, since side by side each key would
+  run into the other column
+
+![Two graphs over one strip. The strip shows HG01978#2's 116 kb split into three solid colours, copy 1 orange from 8.5 to 41 kb, copy 2 blue to 74 kb and copy 3 green to 107 kb, with dark grey flanks. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, copy 2 runs blue from C4A over the hump, and copy 3 runs green from C4B to the right. Right, titled syng folds them onto one ring, the impg syng graph: orange, blue and green threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy](../gallery/c4_two_graphs.png)
+
+```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer/main/test_data/syng/c4.syng.gfa.gz"
+
+c4 <- "chr6:31,972,047-32,055,647"
+hap <- "HG01978#2"
+copies <- c("copy 1" = "#D55E00", "copy 2" = "#0072B2", "copy 3" = "#009E73")
+lift <- function(reference) list(list(walk = reference, color = list(field = "walk", scheme = "grey")), list(walk = hap))
+mc <- bandage_layout(walks, region = c4, haplotypes = hap, walks = lift("GRCh38"), genes = genes)
+sy <- bandage_layout(syng, walks = lift("grch38"), genes = genes)
+mc_steps <- bandage_walk_steps(walks, c4, haplotypes = hap)
+sy_steps <- bandage_walk_steps(syng)
+mc_steps <- mc_steps[startsWith(mc_steps$walk, paste0(hap, "#")), ]
+sy_steps <- sy_steps[startsWith(sy_steps$walk, paste0(hap, "#")), ]
+ring <- sy_steps$node %in% sy_steps$node[sy_steps$pass > 0]
+breaks <- c(min(sy_steps$start[ring]), min(sy_steps$start[sy_steps$pass == 1]), min(sy_steps$start[sy_steps$pass == 2]), max(sy_steps$end[sy_steps$pass == 2]))
+painted <- function(g, steps, title) {
+  shift <- (max(steps$end) - max(sy_steps$end)) / 2
+  steps$copy <- as.character(cut((steps$start + steps$end) / 2 - shift, breaks, labels = names(copies), right = FALSE))
+  mine <- g$nodes$walk %in% 1
+  at <- match(paste(g$nodes$name, pmax(0, g$nodes$pass, na.rm = TRUE)), paste(steps$node, steps$pass))
+  g$nodes$copy <- ifelse(mine, steps$copy[at], NA)
+  g$nodes$start <- steps$start[at]
+  g$nodes$color[mine] <- ifelse(is.na(g$nodes$copy[mine]), "#3a3a3a", copies[g$nodes$copy[mine]])
+  g$genes <- g$genes[g$genes$gene %in% c("C4A", "C4B"), ]
+  g$exons <- g$exons[0, ]
+  spots <- do.call(rbind, lapply(seq_along(copies), function(k) {
+    own <- g$nodes[g$nodes$copy %in% names(copies)[k], ]
+    own[which.min(abs(own$start - stats::quantile(own$start, k / 4))), ]
+  }))
+  autoplot(g) + guides(bandage_keys = "none") + ggtitle(title) +
+    geom_label(aes(x, y, label = copy, colour = I(copies[copy])), data = spots, size = 3.4, fontface = "bold", fill = "white")
+}
+along <- ggplot(data.frame(copy = names(copies), start = breaks[1:3], end = breaks[2:4])) +
+  annotate("rect", xmin = 0, xmax = max(sy_steps$end) / 1000, ymin = 0, ymax = 1, fill = "#3a3a3a") +
+  geom_rect(aes(xmin = start / 1000, xmax = end / 1000, ymin = 0, ymax = 1, fill = I(copies[copy]))) +
+  geom_text(aes((start + end) / 2000, 0.5, label = copy), colour = "white", fontface = "bold", size = 3.4) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(x = "kb along HG01978#2", title = "HG01978#2, coloured by C4 copy in both graphs") +
+  theme_minimal(10) +
+  theme(panel.grid = element_blank())
+graphs <- painted(mc, mc_steps, "Minigraph-Cactus lays the three copies out in a line") | painted(sy, sy_steps, "syng folds them onto one ring")
+(graphs + plot_layout(widths = c(1.3, 1))) / along + plot_layout(heights = c(6, 0.6))
+```
+
+## Core, shell and cloud at GSTM1
+
+`chr1:109,665,000-109,715,000`
+
+- Pangenome studies call sequence core when nearly every genome has it, shell
+  when some do and cloud when few do. The snippet classes each node by
+  `frequency`, the share of haplotypes through it
+- Cloud sequence shows as specks along every strand and makes up 9% of the bp
+- The labels give the share of haplotypes on each route: 16% walk GSTM1's loop,
+  19% the loop beside it and 66% the dashed edge, and two haplotypes walk both
+  loops. The snippet counts the dashed edge's haplotypes from their walk rows,
+  which run about 18 kb shorter than GRCh38's
+- ggbandage dashes an edge that skips part of GRCh38's path, so which edges are
+  dashed depends on the reference. GRCh38 contains GSTM1, which most haplotypes
+  lack, and against a reference without GSTM1 the dashed edge would be the
+  common route and the GSTM1 loop an insertion
+
+![The GSTM1 locus cut from the walk file with all HPRC haplotypes, force-directed, each node coloured by the share of haplotypes through it: core, 95% or more, charcoal; shell, 5 to 95%, blue; cloud, under 5%, orange. A pale green band under the nodes marks GRCh38's path, from GSTM4 and GSTM2 round the GSTM1 loop to GSTM5. GSTM4, GSTM2 and GSTM5 run as thick charcoal strands flecked with orange specks of rare variants. GSTM1's loop, labelled 16%, and the non-reference loop beside it, labelled 19%, are blue shell, and a small orange loop hangs off the second. The grey dashed edge past both loops, off the green band, is labelled 66%. The caption says the percentages are shares of HPRC haplotypes and that a dashed edge skips part of GRCh38's path, and a bar below splits the graph's bp into 43% core, 34 kb, 47% shell, 37 kb, and 9% cloud, 7 kb](../gallery/gstm1_core.png)
+
+```r
+library(ggbandage)
+library(ggplot2)
+library(patchwork)
+
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"
+genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
+
+gstm1 <- "chr1:109,665,000-109,715,000"
+g <- bandage_layout(walks, region = gstm1, genes = genes)
+classes <- c("cloud, under 5%" = "#e8a33d", "shell, 5 to 95%" = "#3b8bc2", "core, 95% or more" = "grey25")
+share <- function(frequency) cut(frequency, c(-Inf, 0.05, 0.95, Inf), labels = names(classes))
+nodes <- g$nodes[!duplicated(g$nodes$name), ]
+bp <- aggregate(length ~ class, transform(nodes, class = share(frequency)), sum)
+loops <- g$nodes[g$nodes$frequency > 0.05 & g$nodes$frequency < 0.5 & g$nodes$length > 400, ]
+loops <- loops[!duplicated(loops$depth), ]
+rows <- bandage_walk_rows(walks, gstm1)$rows
+dashed <- g$edges[g$edges$deletion, ]
+reach <- tapply(abs(dashed$x1 - dashed$x0) + abs(dashed$y1 - dashed$y0), dashed$edge, sum)
+gap <- dashed[dashed$edge == names(which.max(reach)), ]
+gap <- gap[ceiling(nrow(gap) / 2), ]
+gap$share <- mean(rows$bp[-1] < rows$bp[1] - 9000)
+graph <- ggplot(g) +
+  geom_path(aes(x, y, group = interaction(node, stroke)), data = g$nodes[g$nodes$backbone, ], colour = "#cfe8c6", linewidth = 6, lineend = "round") +
+  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_genes(outline = 0, key = NULL) +
+  geom_bandage_nodes(aes(colour = share(frequency))) +
+  geom_label(aes(x, y, label = scales::percent(frequency, 1)), data = loops, size = 3.2, fill = "white", linewidth = 0) +
+  geom_label(aes(x0, y0, label = scales::percent(share, 1)), data = gap, size = 3.2, fill = "white", linewidth = 0, vjust = 1.4) +
+  scale_colour_manual("share of HPRC haplotypes", values = classes) +
+  labs(caption = "Percentages are shares of HPRC haplotypes. The pale green band is GRCh38's path, and a dashed edge skips part of it") +
+  coord_fixed() +
+  theme_void() +
+  theme(legend.position = "top", plot.caption = element_text(hjust = 0.5, size = 10))
+split <- ggplot(bp, aes(length / sum(length), "", fill = class)) +
+  geom_col(width = 0.6) +
+  geom_text(
+    aes(label = sprintf("%s\n%.0f kb", scales::percent(length / sum(length), 1), length / 1000)),
+    position = position_stack(vjust = 0.5), colour = "white", size = 3, lineheight = 0.9
+  ) +
+  scale_fill_manual(values = classes, guide = "none") +
+  scale_x_continuous(labels = scales::label_percent(), expand = c(0, 0)) +
+  labs(x = "share of the graph's bp", y = NULL) +
+  theme_minimal(10) +
+  theme(panel.grid = element_blank())
+graph / split + plot_layout(heights = c(5, 1))
+```
+
+## More examples
+
+Narrower cases, and other ways to draw the same loci.
+
+### C4 copies as threads round an impg syng graph
 
 `chr6:31,972,047-32,055,647`
 
@@ -125,11 +345,11 @@ with no alignment step;
 in jbrowse-plugin-graphgenomeviewer cuts it from odgi's C4 test haplotypes.
 
 - The ring holds every C4 copy's sequence once, so a walk with more copies goes
-  round it more often. Each walk draws a thread per pass: grch38 two round the
-  ring, and HG01978 three, its extra 32.7 kb
-- HG01978's row runs 32.7 kb past grch38's for that copy
-- Each walk shades light to dark along its length, in the drawing and in its
-  row, so a darker thread is a later pass round the ring
+  round it more often. The layout draws a thread for each pass, two for grch38
+  and three for HG01978, whose third pass is its extra 32.7 kb
+- HG01978's row is 32.7 kb longer than grch38's, the length of that copy
+- The layout shades each walk light to dark along its length, in the drawing
+  and in its row, so a darker thread is a later pass round the ring
 - The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.
   GRCh38's C4A and C4B both contain it, and both of HG01952#1's copies lack it
 
@@ -149,44 +369,7 @@ rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1))
 ```
 
-## RHD deletion and duplication in an impg syng graph
-
-`chr1:25,250,000-25,450,000`
-
-The RHD syng graph is a region-specific pangenome.
-`scripts/build-syng-region.sh` cuts the region from the HPRC walk file to find
-each haplotype's contig span, fetches those spans from GenBank, and builds the
-graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
-`inst/extdata`.
-
-- The Rhesus boxes either side of RHD share many of their nodes, so GRCh38
-  walks them twice
-- Each lifted walk draws a thread per pass and shades light to dark along its
-  length, in the drawing and in its row, so a darker thread is a later pass
-- Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and
-  skip RHD, the deletion that most often makes blood RhD-negative
-- HG01106#1 walks the boxes three times and has a second RHD
-
-![Force-directed syng graph of RHD from 19 HPRC haplotypes with three walks lifted together, each shaded light to dark along its own length, grch38 grey, HG01106#1 cyan to blue and HG01258#2 peach to rust, and a thread for every pass through a node. Through the Rhesus box at the left, grch38 draws two threads, HG01106#1 three and HG01258#2 one, each pass darker than the one before. Round the loop at the top, labelled RHD, grch38 draws one thread, HG01106#1 two, its second RHD, and HG01258#2 none, taking the box straight on to the loop below, labelled TMEM50A and RHCE, that every walk runs once. In the walk rows below, each on its walk's ramp under a grey strip where it runs on the grch38 path, grch38 spans 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
-
-```r
-library(ggbandage)
-library(patchwork)
-
-genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
-
-rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
-haps <- c("HG01106#1", "HG01258#2")
-schemes <- c(grch38 = "grey", "HG01106#1" = "blue", "HG01258#2" = "orange")
-progress <- lapply(names(schemes), function(w) list(walk = w, color = list(field = "progress", scheme = schemes[[w]])))
-g <- bandage_layout(rhd_syng, walks = progress, genes = genes)
-g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
-g$exons <- g$exons[0, ]
-rows <- bandage_walk_rows(rhd_syng, haplotypes = haps)
-autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1))
-```
-
-## Your own colours: GSTM1, missing from two thirds of haplotypes
+### Your own colours: GSTM1, missing from two thirds of haplotypes
 
 `chr1:109,665,000-109,715,000`
 
@@ -225,10 +408,6 @@ ggplot(g) +
   theme_void() +
   theme(legend.position = "bottom", legend.title = element_text(size = 9), plot.caption = element_text(hjust = 0.5))
 ```
-
-## More examples
-
-Narrower cases, and other ways to draw the same loci.
 
 ### LPA's KIV-2 repeat, a panel per walk
 
