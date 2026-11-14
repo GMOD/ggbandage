@@ -48,10 +48,10 @@ gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch3
 ```
 
 That writes `hprc-v2.1-mc-grch38.GRCh38.walks.gz` and its directory
-`hprc-v2.1-mc-grch38.GRCh38.walks.gz.idx`, in walk format 7, gfa-to-tabix 4.0's,
-which records every place a haplotype leaves GRCh38 and rejoins it as a
-departure. ggbandage reads format 7 only; rebuild an older walk file, a
-`.walks.bed.gz`, with gfa-to-tabix 4.0 or later.
+`hprc-v2.1-mc-grch38.GRCh38.walks.gz.idx`, in walk format 8, gfa-to-tabix
+5.0's, which records every place a haplotype leaves GRCh38 and rejoins it as a
+departure. ggbandage reads format 8 only; rebuild an older walk file with
+gfa-to-tabix 5.0 or later.
 
 [Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`, `engine`
 and `genes`.

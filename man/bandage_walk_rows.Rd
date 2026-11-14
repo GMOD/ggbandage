@@ -55,8 +55,8 @@ once, so which pass it takes was the walk file writer's choice; \code{runs}, a
 row per stretch of a bar, \code{xmin} and \code{xmax} in bp from the left flank,
 with \code{kind} and, on the reference's path, \code{referenceStart} and
 \code{reversed}, and on a gap, the \code{cause} a walk-file cut states:
-\code{missing}, \code{elsewhere}, \code{own}, \code{mixed}, \code{unread}, \code{abridged} or
-\code{departure}, else \code{outside}; \code{causes}, the words bandage-core gives each
+\code{missing}, \code{elsewhere}, \code{own}, \code{mixed}, \code{unread} or \code{departure}, else
+\code{outside}; \code{causes}, the words bandage-core gives each
 cause, which a gap's \code{kind} takes;
 and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the

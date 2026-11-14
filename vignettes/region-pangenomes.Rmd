@@ -45,7 +45,7 @@ pair too, given the `.segs.bed.gz` or the prefix `graph`.
    vg convert -f graph.gbz > graph.gfa
    ```
 
-2. Index it with gfa-to-tabix 4.0 or later, which writes walk format 7, the
+2. Index it with gfa-to-tabix 5.0 or later, which writes walk format 8, the
    one ggbandage reads, naming the genome whose coordinates `region` will use:
 
    ```console

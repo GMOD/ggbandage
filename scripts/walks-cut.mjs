@@ -6,11 +6,11 @@ import { openFile } from './tabix-cut.mjs'
 // The reference over the region with `context` bp either side, and the walks
 // of the haplotypes asked for, every one when none are, as graph tables with
 // every departure from the reference over the cut, which no GFA line states.
-// A browser caps a cut's reads, draws an abridged walk as a block until
-// asked, and attaches a departure's own steps only up to a size and a number
-// of tile fetches; R asks for one region and waits, so this cut lifts every
-// budget, reads every abridged walk in full and attaches every departure's
-// own steps.
+// A browser caps a cut's reads, draws an abridged walk's runs off the
+// reference as placeholders until asked, and attaches a departure's own steps
+// only up to a size; R asks for one region and waits, so this cut lifts every
+// budget, reads every abridged walk in full and attaches a departure's own
+// steps at any size.
 export async function walkCut({
   file,
   refName,

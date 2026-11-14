@@ -634,11 +634,11 @@ test_that("a walk file cut keeps the haplotypes asked for, and names its sequenc
   )
 })
 
-test_that("a walk file of format 6 or earlier asks for a rebuild", {
-  old <- test_path("testdata", "ecoli_pggb_format5.K12.walks.bed.gz")
+test_that("a walk file of format 7 asks for a rebuild", {
+  old <- test_path("testdata", "ecoli_pggb_format7.K12.walks.gz")
   expect_error(
     bandage_walk_rows(old, "chr:1004500-1004961"),
-    "format 6 or earlier, which has no .idx directory; .* rebuild it with gfa-to-tabix 4.0 or later"
+    "format 7; .* rebuild it with gfa-to-tabix 5.0 or later"
   )
 })
 
@@ -670,26 +670,26 @@ records <- test_path("testdata", "records.GRCh38.walks.gz")
 test_that("a gap in a walk row says what the walk file's departures state of it", {
   w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
   gaps <- w$runs[w$runs$gap, ]
-  expect_equal(as.character(gaps$kind[gaps$label == "HG003#1"]), "not read")
-  expect_match(w$rows$readout[w$rows$label == "HG003#1"], "1.0 kb not read, last seen near chr1:2 kb$")
+  expect_equal(as.character(gaps$kind[gaps$label == "HG003#1"]), "not drawn")
+  expect_match(w$rows$readout[w$rows$label == "HG003#1"], "1.0 kb not drawn \\(last seen near chr1:2 kb\\)$")
   # HG002 leaves GRCh38 after 2 kb and rejoins it at 3 kb, with 2 kb of its
   # own: 1.3 kb between its W lines, and 700 bp on a node the cut did not
   # read, in an order the file does not state, so one gap holds both
   expect_equal(
     as.character(gaps$kind[gaps$label == "HG002#1"]),
-    "of its own, part not read and part not in the graph"
+    "not drawn or left out of graph"
   )
   expect_equal(gaps$bp[gaps$label == "HG002#1"], 2000)
   expect_equal(
     w$rows$readout[w$rows$label == "HG002#1"],
-    "5.0 kb (+1.0 kb) · 1.3 kb not in the graph · 0.7 kb of its own, not read"
+    "5.0 kb (+1.0 kb), of which 1.3 kb left out of graph, 0.7 kb own sequence not drawn"
   )
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
 
 test_that("a layout of a walk file keys a walk by what its departures state", {
   g <- bandage_layout(records, region = "chr1:1001-5000", walks = "HG002#1", context = 0)
-  expect_equal(g$keys$note, " +1 kb, 1.3 kb not in the graph, 700 bp of its own, not read")
+  expect_equal(g$keys$note, " +1 kb, 1.3 kb left out of graph, 700 bp own sequence not drawn")
 })
 
 test_that("the room past the bars fits the readout reaching furthest", {
@@ -735,8 +735,8 @@ test_that("a gap in a GFA's walk is outside the extracted subgraph, whatever its
     "W\tHG002\t1\tchr1\t0\t2000\t>1>2",
     "W\tHG002\t1\tchr1\t3000\t5000\t>4>5"
   ), referencePath = "GRCh38#0#chr1")
-  expect_equal(as.character(plain$runs$kind[plain$runs$gap]), "outside the extracted subgraph")
-  expect_match(plain$rows$readout[2], "1.0 kb outside the extracted subgraph$")
+  expect_equal(as.character(plain$runs$kind[plain$runs$gap]), "out of view")
+  expect_match(plain$rows$readout[2], "1.0 kb out of view$")
   tagged <- bandage_walk_rows(gfa(
     "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:end\twe:Z:break,bp=1000",
     "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:end"

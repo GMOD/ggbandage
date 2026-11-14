@@ -10,10 +10,9 @@ fetches every byte it reads.
 ### Walk files
 
 - **In:** a `<prefix>.<sample>.walks.gz` from `gfa-to-tabix --walks`, in
-  walk format 7 (gfa-to-tabix 4.0 or later), with its directory
-  `<prefix>.<sample>.walks.gz.idx` beside it, and a `region`. An older file,
-  a `.walks.bed.gz`, fails with graph-walks' `WalkFormatError`, which asks
-  for a rebuild
+  walk format 8 (gfa-to-tabix 5.0 or later), with its directory
+  `<prefix>.<sample>.walks.gz.idx` beside it, and a `region`. A format 7
+  file fails with graph-walks' `WalkFormatError`, which asks for a rebuild
 - **Out:** the reference over the region, `context` bp past each end, the
   walks of the `haplotypes` asked for, and every departure from the reference
   over the cut, as graph tables
@@ -287,16 +286,16 @@ gfa-to-tabix 1.0.0:
 gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_contig
 ```
 
-The walk files are format 7, made with gfa-to-tabix 4.0.0 by
+The walk files are format 8, made with gfa-to-tabix 5.0.0 by
 `tests/testthat/testdata/build.sh <gfa-to-tabix>` from the GFAs beside them:
 the pggb GFA's, the same with its two costliest paths abridged, the
 departures `records.GRCh38.gfa` states (graph-walks' fixture of that name),
 and haplotypes with no step on the reference across a window. Each is a
 `.walks.gz` with its `.idx` directory.
 
-`ecoli_pggb_format5.K12.walks.bed.gz` is the pggb GFA's format 5 walk file, as
-ggbandage read it before format 6, kept for the test that ggbandage refuses a
-`.walks.bed.gz`, which has no directory, as format 6 or earlier.
+`ecoli_pggb_format7.K12.walks.gz` is the pggb GFA's format 7 walk file, as
+ggbandage read it before format 8, kept for the test that ggbandage refuses it
+and asks for a rebuild.
 
 `ecoli_pggb_csi.*` copies `ecoli_pggb`'s two files with a `.csi` in place of
 each `.tbi`, from `tabix -C -p bed`.

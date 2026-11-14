@@ -28,8 +28,8 @@
 #'   row per stretch of a bar, `xmin` and `xmax` in bp from the left flank,
 #'   with `kind` and, on the reference's path, `referenceStart` and
 #'   `reversed`, and on a gap, the `cause` a walk-file cut states:
-#'   `missing`, `elsewhere`, `own`, `mixed`, `unread`, `abridged` or
-#'   `departure`, else `outside`; `causes`, the words bandage-core gives each
+#'   `missing`, `elsewhere`, `own`, `mixed`, `unread` or `departure`, else
+#'   `outside`; `causes`, the words bandage-core gives each
 #'   cause, which a gap's `kind` takes;
 #'   and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
