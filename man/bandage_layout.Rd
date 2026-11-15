@@ -10,6 +10,7 @@ bandage_layout(
   walks = NULL,
   facet = NULL,
   width = 1000,
+  height = 800,
   region = NULL,
   genes = NULL,
   gene_names = NULL,
@@ -38,6 +39,10 @@ passes a node twice, each draws a thread per pass}
 
 \item{width}{the width in px the drawing is fit to, which decides whether
 strand arrows show}
+
+\item{height}{the height in px the drawing is fit to. A force layout keeps
+what lies beside the reference clear of it at \code{width} by \code{height}, so
+pass the size the plot is drawn at}
 
 \item{region}{a 1-based locus, as a genome browser writes it, such as
 \code{"GRCh38#0#chr6:31,000,001-31,100,000"}, \code{"chr6:31000001..31100000"} or

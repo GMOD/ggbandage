@@ -150,6 +150,9 @@ walk_origin <- function(walk) {
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
+#' @param height the height in px the drawing is fit to. A force layout keeps
+#'   what lies beside the reference clear of it at `width` by `height`, so
+#'   pass the size the plot is drawn at
 #' @param region a 1-based locus, as a genome browser writes it, such as
 #'   `"GRCh38#0#chr6:31,000,001-31,100,000"`, `"chr6:31000001..31100000"` or
 #'   one base, `"chr6:31,000,001"`. On an index or walk file, the
@@ -178,12 +181,12 @@ walk_origin <- function(walk) {
 #'   the share of haplotypes that pass it, full width at 1; or `"uniform"`
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
-                           width = 1000, region = NULL, genes = NULL,
-                           gene_names = NULL, haplotypes = NULL,
+                           width = 1000, height = 800, region = NULL,
+                           genes = NULL, gene_names = NULL, haplotypes = NULL,
                            context = 1000, frequencies = NULL, ...) {
   src <- graph_source(gfa, region, haplotypes, context)
   spec <- c(
-    list(layout = layout, width = width),
+    list(layout = layout, width = width, height = height),
     if (!is.null(src$region)) list(region = src$region),
     if (length(walks)) list(walks = as.list(walks)),
     if (!is.null(facet)) list(facet = facet),

@@ -60,3 +60,13 @@ test_that("a GFA reads from a URL, plain or gzipped", {
     expect_identical(read_text(url), read_text(path))
   }
 })
+
+test_that("a force layout is sized for the width and height it is fit to", {
+  at <- function(width, height) {
+    g <- bandage_layout(rgfa, width = width, height = height)
+    g$nodes[c("node", "x", "y")]
+  }
+  expect_identical(at(900, 800), at(900, 800))
+  expect_false(identical(at(900, 800), at(1200, 800)))
+  expect_false(identical(at(1200, 100), at(1200, 800)))
+})
