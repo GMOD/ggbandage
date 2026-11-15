@@ -216,42 +216,60 @@ GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
   }
 )
 
-# A node's label goes at the middle point of its longest stroke
-label_points <- function(model) {
-  n <- model$nodes
-  if (!nrow(n)) {
-    return(n)
-  }
-  key <- paste(n$panel, n$stroke)
-  mid <- stats::ave(seq_along(key), key, FUN = function(i) i == i[ceiling(length(i) / 2)])
-  reach <- stats::ave(n$x, key, FUN = function(x) diff(range(x))) +
-    stats::ave(n$y, key, FUN = function(y) diff(range(y)))
-  n <- n[mid == 1, ]
-  n <- n[order(-reach[mid == 1]), ]
-  n[!duplicated(paste(n$panel, n$node)), ]
+# css px of text as ggplot2's size, in mm
+px_size <- function(px) px * 72 / 96 / ggplot2::.pt
+
+SIZE_INK <- "#18181c"
+GENE_INK <- "#1c1c22"
+
+# The labels of `kinds` the core placed, the leaders drawn first; `pick`
+# gives the table a column the label's mapping reads
+placed_labels <- function(data, kinds, ink, params, mapping = ggplot2::aes(),
+                          pick = function(m, l) l) {
+  labels <- function(m) pick(m, m$labels[m$labels$kind %in% kinds, ])
+  list(
+    ggplot2::layer(
+      geom = ggplot2::GeomSegment, stat = "identity", position = "identity",
+      data = table_from(data, function(m) {
+        l <- labels(m)
+        l[!is.na(l$x1), ]
+      }),
+      mapping = ggplot2::aes(x = x1, y = y1, xend = x2, yend = y2),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = list(colour = ink, alpha = 0.6, linewidth = px_linewidth(0.8))
+    ),
+    ggplot2::layer(
+      geom = ggplot2::GeomLabel, stat = "identity", position = "identity",
+      data = table_from(data, labels),
+      mapping = with_defaults(mapping, ggplot2::aes(x = x, y = y, label = text, size = I(px_size(size)))),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = c(list(label.padding = grid::unit(1.5, "pt"), label.r = grid::unit(2, "pt")), params)
+    )
+  )
 }
 
-#' Node names, at the middle of each node
+#' Node lengths, where the Bandage view writes them
 #'
-#' Labels each node once per panel, by default with its GFA name, longest
-#' nodes first, dropping a label that would overlap one already drawn. Map
-#' `label` to another column of the node table, such as `length`, to write
-#' that instead.
+#' Each placeholder's length, the bp of a stretch the cut did not load, and
+#' every node's where the layout was made with `nodeLengths = TRUE`, on a pale
+#' backing at the place the Bandage view gives it, with a leader to its loop
+#' where the label stands off. [autoplot()][autoplot.bandage_layout] adds it.
 #' @inheritParams geom_bandage_nodes
-#' @param check_overlap drop a label that overlaps one drawn before it
-#' @param size text size in mm
+#' @return the leaders and the labels, two layers
 #' @export
-geom_bandage_labels <- function(mapping = NULL, data = NULL,
-                                check_overlap = TRUE, size = 2.6, ...) {
-  ggplot2::layer(
-    geom = ggplot2::GeomText, stat = "identity", position = "identity",
-    data = table_from(data, label_points),
-    mapping = with_defaults(mapping, ggplot2::aes(
-      x = x, y = y, label = name, colour = I("grey15")
-    )),
-    inherit.aes = FALSE, show.legend = FALSE,
-    params = list(check_overlap = check_overlap, size = size, ...)
+geom_bandage_labels <- function(data = NULL) {
+  placed_labels(
+    data, c("placeholder", "length"), SIZE_INK,
+    list(colour = SIZE_INK, fill = ggplot2::alpha("white", 0.8), border.colour = NA)
   )
+}
+
+# The exon gold, the core's own where the caller gives no colour
+inked <- function(colour) {
+  function(m, table) {
+    table$ink <- rep(if (is.null(colour)) m$meta$inks$exon else colour, nrow(table))
+    table
+  }
 }
 
 exons_of <- function(model, outline) {
@@ -261,131 +279,128 @@ exons_of <- function(model, outline) {
   e
 }
 
-# Where two names would overlap, the longer gene keeps its name. A name takes
-# about 7 px a character at the width the layout was fit to.
-gene_labels <- function(model) {
-  g <- model$genes
-  if (!nrow(g)) {
-    return(g)
-  }
-  g <- g[order(-g$bp), ]
-  half <- (nchar(g$gene) * 7 + 12) / 2 / model$meta$scaleX
-  tall <- 20 / model$meta$scaleY
-  keep <- logical(nrow(g))
-  for (i in seq_len(nrow(g))) {
-    k <- which(keep)
-    keep[i] <- !any(
-      abs(g$x[k] - g$x[i]) < half[k] + half[i] & abs(g$y[k] - g$y[i]) < tall
-    )
-  }
-  g[keep, ]
-}
-
 #' Genes pinned on the backbone
 #'
 #' Outlines each exon round the stretch of node that carries it, under the
-#' nodes, and names each gene at its midpoint, as the Bandage view does; where
-#' two names would overlap, the longer gene keeps its name. Needs
-#' a layout made with `genes`; add it before [geom_bandage_nodes()] so the
-#' nodes draw over the outline.
+#' nodes, and names each gene where the Bandage view places its name, with a
+#' leader to its pin. Needs a layout made with `genes`; add it before
+#' [geom_bandage_nodes()] so the nodes draw over the outline.
 #' @inheritParams geom_bandage_nodes
 #' @param outline px the outline reaches past each side of the node
-#' @param colour the outline's colour
+#' @param colour the outline's colour, the Bandage view's exon gold when `NULL`
 #' @param key the legend entry naming the outline, or `NULL` for none
-#' @return the outlines and names, two layers, and the outline's legend entry
+#' @return the outlines, the names' leaders and the names, and the outline's
+#'   legend entry
 #' @export
-geom_bandage_genes <- function(data = NULL, outline = 3, colour = EXON,
+geom_bandage_genes <- function(data = NULL, outline = 3, colour = NULL,
                                key = "exon") {
-  list(
-    ggplot2::layer(
+  ink <- inked(colour)
+  c(
+    list(ggplot2::layer(
       geom = GeomBandagePath, stat = "identity", position = "identity",
-      data = table_from(data, function(m) exons_of(m, outline)),
+      data = table_from(data, function(m) ink(m, exons_of(m, outline))),
       mapping = ggplot2::aes(
-        x = x, y = y, group = stretch, linewidth = I(px_linewidth(width))
+        x = x, y = y, group = stretch, linewidth = I(px_linewidth(width)), colour = I(ink)
       ),
-      inherit.aes = FALSE, show.legend = FALSE,
-      params = list(colour = colour)
-    ),
-    ggplot2::layer(
-      geom = ggplot2::GeomLabel, stat = "identity", position = "identity",
-      data = table_from(data, gene_labels),
-      mapping = ggplot2::aes(x = x, y = y, label = gene),
-      inherit.aes = FALSE, show.legend = FALSE,
-      params = list(
-        size = 3, fontface = "italic", colour = "#1c1c22", fill = "white",
-        vjust = 1.6
-      )
+      inherit.aes = FALSE, show.legend = FALSE
+    )),
+    placed_labels(
+      data, "gene", GENE_INK,
+      list(text.colour = GENE_INK, fill = ggplot2::alpha("white", 0.85), fontface = "italic"),
+      ggplot2::aes(colour = I(ink)), ink
     ),
     if (!is.null(key)) {
-      ggplot2::guides(bandage_genes = exon_key(colour, key))
+      list(ggplot2::guides(bandage_genes = exon_key(if (is.null(colour)) core_exon() else colour, key)))
     }
   )
 }
+
+core_exon <- function() engine()$get("bandage.EXON_COLOR")
 
 exon_key <- function(colour, label) {
   text <- grid::textGrob(
     label,
     x = px(23), just = "left", gp = grid::gpar(fontsize = 9, col = "grey15")
   )
-  bar <- grid::rectGrob(
-    x = 0, width = px(18), height = px(8), just = "left",
-    gp = grid::gpar(col = NA, fill = colour)
+  outline <- grid::roundrectGrob(
+    x = px(1), width = px(16), height = px(10), just = "left", r = grid::unit(4 / 16, "snpc"),
+    gp = grid::gpar(col = colour, fill = NA, lwd = px_linewidth(2) * ggplot2::.pt)
   )
   ggplot2::guide_custom(
-    grid::grobTree(bar, text),
+    grid::grobTree(outline, text),
     width = px(23) + grid::grobWidth(text), height = px(14), order = 9
   )
 }
 
-FADED <- "#a0a0a0"
-EXON <- "#e8a200"
 CHARCOAL <- "#3c4148"
-DELETION <- "#18181c"
 
-keys_of <- function(model, exons = FALSE) {
-  k <- model$keys
+# The graph's key as bandage-core's graphKey states it, an entry a row, each
+# thickness group's entries after its name
+key_rows <- function(model) {
+  k <- model$graph_key
   if (!nrow(k)) {
-    return(k)
+    return(empty_key())
   }
-  k$kind <- "walk"
-  k$alpha <- 1
-  if (nrow(model$panels) > 1) {
-    k$panel <- factor(k$panel, levels = model$panels$panel)
-    return(k)
-  }
-  k$panel <- NULL
-  notes <- key_notes(model, exons)
-  notes[setdiff(names(k), names(notes))] <- ""
-  rbind(k, notes[names(k)])
+  rows <- data.frame(
+    strong = k$strong, text = k$text, under = k$under, swatch = k$swatch,
+    colour = k$color, alpha = k$alpha, stops = k$stops,
+    px = as.numeric(k$px), dashed = as.logical(k$dashed),
+    rim = k$rim, rim_px = as.numeric(k$rimPx),
+    stringsAsFactors = FALSE
+  )
+  headed <- which(k$group %in% c("Node thickness", "Link thickness") & !duplicated(k$group))
+  heads <- if (length(headed)) key_entry(strong = k$group[headed]) else empty_key()
+  out <- rbind(rows, heads)
+  out[order(c(seq_len(nrow(rows)), headed - 0.5)), ]
 }
 
-# The key's entries after the walks: the faded rest, the deletions, the
-# threads, the exon outline and whether node lengths are to scale
-key_notes <- function(model, exons = FALSE) {
-  extra <- function(kind, note, stops = "", alpha = 1) {
-    if (!length(note)) {
-      return(NULL)
-    }
-    data.frame(walk = "", note = note, stops = stops, kind = kind, alpha = alpha)
-  }
-  rbind(
-    extra("faded", model$meta$fadedKey, FADED, 0.3),
-    extra("deletion", model$meta$deletionKey, FADED),
-    extra("passes", as.character(model$threads$note)),
-    if (exons && nrow(model$exons)) extra("exon", "exon", EXON),
-    extra("note", model$meta$compressedKey),
-    data.frame(walk = character(), note = character(), stops = character(), kind = character(), alpha = numeric())
+# Entries of the key's columns, a swatch's colours where it has any
+key_entry <- function(strong = "", text = "", swatch = "", stops = "") {
+  data.frame(
+    strong = strong, text = text, under = "", swatch = swatch, colour = "", alpha = 1,
+    stops = stops, px = NA_real_, dashed = FALSE, rim = "", rim_px = NA_real_
   )
 }
 
+empty_key <- function() {
+  data.frame(
+    strong = character(), text = character(), under = character(), swatch = character(),
+    colour = character(), alpha = numeric(), stops = character(), px = numeric(),
+    dashed = logical(), rim = character(), rim_px = numeric()
+  )
+}
+
+# Each lifted walk's bar, faceted one a panel, with its name and note
+walk_bars <- function(model) {
+  k <- model$keys
+  if (!nrow(k)) {
+    return(cbind(empty_key(), panel = character()))
+  }
+  shades <- grepl(",", k$stops, fixed = TRUE)
+  data.frame(
+    strong = k$walk, text = k$note, under = k$scale, swatch = ifelse(shades, "scale", "swatch"),
+    colour = ifelse(shades, "", k$stops), alpha = 1, stops = ifelse(shades, k$stops, ""),
+    px = NA_real_, dashed = FALSE, rim = "", rim_px = NA_real_,
+    panel = factor(k$panel, levels = model$panels$panel)
+  )
+}
+
+keys_of <- function(model) {
+  if (nrow(model$panels) > 1) walk_bars(model) else key_rows(model)
+}
+
 GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
-  required_aes = c("stops", "label"),
-  default_aes = ggplot2::aes(alpha = 1, kind = "walk"),
+  required_aes = c("swatch", "text"),
+  default_aes = ggplot2::aes(
+    strong = "", under = "", ink = "", alpha = 1, stops = "", px = NA,
+    dashed = FALSE, rim = "", rim_px = NA
+  ),
   extra_params = c("na.rm", "text"),
   draw_panel = function(data, panel_params, coord, text = TRUE) {
     if (!nrow(data)) {
       return(grid::nullGrob())
     }
+    names(data)[names(data) == "ink"] <- "colour"
     grid::gTree(keys = data, text = text, cl = "bandage_keys")
   }
 )
@@ -396,95 +411,110 @@ makeContent.bandage_keys <- function(x) {
 }
 
 key_font <- grid::gpar(fontsize = 8.25, col = "grey15")
+key_bold <- grid::gpar(fontsize = 8.25, col = "grey15", fontface = "bold")
 
+# px a swatch takes along the line: a scale's or a thickness's bar, a mark's
+# square, or nothing for a note
+swatch_px <- function(swatch) {
+  ifelse(swatch %in% c("scale", "width"), 48, ifelse(nzchar(swatch), 18, 0))
+}
+
+# One entry's swatch at `at` px along the line whose middle is `mid`
+swatch_grob <- function(k, at, mid) {
+  ink <- function(colour = k$colour, alpha = k$alpha) ggplot2::alpha(colour, alpha)
+  lwd <- function(px) px_linewidth(px) * ggplot2::.pt
+  x <- function(px) px(at + px)
+  switch(k$swatch,
+    scale = grid::rectGrob(
+      x(0), mid, px(48), px(8), just = "left",
+      gp = grid::gpar(col = NA, fill = grid::linearGradient(
+        strsplit(k$stops, ",", fixed = TRUE)[[1]], x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5
+      ))
+    ),
+    swatch = grid::rectGrob(x(0), mid, px(18), px(8), just = "left", gp = grid::gpar(col = NA, fill = ink())),
+    chip = grid::rectGrob(x(4), mid, px(10), px(10), just = "left", gp = grid::gpar(col = NA, fill = ink())),
+    width = grid::rectGrob(x(0), mid, px(48), px(k$px), just = "left", gp = grid::gpar(col = NA, fill = ink())),
+    hollow = grid::roundrectGrob(
+      x(1), mid, px(16), px(8), just = "left", r = grid::unit(0.5, "snpc"),
+      gp = grid::gpar(col = k$rim, fill = ink(), lwd = lwd(k$rim_px))
+    ),
+    line = if (isTRUE(k$dashed)) {
+      grid::segmentsGrob(x(0), mid, x(18), mid, gp = grid::gpar(col = ink(), lwd = lwd(2), lty = "22", lineend = "butt"))
+    } else {
+      grid::segmentsGrob(x(5), mid, x(13), mid, gp = grid::gpar(col = ink(), lwd = lwd(1.5), lineend = "butt"))
+    },
+    outline = grid::roundrectGrob(
+      x(1), mid, px(16), px(10), just = "left", r = grid::unit(0.4, "snpc"),
+      gp = grid::gpar(col = ink(), fill = NA, lwd = lwd(2))
+    ),
+    halo = grid::segmentsGrob(x(5), mid, x(13), mid, gp = grid::gpar(col = ink(alpha = 0.35), lwd = lwd(8), lineend = "round")),
+    threads = grid::segmentsGrob(
+      x(0), mid + px(c(3, 0, -3)), x(18), mid + px(c(3, 0, -3)),
+      gp = grid::gpar(col = ink(), lwd = lwd(1.5), lineend = "butt")
+    ),
+    overhang = grid::polygonGrob(
+      x = x(c(0, 8, 8, 18, 10, 10)), y = mid + px(c(0, 5, -5, 0, 5, -5)), id = rep(1:2, each = 3),
+      gp = grid::gpar(col = NA, fill = SIZE_INK)
+    )
+  )
+}
+
+# The entries laid along lines across `room` px, a new line where the next
+# would run past it; a line holding a stretch under an entry is two tall
 key_grobs <- function(data, text, room) {
   grobs <- list()
   at <- 6
-  line <- 0
+  top <- 6
+  tall <- 16
   for (i in seq_len(nrow(data))) {
-    colours <- strsplit(data$stops[i], ",", fixed = TRUE)[[1]]
-    threads <- identical(data$kind[i], "passes")
-    note <- identical(data$kind[i], "note")
-    bar <- if (note) 0 else if (length(colours) > 1) 48 else 18
-    gap <- if (note) 0 else 5
-    fill <- if (length(colours) > 1) {
-      grid::linearGradient(colours, x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5)
-    } else if (!threads && !note) {
-      ggplot2::alpha(colours, data$alpha[i])
-    }
-    label <- if (text && nzchar(data$label[i])) {
-      grid::textGrob(data$label[i], just = "left", gp = key_font)
-    }
-    wide <- bar + if (is.null(label)) {
-      0
-    } else {
-      gap + width_px(grid::grobWidth(label))
-    }
+    k <- data[i, ]
+    bar <- swatch_px(k$swatch)
+    gap <- if (bar > 0) 5 else 0
+    strong <- if (text && nzchar(k$strong)) grid::textGrob(k$strong, just = "left", gp = key_bold)
+    words <- if (text && nzchar(k$text)) grid::textGrob(k$text, just = "left", gp = key_font)
+    under <- if (text && nzchar(k$under)) grid::textGrob(k$under, just = "left", gp = key_font)
+    wide_of <- function(g) if (is.null(g)) 0 else width_px(grid::grobWidth(g))
+    said <- wide_of(strong) + wide_of(words)
+    wide <- max(bar + if (said > 0) gap + said else 0, wide_of(under))
     if (at > 6 && at + wide > room) {
       at <- 6
-      line <- line + 1
+      top <- top + tall + 4
+      tall <- 16
     }
-    top <- grid::unit(1, "npc") - px(6 + 16 * line)
-    swatch <- if (note) {
-      NULL
-    } else if (threads) {
-      grid::segmentsGrob(
-        px(at), top - px(c(1, 4, 7)), px(at + bar), top - px(c(1, 4, 7)),
-        gp = grid::gpar(col = "grey30", lwd = 2, lineend = "butt")
-      )
-    } else if (identical(data$kind[i], "deletion")) {
-      grid::segmentsGrob(
-        px(at), top - px(4), px(at + bar), top - px(4),
-        gp = grid::gpar(col = colours, lwd = 2, lty = "22", lineend = "butt")
-      )
-    } else {
-      grid::rectGrob(
-        x = px(at), y = top, width = px(bar), height = px(8),
-        just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
-      )
-    }
-    if (!is.null(swatch)) {
-      grobs[[length(grobs) + 1]] <- swatch
-    }
-    if (!is.null(label)) {
-      grobs[[length(grobs) + 1]] <- grid::editGrob(
-        label, x = px(at + bar + gap), y = top - px(4)
-      )
-    }
+    mid <- grid::unit(1, "npc") - px(top + 4)
+    swatch <- if (bar > 0) swatch_grob(k, at, mid)
+    placed <- list(
+      swatch,
+      if (!is.null(strong)) grid::editGrob(strong, x = px(at + bar + gap), y = mid),
+      if (!is.null(words)) grid::editGrob(words, x = px(at + bar + gap + wide_of(strong)), y = mid),
+      if (!is.null(under)) grid::editGrob(under, x = px(at), y = mid - px(16))
+    )
+    grobs <- c(grobs, Filter(Negate(is.null), placed))
+    if (!is.null(under)) tall <- 32
     at <- at + wide + 16
   }
-  list(grobs = do.call(grid::gList, grobs), lines = line + 1)
+  list(grobs = do.call(grid::gList, grobs), height = top + tall)
 }
 
 KEY_INSET <- (8 + 8 + 20) * 96 / 72
 
-key_guide <- function(model) {
-  keys <- keys_of(model, exons = TRUE)
-  keys$label <- paste0(keys$walk, keys$note)
+key_guide <- function(model, position = "top", keys = key_rows(model)) {
   ggplot2::guides(bandage_keys = ggplot2::guide_custom(
     grid::gTree(keys = keys, text = TRUE, cl = c("bandage_key_guide", "bandage_keys")),
-    position = "top"
+    position = position
   ))
 }
 
 # Faceted, each panel's bar goes unlabelled under its title, so a key below
-# the panels names the shading, the faded rest and the dashes
+# the panels names the shading, then the graph's key: what the panels fade
+# and the skips
 facet_key_guide <- function(model) {
   shades <- unique(model$keys$stops[grepl(",", model$keys$stops, fixed = TRUE)])
   keys <- rbind(
-    if (length(shades) == 1) {
-      data.frame(walk = "", note = "each walk, start to end", stops = shades, kind = "walk", alpha = 1)
-    },
-    key_notes(model)
+    if (length(shades) == 1) key_entry(text = "each walk, start to end", swatch = "scale", stops = shades),
+    key_rows(model)
   )
-  if (!nrow(keys)) {
-    return(NULL)
-  }
-  keys$label <- keys$note
-  ggplot2::guides(bandage_keys = ggplot2::guide_custom(
-    grid::gTree(keys = keys, text = TRUE, cl = c("bandage_key_guide", "bandage_keys")),
-    position = "bottom"
-  ))
+  if (nrow(keys)) key_guide(model, "bottom", keys)
 }
 
 key_room <- function() {
@@ -496,24 +526,25 @@ widthDetails.bandage_key_guide <- function(x) px(key_room())
 
 #' @exportS3Method grid::heightDetails
 heightDetails.bandage_key_guide <- function(x) {
-  px(6 + 16 * key_grobs(x$keys, TRUE, key_room())$lines)
+  px(6 + key_grobs(x$keys, TRUE, key_room())$height)
 }
 
 #' Each lifted walk's colour bar, as the Bandage view's key draws it
 #'
 #' A bar of the walk's colour, or of the scale a shaded walk runs over, with
-#' its name and its length against the reference, at the top left of the
-#' panel. Unfaceted, a faded swatch follows for the rest of the graph.
+#' its name and what it leaves out, at the top left of the panel; unfaceted,
+#' the rest of the graph's key follows.
 #' @inheritParams geom_bandage_nodes
-#' @param text write each walk's name and note beside its bar; faceted, the
-#'   panel's title already does
+#' @param text write each entry's words beside its bar; faceted, the panel's
+#'   title already does
 #' @export
 geom_bandage_keys <- function(data = NULL, text = TRUE) {
   ggplot2::layer(
     geom = GeomBandageKey, stat = "identity", position = "identity",
     data = table_from(data, keys_of),
     mapping = ggplot2::aes(
-      stops = stops, label = paste0(walk, note), alpha = I(alpha), kind = kind
+      swatch = swatch, text = text, strong = strong, under = under, ink = colour,
+      alpha = I(alpha), stops = stops, px = px, dashed = dashed, rim = rim, rim_px = rim_px
     ),
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(text = text)

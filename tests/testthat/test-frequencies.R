@@ -43,12 +43,14 @@ test_that("frequencies widen the nodes they name, and the node table carries the
   )
   expect_equal(unique(g$nodes$frequency[g$nodes$name == name]), 0.25)
   expect_equal(unique(g$nodes$width[g$nodes$name == name]), 6 * 0.25)
-  expect_equal(g$meta$frequencyKey$label, c("100%", "50%", "10%"))
+  widths <- g$graph_key[g$graph_key$section == "node-width", ]
+  expect_equal(widths$text, c("AF 100%", "AF 50%", "AF 10%"))
+  expect_equal(widths$px[1:2], 6 * c(1, 0.5))
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(g)))
 })
 
 test_that("with no walks to count, the node table's frequency is NA", {
   g <- bandage_layout(test_path("testdata", "ecoli_rgfa_slice.gfa.gz"))
   expect_true(all(is.na(g$nodes$frequency)))
-  expect_null(g$meta$frequencyKey)
+  expect_false(any(grepl("of haplotypes", g$graph_key$text)))
 })

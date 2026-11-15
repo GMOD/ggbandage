@@ -2,30 +2,19 @@
 % Please edit documentation in R/geoms.R
 \name{geom_bandage_labels}
 \alias{geom_bandage_labels}
-\title{Node names, at the middle of each node}
+\title{Node lengths, where the Bandage view writes them}
 \usage{
-geom_bandage_labels(
-  mapping = NULL,
-  data = NULL,
-  check_overlap = TRUE,
-  size = 2.6,
-  ...
-)
+geom_bandage_labels(data = NULL)
 }
 \arguments{
-\item{mapping}{aesthetics that override the defaults}
-
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
-
-\item{check_overlap}{drop a label that overlaps one drawn before it}
-
-\item{size}{text size in mm}
-
-\item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
+}
+\value{
+the leaders and the labels, two layers
 }
 \description{
-Labels each node once per panel, by default with its GFA name, longest
-nodes first, dropping a label that would overlap one already drawn. Map
-\code{label} to another column of the node table, such as \code{length}, to write
-that instead.
+Each placeholder's length, the bp of a stretch the cut did not load, and
+every node's where the layout was made with \code{nodeLengths = TRUE}, on a pale
+backing at the place the Bandage view gives it, with a leader to its loop
+where the label stands off. \link[=autoplot.bandage_layout]{autoplot()} adds it.
 }

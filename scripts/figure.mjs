@@ -1,6 +1,7 @@
 import { figureData, walkLayers } from '@jbrowse/bandage-core/figureData'
 
 export { walkRowInks } from '@jbrowse/bandage-core/figureData'
+export { EXON_COLOR } from '@jbrowse/bandage-core/genes/exonOutline'
 import { parseRegion } from '@jbrowse/bandage-core/gbzCut'
 import { backboneGenes } from '@jbrowse/bandage-core/genes/backboneGenes'
 import {

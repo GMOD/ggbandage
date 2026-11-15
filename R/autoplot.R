@@ -1,41 +1,35 @@
 #' The graph as the Bandage view draws it
 #'
 #' Edges, nodes and arrowheads at the view's colours on white, the background
-#' the geoms mix faded ink with, each lifted walk's colour bar, a panel per
-#' walk when faceted, the genes pinned on the backbone, and a reference bp axis
-#' under the layouts whose x is reference bp. Plain links lie under the nodes
-#' and links that skip reference sequence over them, so a deletion is never
-#' hidden under the nodes it skips. Every piece is an ordinary ggplot2 layer,
-#' scale or theme, so `+` changes any of it.
+#' the geoms mix faded ink with, the node lengths the view writes, a panel per
+#' walk when faceted, the genes pinned on the backbone, the view's key at the
+#' top, and a reference bp axis under the layouts whose x is reference bp.
+#' Plain links lie under the nodes and links that skip reference sequence over
+#' them, so a deletion is never hidden under the nodes it skips. Every piece is
+#' an ordinary ggplot2 layer, scale or theme, so `+` changes any of it.
 #' @param object a `bandage_layout`
 #' @param ... unused
 #' @param ncol panels across, for a faceted layout
-#' @param labels name each node, with [geom_bandage_labels()]
 #' @exportS3Method ggplot2::autoplot
-autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
+autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
   m <- object$meta
   faceted <- nrow(object$panels) > 1
-  keyed <- (nrow(object$keys) && !faceted) || ramp_keyed(object)
-  genes <- if (nrow(object$genes)) geom_bandage_genes(key = if (!keyed) "exon")
+  keyed <- !faceted && nrow(key_rows(object)) > 0
+  genes <- if (nrow(object$genes)) geom_bandage_genes(key = NULL)
   p <- ggplot2::ggplot(object) +
     geom_bandage_edges(deletion = FALSE) +
     genes[1] +
     geom_bandage_nodes() +
     geom_bandage_edges(deletion = TRUE) +
     geom_bandage_arrows() +
-    genes[2] +
-    genes[3] +
-    if (labels) geom_bandage_labels()
-  if (nrow(object$keys)) {
-    p <- p + if (faceted) {
-      list(geom_bandage_keys(text = FALSE), facet_key_guide(object))
-    } else {
-      key_guide(object)
-    }
+    genes[2:3] +
+    geom_bandage_labels()
+  if (faceted) {
+    p <- p + geom_bandage_keys(text = FALSE) + facet_key_guide(object)
+  } else if (keyed) {
+    p <- p + key_guide(object)
   }
   p <- p +
-    layout_key(object) +
-    frequency_key(object) +
     ggplot2::theme_void() +
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
@@ -45,18 +39,13 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
       legend.margin = ggplot2::margin(l = 20),
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.text = ggplot2::element_text(size = 9),
-      plot.caption = ggplot2::element_text(size = 8, colour = "grey30", hjust = 0),
-      plot.caption.position = "plot",
       strip.text = ggplot2::element_text(
         hjust = 0, lineheight = 1.1, margin = ggplot2::margin(b = 4)
       ),
       panel.spacing = grid::unit(12, "pt")
     )
-  if (nrow(object$keys) && !faceted) {
+  if (keyed) {
     p <- p + ggplot2::theme(legend.location = "plot")
-  }
-  if (!is.null(m$frequencyKey)) {
-    p <- p + ggplot2::theme(legend.box = "vertical", legend.box.just = "left")
   }
   if (!m$pixelRows) {
     p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX, clip = "off")
@@ -106,106 +95,10 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
         )
       )
   }
-  if (nrow(object$keys) && !faceted) {
+  if (keyed) {
     class(p) <- c("bandage_plot", class(p))
   }
   p
-}
-
-ramp_keyed <- function(object) {
-  m <- object$meta
-  identical(m$colorScheme, "reference-position") && !is.null(m$referenceRamp) &&
-    !nrow(object$keys)
-}
-
-# What the hues, the charcoal, the dashes and the orange mean, for a layout
-# coloured by reference position, and in a caption what no swatch keys: the
-# nodes the reference revisits and node lengths compressed off scale; a lifted
-# walk recolours the drawing and keys itself
-layout_key <- function(object) {
-  m <- object$meta
-  if (!ramp_keyed(object)) {
-    return(list())
-  }
-  reference <- if (is.null(m$referenceName)) "the reference" else m$referenceName
-  nodes <- object$nodes
-  ramp <- data.frame(
-    x = nodes$x[1], y = nodes$y[1],
-    position = c(m$referenceRamp$start, m$referenceRamp$end)
-  )
-  entry <- function(label, colour, linewidth, linetype) {
-    data.frame(label, colour, linewidth, linetype)
-  }
-  inks <- rbind(
-    if (!all(nodes$backbone)) entry(paste("off the", reference, "path"), CHARCOAL, 2.5, "solid"),
-    if (!is.null(m$deletionKey)) entry(m$deletionKey, DELETION, 0.8, "22"),
-    if (nrow(object$exons)) entry("exon", EXON, 2.5, "solid")
-  )
-  guide <- ggplot2::guide_legend(
-    order = 2, override.aes = list(alpha = 1, linewidth = inks$linewidth),
-    theme = ggplot2::theme(legend.key.width = grid::unit(30, "pt"))
-  )
-  revisited <- unique(nodes$node[nodes$referenceVisits > 1])
-  caption <- c(
-    if (length(revisited)) {
-      sprintf(
-        "%s walks %s nodes more than once, and each takes its first visit's colour.\nA node walked only in a later copy takes that copy's colour",
-        reference, format(length(revisited), big.mark = ",")
-      )
-    },
-    m$compressedKey
-  )
-  list(
-    ggplot2::geom_point(
-      ggplot2::aes(x = x, y = y, fill = position),
-      data = ramp, inherit.aes = FALSE, alpha = 0
-    ),
-    scale_fill_bandage_position(paste(reference, "position, Mb")),
-    if (!is.null(inks)) {
-      list(
-        ggplot2::geom_path(
-          ggplot2::aes(x = x, y = y, colour = key, linetype = key, group = key),
-          data = data.frame(
-            x = nodes$x[1], y = nodes$y[1], key = rep(inks$label, each = 2)
-          ),
-          inherit.aes = FALSE, alpha = 0
-        ),
-        ggplot2::scale_colour_manual(
-          NULL,
-          values = stats::setNames(inks$colour, inks$label), breaks = inks$label, guide = guide
-        ),
-        ggplot2::scale_linetype_manual(
-          NULL,
-          values = stats::setNames(inks$linetype, inks$label), breaks = inks$label,
-          guide = ggplot2::guide_legend(order = 2)
-        )
-      )
-    },
-    if (length(caption)) ggplot2::labs(caption = paste(caption, collapse = "\n"))
-  )
-}
-
-# What a node's width means where it is as wide as its frequency
-frequency_key <- function(object) {
-  stops <- object$meta$frequencyKey
-  if (is.null(stops)) {
-    return(list())
-  }
-  nodes <- object$nodes
-  key <- factor(rep(stops$label, each = 2), levels = stops$label)
-  list(
-    ggplot2::geom_path(
-      ggplot2::aes(x = x, y = y, linewidth = key, group = key),
-      data = data.frame(x = nodes$x[1], y = nodes$y[1], key = key),
-      inherit.aes = FALSE, alpha = 0, colour = CHARCOAL
-    ),
-    ggplot2::scale_discrete_manual(
-      "linewidth",
-      name = "haplotypes passing a node",
-      values = stats::setNames(px_linewidth(stops$widthPx), stops$label),
-      guide = ggplot2::guide_legend(order = 3, override.aes = list(alpha = 1))
-    )
-  )
 }
 
 #' @exportS3Method ggplot2::ggplot_build

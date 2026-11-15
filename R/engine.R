@@ -296,12 +296,14 @@ as_bandage_layout <- function(d) {
   threads <- frame(d$threadKeys)
   genes <- upright(frame(d$pins))
   exons <- upright(frame(d$exons))
+  labels <- upright(frame(d$labels), c("y", "y1", "y2"))
+  graph_key <- frame(d$meta$graphKey)
 
   structure(
     list(
       nodes = nodes, edges = edges, arrows = arrows, rows = rows,
       panels = panels, keys = keys, threads = threads, genes = genes, exons = exons,
-      meta = d$meta
+      labels = labels, graph_key = graph_key, meta = d$meta
     ),
     class = "bandage_layout"
   )

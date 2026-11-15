@@ -4,24 +4,24 @@
 \alias{geom_bandage_genes}
 \title{Genes pinned on the backbone}
 \usage{
-geom_bandage_genes(data = NULL, outline = 3, colour = EXON, key = "exon")
+geom_bandage_genes(data = NULL, outline = 3, colour = NULL, key = "exon")
 }
 \arguments{
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
 
 \item{outline}{px the outline reaches past each side of the node}
 
-\item{colour}{the outline's colour}
+\item{colour}{the outline's colour, the Bandage view's exon gold when \code{NULL}}
 
 \item{key}{the legend entry naming the outline, or \code{NULL} for none}
 }
 \value{
-the outlines and names, two layers, and the outline's legend entry
+the outlines, the names' leaders and the names, and the outline's
+legend entry
 }
 \description{
 Outlines each exon round the stretch of node that carries it, under the
-nodes, and names each gene at its midpoint, as the Bandage view does; where
-two names would overlap, the longer gene keeps its name. Needs
-a layout made with \code{genes}; add it before \code{\link[=geom_bandage_nodes]{geom_bandage_nodes()}} so the
-nodes draw over the outline.
+nodes, and names each gene where the Bandage view places its name, with a
+leader to its pin. Needs a layout made with \code{genes}; add it before
+\code{\link[=geom_bandage_nodes]{geom_bandage_nodes()}} so the nodes draw over the outline.
 }

@@ -58,7 +58,7 @@ const { outputFiles } = await build({
   stdin: {
     contents: [
       "import './scripts/v8-host.mjs'",
-      "export { figure, walkRowInks, walkRows } from './scripts/figure.mjs'",
+      "export { EXON_COLOR, figure, walkRowInks, walkRows } from './scripts/figure.mjs'",
       "export { cutWalks } from './scripts/walks-cut.mjs'",
       "export { cutTabix, indexedLines } from './scripts/tabix-cut.mjs'",
     ].join('\n'),

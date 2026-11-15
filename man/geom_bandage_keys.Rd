@@ -9,11 +9,11 @@ geom_bandage_keys(data = NULL, text = TRUE)
 \arguments{
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
 
-\item{text}{write each walk's name and note beside its bar; faceted, the
-panel's title already does}
+\item{text}{write each entry's words beside its bar; faceted, the panel's
+title already does}
 }
 \description{
 A bar of the walk's colour, or of the scale a shaded walk runs over, with
-its name and its length against the reference, at the top left of the
-panel. Unfaceted, a faded swatch follows for the rest of the graph.
+its name and what it leaves out, at the top left of the panel; unfaceted,
+the rest of the graph's key follows.
 }

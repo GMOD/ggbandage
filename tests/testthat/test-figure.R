@@ -26,31 +26,35 @@ drawn_keys <- function(plot, width) {
   grid::pushViewport(grid::viewport(width = grid::unit(room, "inches")))
   kids <- grid::makeContent(key)$children
   texts <- Filter(function(k) inherits(k, "text"), kids)
-  y <- vapply(texts, function(k) -grid::convertY(k$y, "inches", valueOnly = TRUE), 0)
-  x <- vapply(texts, function(k) grid::convertX(k$x, "inches", valueOnly = TRUE), 0)
-  list(labels = unname(vapply(texts, function(k) k$label, "")[order(y, x)]), inches = inches, room = room)
+  list(labels = unname(vapply(texts, function(k) k$label, "")), inches = inches, room = room)
 }
 
-test_that("the key names each lifted walk, then the faded rest and the deletions", {
+# The words of bandage-core's key in the order the key writes them: each
+# entry's bold name, its words and the stretch under it
+key_words <- function(g) {
+  k <- key_rows(g)
+  words <- c(rbind(k$strong, k$text, k$under))
+  words[nzchar(words)]
+}
+
+test_that("the key is bandage-core's graph key: each lifted walk, what the lift fades, the thickness ends, the skip drawn", {
   g <- bandage_layout(pggb, walks = lifted)
   k <- drawn_keys(ggplot2::autoplot(g), 8)
-  expect_equal(k$labels, c(
-    paste0(c("K12", "IAI39"), g$keys$note),
-    "only in other haplotypes", "skips K12 chr sequence"
-  ))
+  expect_equal(k$labels, key_words(g))
+  expect_equal(utils::head(k$labels, 3), c("K12", "IAI39", "only in other haplotypes"))
+  expect_true(all(c("Node thickness", "a skip too short to dash") %in% k$labels))
 })
 
 test_that("under compress the key says node lengths are not to scale", {
   note <- "node lengths compressed, not to scale"
   g <- bandage_layout(pggb, walks = lifted, bubbleSpread = "compress")
-  expect_equal(g$meta$compressedKey, note)
+  expect_equal(utils::tail(g$graph_key$text, 1), note)
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(g), 8)$labels, 1), note)
   plain <- bandage_layout(pggb, walks = lifted)
-  expect_null(plain$meta$compressedKey)
+  expect_false(note %in% plain$graph_key$text)
   expect_false(note %in% drawn_keys(ggplot2::autoplot(plain), 8)$labels)
   unlifted <- bandage_layout(pggb, bubbleSpread = "compress")
-  expect_true(ramp_keyed(unlifted))
-  expect_equal(ggplot2::autoplot(unlifted)$labels$caption, note)
+  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(unlifted), 8)$labels, 1), note)
 })
 
 test_that("the key wraps to the width the plot is drawn at", {
@@ -63,7 +67,8 @@ test_that("the key wraps to the width the plot is drawn at", {
 })
 
 test_that("a panel's key that would run past its right edge starts a new line", {
-  k <- data.frame(stops = "#000000", label = strrep("w", 20), alpha = 1)[rep(1, 3), ]
+  k <- key_entry(text = strrep("w", 20), swatch = "swatch")[rep(1, 3), ]
+  k$colour <- "#000000"
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
   grid::pushViewport(grid::viewport(width = grid::unit(3, "inches")))
@@ -87,7 +92,7 @@ test_that("a walk passing a node twice draws two threads there, and the key says
   v1 <- g$nodes[g$nodes$name == "v1" & !is.na(g$nodes$walk), ]
   threads <- tapply(v1$stroke, v1$walk, function(x) length(unique(x)))
   expect_equal(as.vector(threads), c(1, 2))
-  expect_equal(drawn_keys(p, 8)$labels[4], "a thread per pass through a node")
+  expect_true("a thread per pass through a node" %in% drawn_keys(p, 8)$labels)
 })
 
 placed_keys <- function(plot, width, height) {
@@ -115,7 +120,7 @@ test_that("the key sits at the plot's top left and wraps inside it at any size",
   three <- bandage_layout(gfa, walks = c("ref#0#chr", "dup#1#chr", "third#1#chr"), engine = "stress")
   one <- bandage_layout(pggb, walks = lifted[1])
   for (g in list(one, three)) {
-    want <- c(paste0(g$keys$walk, g$keys$note), keys_of(g)$note[-seq_len(nrow(g$keys))])
+    want <- key_words(g)
     for (width in c(4, 9, 12)) {
       for (height in c(3, 6)) {
         k <- placed_keys(ggplot2::autoplot(g), width, height)
@@ -129,7 +134,7 @@ test_that("the key sits at the plot's top left and wraps inside it at any size",
   expect_gt(length(unique(placed_keys(ggplot2::autoplot(three), 4, 3)$y)), 1)
 })
 
-test_that("only a plot keyed by walks pins its layout, and not in a patchwork", {
+test_that("only a plot with a key at its top pins its layout, and not in a patchwork", {
   skip_if_not_installed("patchwork")
   p <- ggplot2::autoplot(bandage_layout(pggb, walks = lifted))
   expect_s3_class(p, "bandage_plot")
@@ -137,7 +142,9 @@ test_that("only a plot keyed by walks pins its layout, and not in a patchwork", 
   on.exit(dev.off())
   expect_true(isTRUE(patchwork:::plot_table(p, "auto")$respect))
   expect_true(is.matrix(ggplot2::ggplotGrob(p)$respect))
-  expect_false(inherits(ggplot2::autoplot(bandage_layout(pggb)), "bandage_plot"))
+  expect_true(inherits(ggplot2::autoplot(bandage_layout(pggb)), "bandage_plot"))
+  faceted <- bandage_layout(pggb, walks = lifted, facet = "walk")
+  expect_false(inherits(ggplot2::autoplot(faceted), "bandage_plot"))
 })
 
 test_that("a walk row lifted in one flat colour gets a swatch of it", {
@@ -328,32 +335,38 @@ test_that("faceted, each panel draws its own walk's bar", {
   expect_equal(levels(keys_of(g)$panel), c("K12", "IAI39"))
 })
 
-test_that("faceted, one key below the panels names the shading, the faded rest and the deletions", {
+test_that("faceted, one key below the panels names the shading, then the graph's key", {
   g <- bandage_layout(pggb, walks = lifted, facet = "walk")
   guide <- ggplot2::autoplot(g)$guides$guides$bandage_keys
   expect_equal(guide$params$position, "bottom")
-  expect_equal(guide$params$grob$keys$label, c(
-    "each walk, start to end", "only in other haplotypes", "skips K12 chr sequence"
-  ))
+  expect_equal(guide$params$grob$keys$text, c("each walk, start to end", key_rows(g)$text))
+  expect_true("only in other haplotypes" %in% g$graph_key$text)
+  expect_false(any(nzchar(g$graph_key$strong)))
 })
 
-test_that("labels name each node once, at a point of its stroke", {
-  g <- bandage_layout(pggb)
-  d <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_labels())
-  expect_setequal(d$label, unique(g$nodes$name))
-  expect_equal(unique(d$colour), "grey15")
-})
+# R walks three reference nodes; A leaves it for a 75 kb loop the cut did not
+# load, a placeholder, and comes back
+unloaded_gfa <- paste(
+  "S\tr1\t*\tLN:i:20000", "S\tr2\t*\tLN:i:30000", "S\tr3\t*\tLN:i:25000",
+  "S\tp1\t*\tLN:i:75000\tnl:i:1",
+  "L\tr1\t+\tr2\t+\t0M", "L\tr2\t+\tr3\t+\t0M", "L\tr1\t+\tp1\t+\t0M", "L\tp1\t+\tr3\t+\t0M",
+  "W\tR\t0\tchr\t0\t75000\t>r1>r2>r3", "W\tA\t1\tchr\t0\t120000\t>r1>p1>r3",
+  sep = "\n"
+)
 
-test_that("a label's colour can be mapped or set", {
-  g <- bandage_layout(pggb)
-  mapped <- ggplot2::layer_data(
-    ggplot2::ggplot(g) + geom_bandage_labels(ggplot2::aes(colour = depth))
-  )
-  expect_false("grey15" %in% mapped$colour)
-  expect_no_warning(
-    set <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_labels(colour = "red"))
-  )
-  expect_equal(unique(set$colour), "red")
+test_that("a placeholder's length is labelled as the Bandage view labels it, every node's with nodeLengths", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(unloaded_gfa, gfa)
+  g <- bandage_layout(gfa, layout = "auto", referencePath = "R")
+  expect_equal(g$labels$kind, "placeholder")
+  expect_equal(g$labels$text, "75 kb")
+  drawn <- ggplot2::layer_data(ggplot2::autoplot(g), length(ggplot2::autoplot(g)$layers))
+  expect_equal(drawn$label, "75 kb")
+  expect_true("nodes not shown" %in% g$graph_key$text)
+  every <- bandage_layout(gfa, layout = "auto", referencePath = "R", nodeLengths = TRUE)
+  expect_equal(every$labels$kind[1], "placeholder")
+  expect_setequal(every$labels$text, c("75 kb", "30 kb", "25 kb", "20 kb"))
 })
 
 test_that("a gene lands on the backbone nodes under it", {
@@ -365,12 +378,25 @@ test_that("a gene lands on the backbone nodes under it", {
   expect_no_error(ggplot2::ggplot_build(autoplot(g)))
 })
 
-test_that("the exon outline has a legend entry unless key is NULL", {
+test_that("the exon outline and the gene's name take bandage-core's exon gold, the name its place and leader", {
   g <- bandage_layout(rgfa, genes = test_path("testdata", "ecoli_genes.bed"))
   guides <- function(p) names(p$guides$guides)
   expect_true("bandage_genes" %in% guides(ggplot2::ggplot(g) + geom_bandage_genes()))
   expect_false("bandage_genes" %in% guides(ggplot2::ggplot(g) + geom_bandage_genes(key = NULL)))
-  expect_no_error(ggplot2::ggplot_build(ggplot2::ggplot(g) + geom_bandage_genes()))
+  p <- ggplot2::ggplot(g) + geom_bandage_genes(key = NULL)
+  outline <- ggplot2::layer_data(p, 1)
+  leader <- ggplot2::layer_data(p, 2)
+  name <- ggplot2::layer_data(p, 3)
+  expect_equal(unique(outline$colour), g$meta$inks$exon)
+  expect_equal(g$meta$inks$exon, core_exon())
+  gene <- g$labels[g$labels$kind == "gene", ]
+  expect_equal(name$label, gene$text)
+  expect_equal(c(name$x, name$y), c(gene$x, gene$y))
+  expect_equal(nrow(leader), sum(!is.na(gene$x1)))
+  expect_equal(unique(name$colour), g$meta$inks$exon)
+  # a BED line with no blocks is one exon, the whole gene
+  expect_equal(g$graph_key$text[g$graph_key$section == "exon"], "gene")
+  expect_equal(g$graph_key$color[g$graph_key$section == "exon"], g$meta$inks$exon)
 })
 
 test_that("a gene file naming the backbone otherwise warns, and gene_names binds it", {
@@ -542,29 +568,25 @@ test_that("rows with nothing off the reference's path and no ribbons draw withou
   expect_no_warning(ggplot2::ggplot_build(ggplot2::autoplot(w, ribbons = FALSE, hues = "bandage")))
 })
 
-test_that("a layout coloured by position keys its hues, and says which nodes take a first visit's", {
-  gfa <- collapsed_repeat()
-  on.exit(unlink(gfa))
-  p <- ggplot2::autoplot(bandage_layout(gfa))
-  built <- ggplot2::ggplot_build(p)
-  expect_match(p$labels$caption, "walks 2 nodes more than once")
-  expect_false(is.null(built$plot$scales$get_scales("fill")))
-  lifted <- ggplot2::autoplot(bandage_layout(pggb, walks = lifted))
-  expect_null(lifted$labels$caption)
-  expect_null(ggplot2::ggplot_build(lifted)$plot$scales$get_scales("fill"))
+test_that("a layout coloured by position keys its ramp by the reference's name and span, and no ramp while walks are lifted", {
+  p <- ggplot2::autoplot(bandage_layout(pggb))
+  k <- drawn_keys(p, 8)$labels
+  expect_match(k[1], "^position on ")
+  expect_match(k[2], "^[0-9,]+-[0-9,]+ \\(")
+  expect_null(p$labels$caption)
+  lifted <- bandage_layout(pggb, walks = lifted)
+  expect_false("ramp" %in% lifted$graph_key$section)
 })
 
-test_that("a position-coloured layout keys its deletions with a dash and nothing drawn over it", {
-  p <- ggplot2::autoplot(bandage_layout(pggb))
+test_that("the key's skip rows are bandage-core's, drawn as dashes and a short plain stroke", {
+  g <- bandage_layout(pggb, width = 4000)
+  skips <- g$graph_key[g$graph_key$section == "skips", ]
+  expect_gt(nrow(skips), 0)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  gt <- ggplot2::ggplotGrob(p)
-  strokes <- function(x) {
-    own <- if (inherits(x, "segments")) format(x$gp$lty)
-    c(own, unlist(lapply(c(x$grobs, x$children), strokes)))
-  }
-  box <- gt$grobs[startsWith(gt$layout$name, "guide-box")]
-  expect_equal(sort(unname(unlist(lapply(box, strokes)))), c("22", "solid"))
+  grobs <- key_grobs(key_rows(g), TRUE, 2000)$grobs
+  lines <- Filter(function(x) inherits(x, "segments") && identical(x$gp$lwd, px_linewidth(2) * ggplot2::.pt), grobs)
+  expect_equal(length(lines) > 0, any(skips$dashed))
 })
 
 test_that("autoplot draws plain links, then nodes, then the links that skip reference sequence, then arrowheads", {
