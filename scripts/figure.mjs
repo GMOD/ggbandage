@@ -1,4 +1,5 @@
 import { figureData, walkLayers } from '@jbrowse/bandage-core/figureData'
+import { figureFit } from '@jbrowse/bandage-core/figureSettings'
 
 export { walkRowInks } from '@jbrowse/bandage-core/figureData'
 export { EXON_COLOR } from '@jbrowse/bandage-core/genes/exonOutline'
@@ -84,7 +85,14 @@ async function laidOut(source, name, spec) {
   const graph = withFrequencies(plain, spec.frequencies)
   const layout =
     layoutModeByValue(spec.layout ?? 'force').run(graph, region) ??
-    (await forceLayout(graph, engineSettingsOf(spec), layoutEngine)).result
+    (
+      await forceLayout(
+        graph,
+        engineSettingsOf(spec),
+        layoutEngine,
+        figureFit(spec),
+      )
+    ).result
   return { graph, layout, region }
 }
 
