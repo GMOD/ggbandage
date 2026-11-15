@@ -65,7 +65,7 @@ pair too, given the `.segs.bed.gz` or the prefix `graph`.
 ```{r read, eval = FALSE}
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f8.GRCh38.walks.gz"
 g <- bandage_layout(walks, region = "chr1:196,640,001-196,900,000", haplotypes = c("HG00097#1", "HG02055#1"))
 ```
 

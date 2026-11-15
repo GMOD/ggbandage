@@ -7,7 +7,7 @@
 set -euo pipefail
 region=$1 prefix=$2 haps=$3
 impg=${IMPG:-impg}
-walks=https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz
+walks=https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f8.GRCh38.walks.gz
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

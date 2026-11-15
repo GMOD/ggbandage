@@ -25,7 +25,7 @@ remotes::install_github("GMOD/ggbandage")
 ```r
 library(ggbandage)
 
-walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38.GRCh38.walks.gz"
+walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f8.GRCh38.walks.gz"
 kiv2 <- "chr6:160,616,004-160,646,753"
 
 g <- bandage_layout(
