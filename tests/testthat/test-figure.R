@@ -689,7 +689,7 @@ test_that("a gap in a walk row says what the walk file's departures state of it"
 
 test_that("a layout of a walk file keys a walk by what its departures state", {
   g <- bandage_layout(records, region = "chr1:1001-5000", walks = "HG002#1", context = 0)
-  expect_equal(g$keys$note, " +1 kb, 1.3 kb left out of graph, 700 bp own sequence not drawn")
+  expect_equal(g$keys$note, ", 1.3 kb left out of graph, 700 bp own sequence not drawn")
 })
 
 test_that("the room past the bars fits the readout reaching furthest", {
