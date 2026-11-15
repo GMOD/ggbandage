@@ -74,8 +74,8 @@ autoplot(g))",
     width = 9, height = 5, readme = TRUE
   ),
   figure(
-    "kiv2_overlay", "KIV-2 expansions as extra loops", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue and HG00097 yellow to red-orange. GRCh38 runs straight from left to right, and where walks share nodes their lanes run side by side. HG00133 and HG00097 share one narrow loop near the right, with a boxed letter A at its tip, the nodes of block A. HG00133 alone runs one long loop of its own sequence at the right and a small loop near the left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with block A outlined in both",
+    "kiv2_overlay", "KIV-2 expansions as loops off GRCh38", "chr6:160,616,004-160,646,753",
+    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue and HG00097 yellow to red-orange. GRCh38 runs straight from left to right, and where walks share nodes their lanes run side by side. HG00133 and HG00097 share one narrow loop near the right, with a boxed letter A at its tip, the nodes of block A. Of the three walks shown, only HG00133 runs the long loop at the right and the small loop near the left, sequence GRCh38 and HG00097 lack. Minigraph-Cactus stores copies beyond GRCh38's as new sequence rather than as extra turns round one copy, so the expansion shows in the loops' length and in the rows below, not in the number of loops. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with block A outlined in both",
     r"(haps <- c("HG00133#2", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
 g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000)
@@ -90,8 +90,11 @@ steps <- bandage_walk_steps(walks, kiv2, haplotypes = haps)
       "  `bandage_walk_steps()`",
       "- `context = 30000` keeps 30 kb of GRCh38 past each end of the region, so the",
       "  reference runs in straight before it reaches the array",
-      "- Loop size follows bp, so HG00133's own sequence draws as the long loop at",
-      "  the right"
+      "- Minigraph-Cactus stores copies beyond GRCh38's as new sequence rather than as",
+      "  extra turns round one copy, so read an expansion from a loop's length and the",
+      "  rows below, not from the number of loops",
+      "- A loop is longer where the walk carries more sequence, but not to scale with",
+      "  GRCh38's line, so read lengths off the rows"
     )
   ),
   figure(
@@ -162,7 +165,7 @@ autoplot(g) + guides(bandage_keys = "none") +
   ),
   figure(
     "c4_two_graphs", "C4 in two graph builders, the same haplotype in each", "chr6:31,972,047-32,055,647",
-    "Two graphs over one strip. The strip shows HG01978#2 along its length in three solid colours, copy 1 orange, copy 2 blue and copy 3 green, between dark grey flanks. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, copy 2 runs blue along GRCh38's line past C4A, and copy 3 runs green on along it past C4B to the right. Right, titled syng folds them onto one ring, the impg syng graph: orange, blue and green threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy",
+    "Two graphs over one strip. The strip shows HG01978#2 along its length in three solid colours, copy 1 orange, copy 2 blue and copy 3 green, between dark grey flanks. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, labelled beside its tip, whose last stretch back to GRCh38's line is blue, the start of copy 2; copy 2 then runs blue along GRCh38's line past C4A, and copy 3 runs green on along it past C4B to the right. Right, titled syng folds them onto one ring, the impg syng graph: orange, blue and green threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy",
     r"(c4 <- "chr6:31,972,047-32,055,647"
 hap <- "HG01978#2"
 copies <- c("copy 1" = "#D55E00", "copy 2" = "#0072B2", "copy 3" = "#009E73")
@@ -181,16 +184,21 @@ painted <- function(g, steps, title) {
   mine <- g$nodes$walk %in% 1
   at <- match(paste(g$nodes$name, pmax(0, g$nodes$pass, na.rm = TRUE)), paste(steps$node, steps$pass))
   g$nodes$copy <- ifelse(mine, steps$copy[at], NA)
-  g$nodes$start <- steps$start[at]
   g$nodes$color[mine] <- ifelse(is.na(g$nodes$copy[mine]), "#3a3a3a", copies[g$nodes$copy[mine]])
+  lane <- g$edges$walk %in% 1
+  leaves <- match(paste(g$edges$x0, g$edges$y0), paste(g$nodes$x, g$nodes$y)[mine])
+  g$edges$color[lane] <- ave(g$nodes$color[mine][leaves][lane], g$edges$edge[lane], g$edges$pass[lane], FUN = function(c) c[!is.na(c)][1])
   g$genes <- g$genes[g$genes$gene %in% c("C4A", "C4B"), ]
   g$exons <- g$exons[0, ]
-  spots <- do.call(rbind, lapply(seq_along(copies), function(k) {
-    own <- g$nodes[g$nodes$copy %in% names(copies)[k], ]
-    own[which.min(abs(own$start - stats::quantile(own$start, k / 4))), ]
-  }))
+  own <- g$nodes[g$nodes$copy %in% names(copies), ]
+  spot <- function(x, y) (own$x - x)^2 + (own$y - y)^2
+  spots <- own[which.max(ifelse(own$copy == "copy 1", spot(stats::median(g$nodes$x), stats::median(g$nodes$y)), -Inf)), ]
+  for (copy in names(copies)[-1]) {
+    gap <- ifelse(own$copy == copy, Reduce(pmin, Map(spot, spots$x, spots$y)), -Inf)
+    spots <- rbind(spots, own[which.max(gap), ])
+  }
   autoplot(g) + guides(bandage_keys = "none") + ggtitle(title) +
-    geom_label(aes(x, y, label = copy, colour = I(copies[copy])), data = spots, size = 3.4, fontface = "bold", fill = "white")
+    geom_label(aes(x, y, label = copy, colour = I(copies[copy]), hjust = ifelse(x < stats::median(g$nodes$x), 1.05, -0.05)), data = spots, size = 3.4, fontface = "bold", fill = "white")
 }
 along <- ggplot(data.frame(copy = names(copies), start = breaks[1:3], end = breaks[2:4])) +
   annotate("rect", xmin = 0, xmax = max(sy_steps$end) / 1000, ymin = 0, ymax = 1, fill = "#3a3a3a") +
@@ -211,9 +219,13 @@ graphs <- painted(mc, mc_steps, "Minigraph-Cactus lays the three copies out in a
       "  and in the strip below",
       "- `bandage_walk_steps()` gives each step's bp along its walk and its pass, which",
       "  joins the step to the layout's thread for that pass",
-      "- In the Minigraph-Cactus graph, copy 1 is a loop off GRCh38's path, copy 2",
-      "  starts at GRCh38's C4A and copy 3 at its C4B. In the syng graph, all three are",
-      "  passes round the ring, which GRCh38 runs twice",
+      "- In the Minigraph-Cactus graph, copy 1 is a loop off GRCh38's path, and the",
+      "  loop's last stretch is the start of copy 2, which runs on along GRCh38's line.",
+      "  In the syng graph, all three are passes round the ring, which GRCh38 runs twice",
+      "- The snippet colours the walk's links as well as its nodes, each link by the",
+      "  node it leaves. It labels copy 1 at its node farthest from the middle of the",
+      "  drawing, and each later copy at its node farthest from the labels already",
+      "  placed, each label beside its node on the side away from the middle",
       "- The Minigraph-Cactus cut keeps about 1 kb of flank past each end, so the",
       "  snippet centres that walk on the syng walk before matching bp",
       "- The snippet turns off each graph's key, since side by side each key would",
