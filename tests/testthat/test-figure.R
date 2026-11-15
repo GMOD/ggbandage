@@ -682,7 +682,7 @@ test_that("a gap in a walk row says what the walk file's departures state of it"
   expect_equal(gaps$bp[gaps$label == "HG002#1"], 2000)
   expect_equal(
     w$rows$readout[w$rows$label == "HG002#1"],
-    "5.0 kb (+1.0 kb), of which 1.3 kb left out of graph, 0.7 kb own sequence not drawn"
+    "5.0 kb (+1.0 kb), of which 1.3 kb left out of graph, 700 bp own sequence not drawn"
   )
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })

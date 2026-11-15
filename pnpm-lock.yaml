@@ -205,7 +205,7 @@ packages:
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
   '@jbrowse/bandage-core@file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0.tgz':
-    resolution: {integrity: sha512-0FJH7VDZS/RLDjBTU0va5ORJFbz8W8g/gf1ku4fk9QmO9lYs1SkmdesYKjHxos0Snfk2HaKNUrlybz6+LHEU+A==, tarball: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0.tgz}
+    resolution: {integrity: sha512-Eb9xEcetRxV9w82qvcdI+phk6XYMy8dOmupSXhMNc7pilNdCct0r3S2sgDS1I8Fhohm2xBtG2o3hIQRcfYbC1g==, tarball: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0.tgz}
     version: 14.0.0
     engines: {node: '>=20'}
     hasBin: true
@@ -219,7 +219,7 @@ packages:
     engines: {node: '>=20'}
 
   '@jbrowse/graph-walks@file:../vendor/walks8-pack/jbrowse-graph-walks-7.0.0.tgz':
-    resolution: {integrity: sha512-qJyG4NR5Pc0A9GRdD+2REB53YHTRKGvcKzSyoI3i0E4aus4fxVoDXhR6HSQ3pNxGWRFyF92haLiB0T5U8rsJQg==, tarball: file:../vendor/walks8-pack/jbrowse-graph-walks-7.0.0.tgz}
+    resolution: {integrity: sha512-SrT3LNZIK0jLZnFTwUTouSnjDYCwnFbfvS6xZX6bwi5B8ZWAQRGvTclaERso3eVwCUzHwMEx4taubKgT6CKHGA==, tarball: file:../vendor/walks8-pack/jbrowse-graph-walks-7.0.0.tgz}
     version: 7.0.0
     engines: {node: '>=20'}
 
