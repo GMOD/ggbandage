@@ -205,7 +205,7 @@ packages:
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
   '@jbrowse/bandage-core@file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0.tgz':
-    resolution: {integrity: sha512-Eb9xEcetRxV9w82qvcdI+phk6XYMy8dOmupSXhMNc7pilNdCct0r3S2sgDS1I8Fhohm2xBtG2o3hIQRcfYbC1g==, tarball: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0.tgz}
+    resolution: {integrity: sha512-9R3SP2Ra0gjr9R1DSdk1IJiuYxDwRV/ZLOAETjCmXFXwjG8Mwv0ZH+B4wOgg+b+Rxf5FYsG3lFFgDxaBvzbK2w==, tarball: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0.tgz}
     version: 14.0.0
     engines: {node: '>=20'}
     hasBin: true
