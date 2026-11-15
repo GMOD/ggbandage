@@ -44,7 +44,7 @@ autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = 
 - GRCh38 is the shortest row, and 462 of the 463 HPRC haplotypes in the walk
   file are longer than GRCh38 here
 
-![Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the extra copies, on non-reference nodes, fall into three blocks: A, 68 kb walked by HG02055#1 and HG00133#2; B, 22 kb walked by four haplotypes; and C, 5.5 kb walked by two](../gallery/kiv2_rows.png)
+![Walk rows at KIV-2 on a bp-from-flank axis: between the flanking reference nodes GRCh38 spans 31 kb and HG00133#2 164 kb, and the non-reference sequence several rows share falls into three blocks: A, walked by HG02055#1 and HG00133#2; B, walked by four haplotypes; and C, walked by two. HG02055#1 walks block A in place of nearly all of GRCh38's array](../gallery/kiv2_rows.png)
 
 ```r
 library(ggbandage)
@@ -63,7 +63,7 @@ autoplot(rows) +
 
 `chr1:103,540,000-103,780,000`
 
-![Walk rows over the salivary amylase genes for GRCh38 and seven haplotypes, each bar coloured by the GRCh38 position it covers: against GRCh38's 240 kb the haplotypes span 146 kb to 474 kb. HG00128#1 and HG002#1 walk the non-reference block A twice, CHM13 and HG00097#2 once, HG00099#1 and HG00097#1 walk block C in its place, and 19 kb of HG00097#1 is left out of the graph, drawn as an open box](../gallery/amylase_rows.png)
+![Walk rows over the salivary amylase genes for GRCh38 and seven haplotypes, each bar coloured by the GRCh38 position it covers: across the region, against GRCh38's 240 kb, the haplotypes span 146 kb to 474 kb. HG00128#1 walks the non-reference block A twice, HG002#1 once in full and most of it a second time, and CHM13 and HG00097#2 once. HG00099#1 and HG00097#1 walk no block A; nearer the left they walk block C, which replaces a shorter stretch of GRCh38, and 19 kb of HG00097#1 is left out of the graph, drawn as an open box](../gallery/amylase_rows.png)
 
 ```r
 library(ggbandage)
@@ -79,7 +79,7 @@ autoplot(rows)
 
 `chr22:42,118,000-42,136,000`
 
-![Stress layout of CYP2D6 from the hosted index, GRCh38 drawn straight and coloured by position from NDUFA6-DT to CYP2D7, exons outlined in gold: a dashed arch spans CYP2D6, the route of haplotypes that skip the gene, and non-reference sequence hangs in charcoal loops above and below](../gallery/cyp2d6_stress.png)
+![Stress layout of CYP2D6 from the hosted index, GRCh38 drawn straight and coloured by position from NDUFA6-DT to CYP2D7, exons outlined in gold: a dashed arch spans CYP2D6, the route of haplotypes that skip the gene, a small dashed arch at the left skips a short stretch of GRCh38, and non-reference sequence hangs in charcoal loops above and below](../gallery/cyp2d6_stress.png)
 
 ```r
 library(ggbandage)
@@ -286,17 +286,20 @@ graphs <- painted(mc, mc_steps, "Minigraph-Cactus lays the three copies out in a
 - Pangenome studies call sequence core when nearly every genome has it, shell
   when some do and cloud when few do. The snippet classes each node by
   `frequency`, the share of haplotypes through it
-- Cloud sequence shows as specks along every strand and makes up 9% of the bp
-- The labels give the share of haplotypes on each route: 16% walk GSTM1's loop,
-  19% the loop beside it and 66% the dashed edge, and two haplotypes walk both
-  loops. The snippet counts the dashed edge's haplotypes from their walk rows,
-  which run about 18 kb shorter than GRCh38's
+- Cloud sequence makes up 9% of the bp, most of it the small orange loop off the
+  second loop; the rest shows as specks along the strands
+- The labels give the share of haplotypes on each route: 16% walk GSTM1's loop
+  and 84% the dashed edge. Most of the 19% on the second loop reach it by the
+  dashed edge, and the rest of the dashed edge's haplotypes walk neither loop
+- The snippet counts the dashed edge's haplotypes from their walk rows: a row
+  takes it where one stretch on GRCh38's path jumps straight to the next across
+  the most GRCh38 sequence any row skips
 - ggbandage dashes an edge that skips part of GRCh38's path, so which edges are
-  dashed depends on the reference. GRCh38 contains GSTM1, which most haplotypes
-  lack, and against a reference without GSTM1 the dashed edge would be the
-  common route and the GSTM1 loop an insertion
+  dashed depends on the reference. GRCh38 walks the GSTM1 loop, which most
+  haplotypes skip by the dashed edge, and against a reference without GSTM1 the
+  dashed edge would be the common route and the GSTM1 loop an insertion
 
-![The GSTM1 locus cut from the walk file with all HPRC haplotypes, force-directed, each node coloured by the share of haplotypes through it: core, 95% or more, charcoal; shell, 5 to 95%, blue; cloud, under 5%, orange. A pale green band under the nodes marks GRCh38's path, from GSTM4 and GSTM2 round the GSTM1 loop to GSTM5. GSTM4, GSTM2 and GSTM5 run as thick charcoal strands flecked with orange specks of rare variants. GSTM1's loop, labelled 16%, and the non-reference loop beside it, labelled 19%, are blue shell, and a small orange loop hangs off the second. The grey dashed edge past both loops, off the green band, is labelled 66%. The caption says the percentages are shares of HPRC haplotypes and that a dashed edge skips part of GRCh38's path, and a bar below splits the graph's bp into 43% core, 34 kb, 47% shell, 37 kb, and 9% cloud, 7 kb](../gallery/gstm1_core.png)
+![The GSTM1 locus cut from the walk file with all HPRC haplotypes, force-directed, each node coloured by the share of haplotypes through it: core, 95% or more, charcoal; shell, 5 to 95%, blue; cloud, under 5%, orange. A pale green band under the nodes marks GRCh38's path, from GSTM4 and GSTM2 round the GSTM1 loop to GSTM5. GSTM4, GSTM2 and GSTM5 run as thick charcoal strands flecked with orange specks of rare variants. GSTM1's loop, labelled 16%, and the non-reference loop beside it, labelled 19%, are blue shell, and a small orange loop hangs off the second. The grey dashed edge, off the green band, skips GSTM1's loop and lands where the second loop hangs, and is labelled 84%. The caption says the percentages are shares of HPRC haplotypes and that a dashed edge skips part of GRCh38's path, and a bar below splits the graph's bp into 43% core, 34 kb, 47% shell, 37 kb, and 9% cloud, 7 kb](../gallery/gstm1_core.png)
 
 ```r
 library(ggbandage)
@@ -314,12 +317,14 @@ nodes <- g$nodes[!duplicated(g$nodes$name), ]
 bp <- aggregate(length ~ class, transform(nodes, class = share(frequency)), sum)
 loops <- g$nodes[g$nodes$frequency > 0.05 & g$nodes$frequency < 0.5 & g$nodes$length > 400, ]
 loops <- loops[!duplicated(loops$depth), ]
-rows <- bandage_walk_rows(walks, gstm1)$rows
+runs <- bandage_walk_rows(walks, gstm1)$runs
+on <- runs[runs$onReference, ]
+jump <- c(on$referenceStart[-1] - on$referenceStart[-nrow(on)] - on$bp[-nrow(on)], 0) * c(on$row[-1] == on$row[-nrow(on)], FALSE)
 dashed <- g$edges[g$edges$deletion, ]
 reach <- tapply(abs(dashed$x1 - dashed$x0) + abs(dashed$y1 - dashed$y0), dashed$edge, sum)
 gap <- dashed[dashed$edge == names(which.max(reach)), ]
 gap <- gap[ceiling(nrow(gap) / 2), ]
-gap$share <- mean(rows$bp[-1] < rows$bp[1] - 9000)
+gap$share <- length(unique(on$row[jump == max(jump)])) / (length(unique(runs$row)) - 1)
 graph <- ggplot(g) +
   geom_path(aes(x, y, group = interaction(node, stroke)), data = g$nodes[g$nodes$backbone, ], colour = "#cfe8c6", linewidth = 6, lineend = "round") +
   geom_bandage_edges(aes(colour = I("grey80")), deletion = FALSE) +
@@ -386,21 +391,22 @@ rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1))
 ```
 
-### Your own colours: GSTM1, missing from two thirds of haplotypes
+### Your own colours: GSTM1 and the edge most haplotypes take past it
 
 `chr1:109,665,000-109,715,000`
 
 - Colour and width both show `frequency`, the share of the cut's haplotypes
   through a node: `depth` over the haplotype count.
-- Of 465 walks, 71 run GRCh38's GSTM1 loop, 84 the non-reference loop beside it,
-  2 both, and 308 neither, taking the dashed deletion edge.
-- A walk through either loop spans 60.6 kb, and one taking the deletion 42.2 kb.
-  The 18 kb between them is the GSTM1 deletion, so the second loop is most likely
-  GSTM1 too, a copy the graph did not align to GRCh38's.
+- Of 465 walks, 71 run GRCh38's GSTM1 loop, 84 the non-reference loop beside it
+  and 2 both. The 84 reach the second loop by the dashed edge, and the other 308
+  take the dashed edge and walk neither loop.
+- Across the region, a walk through one of the loops is 18 kb longer than one
+  that walks neither, the length of GRCh38's GSTM1 loop, so the second loop is most
+  likely GSTM1 too, a copy the graph did not align to GRCh38's.
 - The snippet draws the edges that skip GRCh38 sequence after the nodes, as
   `autoplot()` does, so none hides under the nodes it skips.
 
-![The GSTM1 locus cut from the walk file with all 464 HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that every haplotype walks. GSTM1 hangs off them as a thin pale loop labelled 16%, beside a second pale loop of non-reference sequence labelled 19%, and most haplotypes take the grey dashed edge that skips both. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
+![The GSTM1 locus cut from the walk file with all HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that nearly every haplotype walks. GSTM1 hangs off them as a thin pale loop labelled 16%, beside a second pale loop of non-reference sequence labelled 19%, and most haplotypes take the grey dashed edge that skips GSTM1's loop and lands where the second loop hangs. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
 
 ```r
 library(ggbandage)
@@ -433,7 +439,7 @@ ggplot(g) +
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop that GRCh38 skips, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes and a dashed link that skips GRCh38 sequence](../gallery/kiv2_walks.png)
+![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop of sequence GRCh38 does not have, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes and a dashed link that skips GRCh38 sequence](../gallery/kiv2_walks.png)
 
 ```r
 library(ggbandage)
@@ -471,7 +477,7 @@ autoplot(g)
 
 `chr6:31,978,000-32,040,000`
 
-![Stress layout of the complement C4 genes in the MHC, GRCh38 drawn straight, its C4A and C4B the long forms: non-reference sequence hangs in loops below C4A and C4B, and a dashed arch from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA](../gallery/c4_stress.png)
+![Stress layout of the complement C4 genes in the MHC, GRCh38 drawn straight: non-reference sequence hangs in loops below C4A and C4B, and a dashed arch from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA](../gallery/c4_stress.png)
 
 ```r
 library(ggbandage)
