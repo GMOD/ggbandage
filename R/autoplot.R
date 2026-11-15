@@ -119,8 +119,9 @@ ramp_keyed <- function(object) {
 }
 
 # What the hues, the charcoal, the dashes and the orange mean, for a layout
-# coloured by reference position; a lifted walk recolours the drawing and keys
-# itself
+# coloured by reference position, and in a caption what no swatch keys: the
+# nodes the reference revisits and node lengths compressed off scale; a lifted
+# walk recolours the drawing and keys itself
 layout_key <- function(object) {
   m <- object$meta
   if (!ramp_keyed(object)) {
@@ -145,6 +146,15 @@ layout_key <- function(object) {
     theme = ggplot2::theme(legend.key.width = grid::unit(30, "pt"))
   )
   revisited <- unique(nodes$node[nodes$referenceVisits > 1])
+  caption <- c(
+    if (length(revisited)) {
+      sprintf(
+        "%s walks %s nodes more than once, and each takes its first visit's colour.\nA node walked only in a later copy takes that copy's colour",
+        reference, format(length(revisited), big.mark = ",")
+      )
+    },
+    m$compressedKey
+  )
   list(
     ggplot2::geom_point(
       ggplot2::aes(x = x, y = y, fill = position),
@@ -171,12 +181,7 @@ layout_key <- function(object) {
         )
       )
     },
-    if (length(revisited)) {
-      ggplot2::labs(caption = sprintf(
-        "%s walks %s nodes more than once, and each takes its first visit's colour.\nA node walked only in a later copy takes that copy's colour",
-        reference, format(length(revisited), big.mark = ",")
-      ))
-    }
+    if (length(caption)) ggplot2::labs(caption = paste(caption, collapse = "\n"))
   )
 }
 

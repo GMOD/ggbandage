@@ -40,6 +40,19 @@ test_that("the key names each lifted walk, then the faded rest and the deletions
   ))
 })
 
+test_that("under compress the key says node lengths are not to scale", {
+  note <- "node lengths compressed, not to scale"
+  g <- bandage_layout(pggb, walks = lifted, bubbleSpread = "compress")
+  expect_equal(g$meta$compressedKey, note)
+  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(g), 8)$labels, 1), note)
+  plain <- bandage_layout(pggb, walks = lifted)
+  expect_null(plain$meta$compressedKey)
+  expect_false(note %in% drawn_keys(ggplot2::autoplot(plain), 8)$labels)
+  unlifted <- bandage_layout(pggb, bubbleSpread = "compress")
+  expect_true(ramp_keyed(unlifted))
+  expect_equal(ggplot2::autoplot(unlifted)$labels$caption, note)
+})
+
 test_that("the key wraps to the width the plot is drawn at", {
   g <- bandage_layout(pggb, walks = lifted)
   narrow <- drawn_keys(ggplot2::autoplot(g), 3)

@@ -360,7 +360,7 @@ keys_of <- function(model, exons = FALSE) {
 }
 
 # The key's entries after the walks: the faded rest, the deletions, the
-# threads and the exon outline
+# threads, the exon outline and whether node lengths are to scale
 key_notes <- function(model, exons = FALSE) {
   extra <- function(kind, note, stops = "", alpha = 1) {
     if (!length(note)) {
@@ -373,6 +373,7 @@ key_notes <- function(model, exons = FALSE) {
     extra("deletion", model$meta$deletionKey, FADED),
     extra("passes", as.character(model$threads$note)),
     if (exons && nrow(model$exons)) extra("exon", "exon", EXON),
+    extra("note", model$meta$compressedKey),
     data.frame(walk = character(), note = character(), stops = character(), kind = character(), alpha = numeric())
   )
 }
@@ -403,10 +404,12 @@ key_grobs <- function(data, text, room) {
   for (i in seq_len(nrow(data))) {
     colours <- strsplit(data$stops[i], ",", fixed = TRUE)[[1]]
     threads <- identical(data$kind[i], "passes")
-    bar <- if (length(colours) > 1) 48 else 18
+    note <- identical(data$kind[i], "note")
+    bar <- if (note) 0 else if (length(colours) > 1) 48 else 18
+    gap <- if (note) 0 else 5
     fill <- if (length(colours) > 1) {
       grid::linearGradient(colours, x1 = 0, y1 = 0.5, x2 = 1, y2 = 0.5)
-    } else if (!threads) {
+    } else if (!threads && !note) {
       ggplot2::alpha(colours, data$alpha[i])
     }
     label <- if (text && nzchar(data$label[i])) {
@@ -415,14 +418,16 @@ key_grobs <- function(data, text, room) {
     wide <- bar + if (is.null(label)) {
       0
     } else {
-      5 + width_px(grid::grobWidth(label))
+      gap + width_px(grid::grobWidth(label))
     }
     if (at > 6 && at + wide > room) {
       at <- 6
       line <- line + 1
     }
     top <- grid::unit(1, "npc") - px(6 + 16 * line)
-    grobs[[length(grobs) + 1]] <- if (threads) {
+    swatch <- if (note) {
+      NULL
+    } else if (threads) {
       grid::segmentsGrob(
         px(at), top - px(c(1, 4, 7)), px(at + bar), top - px(c(1, 4, 7)),
         gp = grid::gpar(col = "grey30", lwd = 2, lineend = "butt")
@@ -438,9 +443,12 @@ key_grobs <- function(data, text, room) {
         just = c("left", "top"), gp = grid::gpar(col = NA, fill = fill)
       )
     }
+    if (!is.null(swatch)) {
+      grobs[[length(grobs) + 1]] <- swatch
+    }
     if (!is.null(label)) {
       grobs[[length(grobs) + 1]] <- grid::editGrob(
-        label, x = px(at + bar + 5), y = top - px(4)
+        label, x = px(at + bar + gap), y = top - px(4)
       )
     }
     at <- at + wide + 16
