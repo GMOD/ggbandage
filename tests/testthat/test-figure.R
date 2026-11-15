@@ -535,6 +535,21 @@ test_that("a position-coloured layout keys its deletions with a dash and nothing
   expect_equal(sort(unname(unlist(lapply(box, strokes)))), c("22", "solid"))
 })
 
+test_that("autoplot draws plain links, then nodes, then the links that skip reference sequence, then arrowheads", {
+  p <- ggplot2::autoplot(bandage_layout(pggb, width = 4000))
+  drawn <- function(layer) {
+    t <- layer$layer_data(p$data)
+    if ("curve" %in% names(t)) {
+      ifelse(t$deletion, "skip", "link")
+    } else if ("stroke" %in% names(t)) {
+      rep("node", nrow(t))
+    } else if ("halfWidth" %in% names(t)) {
+      rep("arrow", nrow(t))
+    }
+  }
+  expect_equal(rle(unlist(lapply(unname(p$layers), drawn)))$values, c("link", "node", "skip", "arrow"))
+})
+
 test_that("Bandage's position hues run red to magenta at the view's saturation", {
   hues <- bandage_hues()
   expect_equal(hues[1], "#D92626")

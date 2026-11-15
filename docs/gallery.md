@@ -306,9 +306,10 @@ gap <- gap[ceiling(nrow(gap) / 2), ]
 gap$share <- mean(rows$bp[-1] < rows$bp[1] - 9000)
 graph <- ggplot(g) +
   geom_path(aes(x, y, group = interaction(node, stroke)), data = g$nodes[g$nodes$backbone, ], colour = "#cfe8c6", linewidth = 6, lineend = "round") +
-  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_edges(aes(colour = I("grey80")), deletion = FALSE) +
   geom_bandage_genes(outline = 0, key = NULL) +
   geom_bandage_nodes(aes(colour = share(frequency))) +
+  geom_bandage_edges(aes(colour = I("grey80")), deletion = TRUE) +
   geom_label(aes(x, y, label = scales::percent(frequency, 1)), data = loops, size = 3.2, fill = "white", linewidth = 0) +
   geom_label(aes(x0, y0, label = scales::percent(share, 1)), data = gap, size = 3.2, fill = "white", linewidth = 0, vjust = 1.4) +
   scale_colour_manual("share of HPRC haplotypes", values = classes) +
@@ -380,6 +381,8 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
 - A walk through either loop spans 60.6 kb, and one taking the deletion 42.2 kb.
   The 18 kb between them is the GSTM1 deletion, so the second loop is most likely
   GSTM1 too, a copy the graph did not align to GRCh38's.
+- The snippet draws the edges that skip GRCh38 sequence after the nodes, as
+  `autoplot()` does, so none hides under the nodes it skips.
 
 ![The GSTM1 locus cut from the walk file with all 464 HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that every haplotype walks. GSTM1 hangs off them as a thin pale loop labelled 16%, beside a second pale loop of non-reference sequence labelled 19%, and most haplotypes take the grey dashed edge that skips both. Small pale specks along the black strands are small variants](../gallery/own_colours.png)
 
@@ -396,9 +399,10 @@ loops <- g$nodes[g$nodes$frequency > 0.05 & g$nodes$frequency < 0.5 & g$nodes$le
 loops <- loops[!duplicated(loops$depth), ]
 share <- "share of HPRC haplotypes"
 ggplot(g) +
-  geom_bandage_edges(aes(colour = I("grey80"))) +
+  geom_bandage_edges(aes(colour = I("grey80")), deletion = FALSE) +
   geom_bandage_genes() +
   geom_bandage_nodes(aes(colour = frequency, linewidth = frequency)) +
+  geom_bandage_edges(aes(colour = I("grey80")), deletion = TRUE) +
   geom_label(aes(x, y, label = scales::percent(frequency, 1)), data = loops, size = 3, fill = "white", linewidth = 0) +
   scale_colour_viridis_c(share, option = "mako", direction = -1, end = 0.9, labels = scales::label_percent()) +
   scale_linewidth(share, range = c(0.4, 3.5), labels = scales::label_percent()) +

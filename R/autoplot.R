@@ -3,8 +3,10 @@
 #' Edges, nodes and arrowheads at the view's colours on white, the background
 #' the geoms mix faded ink with, each lifted walk's colour bar, a panel per
 #' walk when faceted, the genes pinned on the backbone, and a reference bp axis
-#' under the layouts whose x is reference bp. Every piece is an ordinary
-#' ggplot2 layer, scale or theme, so `+` changes any of it.
+#' under the layouts whose x is reference bp. Plain links lie under the nodes
+#' and links that skip reference sequence over them, so a deletion is never
+#' hidden under the nodes it skips. Every piece is an ordinary ggplot2 layer,
+#' scale or theme, so `+` changes any of it.
 #' @param object a `bandage_layout`
 #' @param ... unused
 #' @param ncol panels across, for a faceted layout
@@ -16,9 +18,10 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL, labels = FALSE) {
   keyed <- (nrow(object$keys) && !faceted) || ramp_keyed(object)
   genes <- if (nrow(object$genes)) geom_bandage_genes(key = if (!keyed) "exon")
   p <- ggplot2::ggplot(object) +
-    geom_bandage_edges() +
+    geom_bandage_edges(deletion = FALSE) +
     genes[1] +
     geom_bandage_nodes() +
+    geom_bandage_edges(deletion = TRUE) +
     geom_bandage_arrows() +
     genes[2] +
     genes[3] +

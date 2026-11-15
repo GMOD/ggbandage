@@ -4,7 +4,13 @@
 \alias{geom_bandage_edges}
 \title{Graph edges as their Bezier curves}
 \usage{
-geom_bandage_edges(mapping = NULL, data = NULL, background = "white", ...)
+geom_bandage_edges(
+  mapping = NULL,
+  data = NULL,
+  background = "white",
+  deletion = NULL,
+  ...
+)
 }
 \arguments{
 \item{mapping}{aesthetics that override the defaults}
@@ -13,8 +19,15 @@ geom_bandage_edges(mapping = NULL, data = NULL, background = "white", ...)
 
 \item{background}{what faded ink is mixed with, the plot's background}
 
+\item{deletion}{\code{TRUE} for only the links that skip reference sequence,
+\code{FALSE} for only the rest, \code{NULL} for all}
+
 \item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
 }
 \description{
-Graph edges as their Bezier curves
+A link that skips reference sequence, dashed or short and solid, is a
+deletion's only mark, so draw it over the nodes it skips: plain links with
+\code{deletion = FALSE} before \code{\link[=geom_bandage_nodes]{geom_bandage_nodes()}}, and these with
+\code{deletion = TRUE} after it, as \link[=autoplot.bandage_layout]{autoplot()} and the
+Bandage view do.
 }

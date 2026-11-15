@@ -153,11 +153,22 @@ geom_bandage_nodes <- function(mapping = NULL, data = NULL,
 }
 
 #' Graph edges as their Bezier curves
+#'
+#' A link that skips reference sequence, dashed or short and solid, is a
+#' deletion's only mark, so draw it over the nodes it skips: plain links with
+#' `deletion = FALSE` before [geom_bandage_nodes()], and these with
+#' `deletion = TRUE` after it, as [autoplot()][autoplot.bandage_layout] and the
+#' Bandage view do.
 #' @inheritParams geom_bandage_nodes
+#' @param deletion `TRUE` for only the links that skip reference sequence,
+#'   `FALSE` for only the rest, `NULL` for all
 #' @export
 geom_bandage_edges <- function(mapping = NULL, data = NULL,
-                               background = "white", ...) {
-  path_layer(mapping, data, function(m) edges_of(m, background), ...)
+                               background = "white", deletion = NULL, ...) {
+  path_layer(mapping, data, function(m) {
+    e <- edges_of(m, background)
+    if (is.null(deletion)) e else e[e$deletion == deletion, ]
+  }, ...)
 }
 
 # ggplot2 keys a layer under any legend whose aesthetic it maps, I() or not,
