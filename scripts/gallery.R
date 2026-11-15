@@ -36,7 +36,7 @@ figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = N
 figures <- list(
   figure(
     "cfh_overlay", "CFHR3 and CFHR1 deleted in one haplotype", "chr1:196,640,001-196,900,000",
-    "Force-directed CFH locus with GRCh38, HG00097 and HG02055 lifted together, each shaded along its own length: GRCh38 grey, HG00097 cyan to blue and HG02055 pink to plum. GRCh38 and HG00097 run the loop through CFHR3 and CFHR1, and HG02055 alone takes the deletion edge under it, its lane drawn solid along the edge. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097 260 kb and HG02055 176 kb, and the ribbons from HG00097 down to HG02055 break across the 85 kb HG02055 lacks",
+    "Force-directed CFH locus with GRCh38, HG00097 and HG02055 lifted together, each shaded along its own length: GRCh38 grey, HG00097 cyan to blue and HG02055 pink to plum. GRCh38 and HG00097 run the loop through CFHR3 and CFHR1, and HG02055 alone takes the edge under it that skips both genes, its lane drawn along the edge. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097 260 kb and HG02055 175 kb, and the ribbons from HG00097 down to HG02055 break across the 85 kb HG02055 lacks",
     r"(cfh <- "chr1:196,640,001-196,900,000"
 haps <- c("HG00097#1", "HG02055#1")
 schemes <- c(GRCh38 = "grey", "HG00097#1" = "blue", "HG02055#1" = "purple")
@@ -59,8 +59,8 @@ autoplot(rows) +
     )
   ),
   figure(
-    "amylase_rows", "Amylase haplotypes from 146 to 475 kb", "chr1:103,540,000-103,780,000",
-    "Walk rows over the salivary amylase genes for GRCh38 and seven haplotypes, each bar coloured by the GRCh38 position it covers: against GRCh38's 240 kb the haplotypes span 146 kb to 475 kb. HG00128#1 and HG002#1 walk the non-reference block A twice, CHM13 and HG00097#2 once, HG00099#1 and HG00097#1 walk block C in its place, and HG00097#1 has a 19 kb stretch the graph lacks, drawn as an open box",
+    "amylase_rows", "Amylase haplotypes from 146 to 474 kb", "chr1:103,540,000-103,780,000",
+    "Walk rows over the salivary amylase genes for GRCh38 and seven haplotypes, each bar coloured by the GRCh38 position it covers: against GRCh38's 240 kb the haplotypes span 146 kb to 474 kb. HG00128#1 and HG002#1 walk the non-reference block A twice, CHM13 and HG00097#2 once, HG00099#1 and HG00097#1 walk block C in its place, and 19 kb of HG00097#1 is left out of the graph, drawn as an open box",
     r"(amylase <- c("HG00128#1", "CHM13#0", "HG00097#2", "HG002#1", "HG00099#1", "HG00097#1", "HG00099#2")
 rows <- bandage_walk_rows(walks, "chr1:103,540,000-103,780,000", haplotypes = amylase)
 autoplot(rows))",
@@ -75,10 +75,10 @@ autoplot(g))",
   ),
   figure(
     "kiv2_overlay", "KIV-2 expansions as extra loops", "chr6:160,616,004-160,646,753",
-    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue, 133 kb longer, and HG00097 yellow to red-orange, 22.4 kb longer. GRCh38 runs straight in along 30 kb of flank from either side to a knot of loops at the array. Where walks share nodes their lanes run side by side. All three walks run the loops at the top, HG00133 and HG00097 run the loop at the lower right together, and HG00133 alone runs the loop at the lower left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with block A outlined in both. A boxed letter A sits at the tip of the lower right loop, the block's nodes in the graph",
+    "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue and HG00097 yellow to red-orange. GRCh38 runs straight from left to right, and where walks share nodes their lanes run side by side. HG00133 and HG00097 share one narrow loop near the right, with a boxed letter A at its tip, the nodes of block A. HG00133 alone runs one long loop of its own sequence at the right and a small loop near the left. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with block A outlined in both",
     r"(haps <- c("HG00133#2", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
-g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000, bubbleSpread = "compress")
+g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000)
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
 steps <- bandage_walk_steps(walks, kiv2, haplotypes = haps)
 (autoplot(g) + geom_bandage_blocks(rows, steps)) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1)))",
@@ -86,17 +86,17 @@ steps <- bandage_walk_steps(walks, kiv2, haplotypes = haps)
     note = c(
       "- `geom_bandage_blocks()` letters each block of the walk rows on the graph, at",
       "  the block's node furthest from the middle, so block A in the rows is the",
-      "  lower right loop. It finds the block's nodes from `bandage_walk_steps()`",
+      "  loop HG00133 and HG00097 share. It finds the block's nodes from",
+      "  `bandage_walk_steps()`",
       "- `context = 30000` keeps 30 kb of GRCh38 past each end of the region, so the",
       "  reference runs in straight before it reaches the array",
-      "- `bubbleSpread = \"compress\"` pulls node lengths towards the mean, so HG00133's",
-      "  extra copies no longer dwarf the rest. Loop size stops tracking bp, so read",
-      "  lengths off the walk rows below"
+      "- Loop size follows bp, so HG00133's own sequence draws as the long loop at",
+      "  the right"
     )
   ),
   figure(
     "syng_rhd", "RHD deletion and duplication in an impg syng graph", "chr1:25,250,000-25,450,000",
-    "Force-directed syng graph of RHD from 19 HPRC haplotypes with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 coloured by its pass through each node, orange the first time, blue the second and green the third. Round the loop at the top, labelled RHD, run a grey grch38 thread, an orange first-pass thread and a blue thread labelled second pass, HG01106#1's second RHD. A short green thread labelled third pass runs through the Rhesus box at the left. HG01258#2 skips the RHD loop and runs straight on to TMEM50A and RHCE. A strip below shows HG01106#1's 272 kb by pass, orange except blue from 85 to 155 kb and green to 160 kb, and walk rows give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb",
+    "Force-directed syng graph of RHD with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 coloured by its pass through each node, orange the first time, blue the second and green the third. Round the loop at the top, labelled RHD, run a grey grch38 thread, an orange first-pass thread and a blue second-pass thread, HG01106#1's second RHD, labelled second pass where the loop meets the threads to RHCE. A short green thread at the far left, where the walks come in, is labelled third pass. HG01258#2 skips the RHD loop and runs down past TMEM50A and round to RHCE. A strip below shows HG01106#1 along its length by pass, orange with a blue stretch and a short green one, and walk rows give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb",
     r"(rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 dup <- "HG01106#1"
 del <- "HG01258#2"
@@ -112,9 +112,13 @@ g$exons <- g$exons[0, ]
 mine <- g$nodes$walk %in% 1
 g$nodes$pass_name <- ifelse(mine, names(passes)[pmax(0, g$nodes$pass, na.rm = TRUE) + 1], NA)
 g$nodes$color[mine] <- passes[g$nodes$pass_name[mine]]
-reach <- (g$nodes$x - stats::median(g$nodes$x))^2 + (g$nodes$y - stats::median(g$nodes$y))^2
-later <- g$nodes[mine & g$nodes$pass_name != "first pass", ][order(-reach[mine & g$nodes$pass_name != "first pass"]), ]
-later <- later[!duplicated(later$pass_name), ]
+threads <- g$nodes[mine & g$nodes$pass_name != "first pass", ]
+spot <- function(x, y) (threads$x - x)^2 + (threads$y - y)^2
+later <- threads[which.max(spot(stats::median(g$nodes$x), stats::median(g$nodes$y))), ]
+for (pass in setdiff(threads$pass_name, later$pass_name)) {
+  gap <- ifelse(threads$pass_name == pass, Reduce(pmin, Map(spot, later$x, later$y)), -Inf)
+  later <- rbind(later, threads[which.max(gap), ])
+}
 steps <- bandage_walk_steps(rhd_syng)
 steps <- steps[startsWith(steps$walk, paste0(dup, "#")), ]
 steps$kb <- floor((steps$start + steps$end) / 2000)
@@ -158,7 +162,7 @@ autoplot(g) + guides(bandage_keys = "none") +
   ),
   figure(
     "c4_two_graphs", "C4 in two graph builders, the same haplotype in each", "chr6:31,972,047-32,055,647",
-    "Two graphs over one strip. The strip shows HG01978#2's 116 kb split into three solid colours, copy 1 orange from 8.5 to 41 kb, copy 2 blue to 74 kb and copy 3 green to 107 kb, with dark grey flanks. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, copy 2 runs blue from C4A over the hump, and copy 3 runs green from C4B to the right. Right, titled syng folds them onto one ring, the impg syng graph: orange, blue and green threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy",
+    "Two graphs over one strip. The strip shows HG01978#2 along its length in three solid colours, copy 1 orange, copy 2 blue and copy 3 green, between dark grey flanks. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, copy 2 runs blue along GRCh38's line past C4A, and copy 3 runs green on along it past C4B to the right. Right, titled syng folds them onto one ring, the impg syng graph: orange, blue and green threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy",
     r"(c4 <- "chr6:31,972,047-32,055,647"
 hap <- "HG01978#2"
 copies <- c("copy 1" = "#D55E00", "copy 2" = "#0072B2", "copy 3" = "#009E73")
@@ -293,8 +297,8 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
       "",
       "- The ring holds every C4 copy's sequence once, so a walk with more copies goes",
       "  round it more often. The layout draws a thread for each pass, two for grch38",
-      "  and three for HG01978, whose third pass is its extra 32.7 kb",
-      "- HG01978's row is 32.7 kb longer than grch38's, the length of that copy",
+      "  and three for HG01978, whose third pass is its extra copy",
+      "- HG01978's row is 33 kb longer than grch38's, the length of that copy",
       "- The layout shades each walk light to dark along its length, in the drawing",
       "  and in its row, so a darker thread is a later pass round the ring",
       "- The loop at the left is the HERV-K in C4's intron 9, which makes a C4 long.",
@@ -337,7 +341,7 @@ ggplot(g) +
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
-    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one 22 kb loop that GRCh38 skips, drawn faded in GRCh38's panel, and a short grey dashed link at the loop's base skips GRCh38 sequence that both walks take. The panel titles give HG00097 113 kb and GRCh38 90.8 kb, each span the region plus 30 kb of flank either side, and a key below the panels names the shading, the faded nodes and the dashes",
+    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop that GRCh38 skips, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes and a dashed link that skips GRCh38 sequence",
     r"(g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = "HG00097#1", context = 30000,
