@@ -241,23 +241,25 @@ bar_tiles <- function(runs, tile) {
 autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = TRUE,
                                        hues = c("viridis", "bandage", "walk"), layout = NULL) {
   hues <- match.arg(hues)
-  inks <- walk_inks(object$rows, layout)
   walk_hued <- hues == "walk"
-  swatches <- row_swatches(object$rows, if (!walk_hued) layout)
-  if (walk_hued && !nrow(inks)) {
+  rows <- object$rows
+  span <- max(rows$xmax)
+  all <- bar_tiles(object$runs, span / 600)
+  inks <- row_inks(rows, layout, all$row, (all$xmin + all$xmax) / 2)
+  if (walk_hued && all(is.na(inks$colour))) {
     stop(
       'hues = "walk" needs a `layout` that lifts the rows\' walks in flat colours or progress ramps',
       call. = FALSE
     )
   }
-  rows <- object$rows
-  rows$label <- key_labels(rows, layout)
+  swatches <- row_swatches(rows, if (!walk_hued) layout, inks$key)
+  keyed <- !is.na(inks$key)
+  rows$label[keyed] <- layout$keys$walk[inks$key[keyed]]
   reference <- rows$sample[1]
   half <- 0.2
   y <- nrow(rows) - rows$row
-  span <- max(rows$xmax)
-  all <- bar_tiles(object$runs, span / 600)
   all$y <- y[all$row + 1]
+  all$ink <- inks$colour
   on <- all$kind == "on the reference's path"
   tiles <- all[on | (walk_hued & all$kind == "off the reference's path"), ]
   plain <- all[!on, ]
@@ -328,7 +330,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   }
   plain$fill <- ifelse(walk_hued & plain$key == off, NA, keys[plain$key])
   if (walk_hued) {
-    tiles$fill <- walk_fill(inks, rows, tiles$row, (tiles$xmin + tiles$xmax) / 2)
+    tiles$fill <- ifelse(is.na(tiles$ink), "#9A9A9A", tiles$ink)
   }
   p <- ggplot2::ggplot()
   if (nrow(links)) {
@@ -446,72 +448,36 @@ STRIP_FILL <- "#8c8c8c"
 STRIP_GAP <- 0.03
 STRIP_HEIGHT <- 0.06
 
-# Which key, if any, names each walk, by its full name or the name without
-# the cut's range
-key_index <- function(names, keys) {
-  origin <- function(name) sub(":[0-9]+-[0-9]+$", "", name)
-  at <- match(names, keys$name)
-  at[is.na(at)] <- match(origin(names), origin(keys$name))[is.na(at)]
-  at
+# A swatch beside each row whose walk the layout lifts in one flat colour
+row_swatches <- function(rows, layout, key = row_inks(rows, layout)$key) {
+  keyed <- !is.na(key) & !is.null(layout$keys)
+  colour <- rep("", nrow(rows))
+  colour[keyed] <- layout$keys$color[key[keyed]]
+  data.frame(row = rows$row, colour = colour)[nzchar(colour), ]
 }
 
-# Each row's label, or the name the layout's key gives the walk
-key_labels <- function(rows, layout) {
-  if (is.null(layout$keys$walk)) {
-    return(rows$label)
+# Columns as JSON, a missing value as null, for bandage-core's tables
+columns_json <- function(x) {
+  V8::JS(jsonlite::toJSON(x, dataframe = "columns", na = "null", digits = NA))
+}
+
+# Which key names each row's walk, `key`, and the colour bandage-core's walk
+# rows give `x` bp along bar `row`, `colour`: the lifted walk's flat colour,
+# or its progress ramp at the contig position `x` covers, NA on a row no
+# lifted walk inks
+row_inks <- function(rows, layout, row = integer(), x = numeric()) {
+  inks <- if (is.null(layout$keys)) {
+    list(key = NULL, color = NULL)
+  } else {
+    engine()$call(
+      "bandage.walkRowInks",
+      columns_json(layout$keys[c("name", "stops", "field", "contig", "start", "end")]),
+      columns_json(rows[c("name", "bp", "contig", "contigStart", "backward")]),
+      columns_json(data.frame(row = row, offset = x))
+    )
   }
-  at <- key_index(rows$name, layout$keys)
-  ifelse(is.na(at), rows$label, layout$keys$walk[at])
-}
-
-# Each row's walk as `layout` lifts it: a flat `colour`, or the `stops` of a
-# progress ramp with no colour, run over `start` to `end` of `contig`
-walk_inks <- function(rows, layout) {
-  keys <- layout$keys
-  if (is.null(keys$color)) {
-    return(data.frame(
-      row = integer(), colour = character(), stops = character(),
-      contig = character(), start = numeric(), end = numeric()
-    ))
-  }
-  keys <- keys[nzchar(keys$color) | keys$field == "progress", ]
-  at <- key_index(rows$name, keys)
-  data.frame(
-    row = rows$row, colour = keys$color[at], stops = keys$stops[at],
-    contig = keys$contig[at], start = keys$start[at], end = keys$end[at]
-  )[!is.na(at), ]
-}
-
-row_swatches <- function(rows, layout) {
-  inks <- walk_inks(rows, layout)
-  inks[nzchar(inks$colour), c("row", "colour")]
-}
-
-# A row's colour `x` bp along its bar. A ramp runs over the stretch of contig
-# the layout lifts, which reaches past the flanks the bar spans
-walk_fill <- function(inks, rows, row, x) {
-  rgb <- matrix(0x9a, length(row), 3)
-  for (r in intersect(unique(row), inks$row)) {
-    k <- match(r, inks$row)
-    here <- row == r
-    rgb[here, ] <- if (nzchar(inks$colour[k])) {
-      matrix(grDevices::col2rgb(inks$colour[k]), sum(here), 3, byrow = TRUE)
-    } else {
-      ramp <- grDevices::colorRamp(strsplit(inks$stops[k], ",")[[1]], space = "Lab")
-      ramp(pmin(1, pmax(0, ramp_along(inks[k, ], rows[r + 1, ], x[here]))))
-    }
-  }
-  grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3], maxColorValue = 255)
-}
-
-# How far along its ramp `x` bp of a row's bar falls: by contig position where
-# the row's axis and the lifted stretch share a contig, else by share of the bar
-ramp_along <- function(ink, row, x) {
-  backward <- isTRUE(row$backward)
-  if (isTRUE(ink$contig == row$contig) && ink$end > ink$start) {
-    position <- row$contigStart + if (backward) -x else x
-    return((position - ink$start) / (ink$end - ink$start))
-  }
-  along <- if (row$bp > 0) x / row$bp else 0 * x
-  if (backward) 1 - along else along
+  list(
+    key = if (length(inks$key)) as.integer(inks$key) + 1L else rep(NA_integer_, nrow(rows)),
+    colour = if (length(inks$color)) as.character(inks$color) else rep(NA_character_, length(row))
+  )
 }

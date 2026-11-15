@@ -1,4 +1,6 @@
 import { figureData, walkLayers } from '@jbrowse/bandage-core/figureData'
+
+export { walkRowInks } from '@jbrowse/bandage-core/figureData'
 import { parseRegion } from '@jbrowse/bandage-core/gbzCut'
 import { backboneGenes } from '@jbrowse/bandage-core/genes/backboneGenes'
 import {
@@ -24,7 +26,6 @@ import {
   forceLayout,
   loadGraph,
 } from '@jbrowse/bandage-core/pipeline'
-import { walkHighlight } from '@jbrowse/bandage-core/walkHighlight'
 
 import { openIndexed } from './tabix-cut.mjs'
 import { walkCut } from './walks-cut.mjs'
@@ -98,13 +99,6 @@ export async function figure(source, name, spec, genes) {
       walks,
       genes: read.genes,
     }),
-    ranges: columns(
-      walks.flatMap(({ walk }) => {
-        const range = walkHighlight(graph, walk)?.range
-        return range ? [{ name: walk, ...range }] : []
-      }),
-      ['name', 'contig', 'start', 'end'],
-    ),
     unmatched,
     unbound: read.unbound,
   }

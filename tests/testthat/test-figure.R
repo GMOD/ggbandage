@@ -158,28 +158,39 @@ test_that("walk-hued rows run a walk's progress ramp from the bar's start to its
   progress <- lapply(lifted, function(w) list(walk = w, color = list(field = "progress")))
   g <- bandage_layout(pggb, walks = progress)
   rows <- bandage_walk_rows(pggb)
-  inks <- walk_inks(rows$rows, g)
-  expect_length(inks$row, 2)
+  key <- row_inks(rows$rows, g)$key
+  expect_equal(sum(!is.na(key)), 2)
   expect_equal(nrow(row_swatches(rows$rows, g)), 0)
   p <- ggplot2::autoplot(rows, hues = "walk", layout = g)
   at <- which(vapply(p$layers, function(l) "position" %in% names(l$data), TRUE))
   bar <- p$layers[[at]]$data
   bar <- bar[bar$row == 0, ]
-  stops <- strsplit(inks$stops[inks$row == 0], ",")[[1]]
+  stops <- strsplit(g$keys$stops[key[1]], ",")[[1]]
   near <- function(a, b) max(abs(grDevices::col2rgb(a) - grDevices::col2rgb(b))) < 8
   expect_true(near(bar$fill[1], stops[1]))
   expect_true(near(bar$fill[nrow(bar)], stops[length(stops)]))
 })
 
-test_that("a row's ramp runs over the stretch of contig its walk is lifted on, past the bar's flanks", {
-  ink <- data.frame(contig = "c", start = 100, end = 300)
-  row <- data.frame(bp = 100, backward = FALSE, contig = "c", contigStart = 150)
-  expect_equal(ramp_along(ink, row, c(0, 100)), c(0.25, 0.75))
-  row$backward <- TRUE
-  row$contigStart <- 250
-  expect_equal(ramp_along(ink, row, c(0, 100)), c(0.75, 0.25))
-  row$contig <- "elsewhere"
-  expect_equal(ramp_along(ink, row, c(0, 100)), c(1, 0))
+test_that("bandage-core runs a row's ramp over the stretch of contig its walk is lifted on, past the bar's flanks", {
+  layout <- list(keys = data.frame(
+    name = "a#1#c", walk = "a", color = "", stops = "#000000,#ffffff", field = "progress",
+    contig = "c", start = 100, end = 300
+  ))
+  rows <- data.frame(name = "a#1#c", bp = 100, backward = FALSE, contig = "c", contigStart = 150)
+  forward <- row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour
+  rows$backward <- TRUE
+  rows$contigStart <- 250
+  expect_equal(row_inks(rows, layout, c(0L, 0L), c(100, 0))$colour, forward)
+  rows$contig <- "elsewhere"
+  expect_equal(row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour, c("#ffffff", "#000000"))
+  rows$contig <- NA
+  rows$contigStart <- NA
+  rows$backward <- FALSE
+  expect_equal(row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour, c("#000000", "#ffffff"))
+  lightness <- function(colour) sum(grDevices::col2rgb(colour))
+  expect_gt(lightness(forward[1]), 0)
+  expect_lt(lightness(forward[2]), 3 * 255)
+  expect_lt(lightness(forward[1]), lightness(forward[2]))
 })
 
 test_that("a walk file cut with context starts each row's ramp where the drawing's reaches its flank", {
@@ -188,11 +199,13 @@ test_that("a walk file cut with context starts each row's ramp where the drawing
     list(walk = "K12", color = list(field = "progress"))
   ))
   rows <- bandage_walk_rows(walk_file, region, context = 100)
-  inks <- walk_inks(rows$rows, g)
-  r <- inks$row[1]
-  along <- ramp_along(inks[1, ], rows$rows[r + 1, ], c(0, rows$rows$bp[r + 1]))
-  expect_gt(along[1], 0.05)
-  expect_lt(along[2], 0.95)
+  key <- row_inks(rows$rows, g)$key
+  r <- which(!is.na(key))[1]
+  stops <- strsplit(g$keys$stops[key[r]], ",")[[1]]
+  ends <- row_inks(rows$rows, g, rows$rows$row[c(r, r)], c(0, rows$rows$bp[r]))$colour
+  lightness <- function(colour) sum(grDevices::col2rgb(colour))
+  expect_lt(lightness(ends[1]), lightness(stops[1]) - 10)
+  expect_gt(lightness(ends[2]), lightness(stops[length(stops)]) + 10)
 })
 
 test_that("blocks past the three filled ones are keyed", {
@@ -214,10 +227,16 @@ test_that("blocks past the three filled ones are keyed", {
   expect_true(any(startsWith(colours$get_breaks(), "more shared blocks")))
 })
 
-test_that("rows a layout lifts take the name its key gives the walk", {
-  rows <- data.frame(name = c("a#1#c:0-10", "b#1#c"), label = c("a#1", "b#1"))
-  expect_equal(key_labels(rows, list(keys = data.frame(name = "a#1#c:5-9", walk = "a"))), c("a", "b#1"))
-  expect_equal(key_labels(rows, NULL), rows$label)
+test_that("bandage-core finds a row's key by the walk's name without the cut's range", {
+  rows <- data.frame(
+    name = c("a#1#c:0-10", "b#1#c"), bp = 10, backward = FALSE, contig = "c", contigStart = 0
+  )
+  keys <- data.frame(
+    name = "a#1#c:5-9", walk = "a", color = "#123456", stops = "#123456", field = "walk",
+    contig = "c", start = 5, end = 9
+  )
+  expect_equal(row_inks(rows, list(keys = keys))$key, c(1L, NA))
+  expect_equal(row_inks(rows, NULL)$key, c(NA_integer_, NA_integer_))
 })
 
 ramp_rows <- function(walk) {
