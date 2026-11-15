@@ -30,10 +30,11 @@ fetches every byte it reads.
   which drops both
 - bandage-core's `laidOutGraph` takes GFA text only, so `scripts/figure.mjs`
   lays out the loaded graph with the same calls
-- BandageJS caps a cut's reads, draws an abridged walk as a block, and
-  attaches a departure's own steps only up to `attachBp` of own sequence. R
-  asks for one region and waits, so ggbandage lifts graph-walks' step, byte,
-  departure-read and attach budgets and reads every abridged walk in full
+- The cut takes graph-walks' `CUT_PRESETS.figure`: the browser readers'
+  `context`, `contained` and `attachBp`, so a region draws the graph BandageJS,
+  the JBrowse graph plugin and sequenceTubeMap draw, with the step, byte and
+  departure-read budgets lifted, since R asks for one region and waits. It
+  reads every abridged walk in full, where BandageJS draws one as a block
 - A cut at KIV-2 with five HPRC haplotypes took about 3 s from the hosted
   format 5 file
 

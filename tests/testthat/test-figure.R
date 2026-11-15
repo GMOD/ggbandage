@@ -694,6 +694,13 @@ test_that("a walk file cuts the walks under a region", {
   expect_s3_class(bandage_layout(walk_file, region = region), "bandage_layout")
 })
 
+test_that("a walk file cut keeps the browser readers' context unless given one", {
+  region <- "chr:1004700-1004750"
+  cut <- bandage_gfa(walk_file, region)
+  expect_identical(cut, bandage_gfa(walk_file, region, context = 1000))
+  expect_false(identical(cut, bandage_gfa(walk_file, region, context = 0)))
+})
+
 test_that("a walk file cut keeps the haplotypes asked for, and names its sequences for one it lacks", {
   w <- bandage_walk_rows(walk_file, "chr:1004500-1004961", haplotypes = "IAI39", context = 0)
   expect_setequal(w$rows$sample, c("K12", "IAI39"))

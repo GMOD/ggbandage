@@ -72,7 +72,8 @@ g <- bandage_layout(walks, region = "chr1:196,640,001-196,900,000", haplotypes =
 - `region` takes a locus as a genome browser writes it. `"chr6"` stands for
   `GRCh38#0#chr6` when exactly one sequence ends that way
 - `haplotypes` picks the `sample#haplotype` walks to cut, every one by default
-- `context` keeps that many bp of reference past each end, 1,000 by default
+- `context` keeps that many bp of reference past each end, by default what
+  the browser readers keep
 
 ## Exporting a region
 

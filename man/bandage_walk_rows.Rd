@@ -8,7 +8,7 @@ bandage_walk_rows(
   gfa,
   region = NULL,
   haplotypes = NULL,
-  context = 1000,
+  context = NULL,
   referencePath = NULL,
   order = c("length", "shared"),
   join = NULL
@@ -31,7 +31,9 @@ the core crops to}
 \code{sample#haplotype}, every one when \code{NULL}. On a walk file, also the walks
 to cut}
 
-\item{context}{on a walk file, bp of reference kept past each end of \code{region}}
+\item{context}{on a walk file, bp of reference kept past each end of
+\code{region}; \code{NULL} keeps what the browser readers keep, graph-walks'
+\code{WALK_CONTEXT}}
 
 \item{referencePath}{the reference walk, when it is not the one rank-0
 segments name or the first}

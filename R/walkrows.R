@@ -41,7 +41,7 @@
 #'   another row can split one.
 #' @export
 bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
-                              context = 1000, referencePath = NULL,
+                              context = NULL, referencePath = NULL,
                               order = c("length", "shared"), join = NULL) {
   order <- match.arg(order)
   src <- graph_source(gfa, region, haplotypes, context)

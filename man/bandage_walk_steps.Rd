@@ -4,7 +4,7 @@
 \alias{bandage_walk_steps}
 \title{Each walk's steps, with the bp each covers}
 \usage{
-bandage_walk_steps(gfa, region = NULL, haplotypes = NULL, context = 1000)
+bandage_walk_steps(gfa, region = NULL, haplotypes = NULL, context = NULL)
 }
 \arguments{
 \item{gfa}{path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix
@@ -22,7 +22,9 @@ the core crops to}
 \item{haplotypes}{on a walk file, the \code{sample#haplotype} walks to cut, every
 one when \code{NULL}}
 
-\item{context}{on a walk file, bp of reference kept past each end of \code{region}}
+\item{context}{on a walk file, bp of reference kept past each end of
+\code{region}; \code{NULL} keeps what the browser readers keep, graph-walks'
+\code{WALK_CONTEXT}}
 }
 \value{
 a data frame of \code{walk}, as \code{sample#haplotype#contig:start-end} for

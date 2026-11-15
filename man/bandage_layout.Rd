@@ -15,7 +15,7 @@ bandage_layout(
   genes = NULL,
   gene_names = NULL,
   haplotypes = NULL,
-  context = 1000,
+  context = NULL,
   frequencies = NULL,
   ...
 )
@@ -61,7 +61,9 @@ otherwise, such as \code{c(chr6 = "NC_000006.12")}. A name differing only by a
 \item{haplotypes}{on a walk file, the \code{sample#haplotype} walks to cut, every
 one when \code{NULL}}
 
-\item{context}{on a walk file, bp of reference kept past each end of \code{region}}
+\item{context}{on a walk file, bp of reference kept past each end of
+\code{region}; \code{NULL} keeps what the browser readers keep, graph-walks'
+\code{WALK_CONTEXT}}
 
 \item{frequencies}{each node's passes per haplotype, as a data frame of
 \code{name} and \code{frequency} such as \code{\link[=vcf_frequencies]{vcf_frequencies()}} returns, or a numeric

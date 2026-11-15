@@ -66,7 +66,7 @@ core_region <- function(region) {
 #' @inheritParams bandage_layout
 #' @return GFA text, one string
 #' @export
-bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
+bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = NULL) {
   source <- graph_source(gfa, region, haplotypes, context)$source
   if (is.null(source$walks)) {
     source$text
@@ -88,7 +88,7 @@ bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
 #'   a W line or the path's name for a P line; `step`, from 1 in each line;
 #'   `node`; `pass`; and `start` and `end`, bp from the line's first base
 #' @export
-bandage_walk_steps <- function(gfa, region = NULL, haplotypes = NULL, context = 1000) {
+bandage_walk_steps <- function(gfa, region = NULL, haplotypes = NULL, context = NULL) {
   lines <- strsplit(bandage_gfa(gfa, region, haplotypes, context), "\n", fixed = TRUE)[[1]]
   records <- function(tag) strsplit(lines[startsWith(lines, tag)], "\t", fixed = TRUE)
   segments <- records("S\t")
@@ -166,7 +166,9 @@ walk_origin <- function(walk) {
 #'   `chr` prefix needs none
 #' @param haplotypes on a walk file, the `sample#haplotype` walks to cut, every
 #'   one when `NULL`
-#' @param context on a walk file, bp of reference kept past each end of `region`
+#' @param context on a walk file, bp of reference kept past each end of
+#'   `region`; `NULL` keeps what the browser readers keep, graph-walks'
+#'   `WALK_CONTEXT`
 #' @param frequencies each node's passes per haplotype, as a data frame of
 #'   `name` and `frequency` such as [vcf_frequencies()] returns, or a numeric
 #'   vector named by node. They override any `AF` tag and what the walks give,
@@ -183,7 +185,7 @@ walk_origin <- function(walk) {
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, height = 800, region = NULL,
                            genes = NULL, gene_names = NULL, haplotypes = NULL,
-                           context = 1000, frequencies = NULL, ...) {
+                           context = NULL, frequencies = NULL, ...) {
   src <- graph_source(gfa, region, haplotypes, context)
   spec <- c(
     list(layout = layout, width = width, height = height),
@@ -257,7 +259,8 @@ unbound_genes <- function(genes, unbound) {
 # location
 walk_request <- function(file, region, haplotypes, context) {
   c(
-    list(file = file, context = context),
+    list(file = file),
+    if (!is.null(context)) list(context = context),
     if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
     parse_region(region)
   )
