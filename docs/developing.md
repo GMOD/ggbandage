@@ -222,19 +222,19 @@ on any other bundle, so main must not get one until the core is out:
 `scripts/v8-host.mjs`, the bundle's first import, defines each one when V8
 lacks it:
 
-| Global                           | Needed by                                      |
-| -------------------------------- | ---------------------------------------------- |
-| `TextDecoder`, `TextEncoder`     | line decoding and the wasm bindings            |
-| `AbortController`                | `@gmod/shared-read-cache`                      |
-| `fetch`                          | the bgzf wasm, which loads from a `data:` URL  |
-| `performance`, `structuredClone` | timing and copying in the core                 |
-| `Intl.Collator`                  | the core's order for node labels and row names |
+| Global                           | Needed by                                     |
+| -------------------------------- | --------------------------------------------- |
+| `TextDecoder`, `TextEncoder`     | line decoding and the wasm bindings           |
+| `AbortController`                | `@gmod/shared-read-cache`                     |
+| `fetch`                          | the bgzf wasm, which loads from a `data:` URL |
+| `performance`, `structuredClone` | timing and copying in the core                |
 
 - `fetch` only reads `data:` URLs and throws on anything else
-- R's V8 is built without ICU, so with `Intl.Collator` the file also replaces
-  `localeCompare`, which would order by code unit, and `toLocaleString`, which
-  would group no digits. Each gives the en-US answer a browser gives for ASCII
-  names and for counts, so the core's key and readouts read the same in R
+- R's V8 is built without ICU, so it has no `Intl` and its `toLocaleString`
+  groups no digits. The core orders names with its own `compareIds`, not by
+  collation, so the file defines no `Intl`. Where `toLocaleString` groups no
+  digits it gives the en-US answer a browser gives for a count, so the core's
+  key and readouts print 1,234,567 in R as in a browser
 - The build inlines the core's wasm as base64, which `bandageBase64` in the
   bundle's banner decodes before any module runs
 - The cut passes `chunkCacheIdleTimeoutMs: 0`, which stops the chunk cache
