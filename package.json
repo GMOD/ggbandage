@@ -15,8 +15,8 @@
     "@jbrowse/graph-walks": "^6.2.0",
     "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
-    "oxfmt": "^0.76.0",
-    "oxlint": "^1.92.0",
-    "tsrs": "0.23.0-ts7.1.0-beta"
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "tsrs": "0.25.0-ts7.1.0-beta"
   }
 }
