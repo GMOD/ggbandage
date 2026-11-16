@@ -40,20 +40,18 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.text = ggplot2::element_text(size = 9),
       strip.text = ggplot2::element_text(
-        hjust = 0, lineheight = 1.1, margin = ggplot2::margin(b = 4)
+        hjust = 0, lineheight = 1.1,
+        margin = ggplot2::margin(b = 4 + (BAR_RISE + 2) * 72 / 96)
       ),
       panel.spacing = grid::unit(12, "pt")
     )
   if (keyed) {
     p <- p + ggplot2::theme(legend.location = "plot")
   }
-  if (!m$pixelRows) {
-    p <- p + ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX, clip = "off")
-  }
-  if (faceted && !nrow(object$rows)) {
-    p <- p + ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = 0.05, add = c(0, 24 / m$scaleY))
-    )
+  p <- p + if (m$pixelRows) {
+    ggplot2::coord_cartesian(clip = "off")
+  } else {
+    ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX, clip = "off")
   }
   if (faceted) {
     panels <- object$panels

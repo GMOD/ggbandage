@@ -10,7 +10,9 @@ geom_bandage_keys(data = NULL, text = TRUE)
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
 
 \item{text}{write each entry's words beside its bar; faceted, the panel's
-title already does}
+title already does. A bar without its words stands just above the panel,
+clear of the drawing, so it needs a coord with \code{clip = "off"} and room
+under the panel's title, as \link[=autoplot.bandage_layout]{autoplot()} gives it}
 }
 \description{
 A bar of the walk's colour, or of the scale a shaded walk runs over, with

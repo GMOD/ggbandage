@@ -404,13 +404,18 @@ GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
       return(grid::nullGrob())
     }
     names(data)[names(data) == "ink"] <- "colour"
-    grid::gTree(keys = data, text = text, cl = "bandage_keys")
+    grid::gTree(keys = data, text = text, top = if (text) 6 else -BAR_RISE, cl = "bandage_keys")
   }
 )
 
+# px a panel's unlabelled bar stands above the panel's top edge, under the
+# panel's title and off the drawing
+BAR_RISE <- 14
+
 #' @exportS3Method grid::makeContent
 makeContent.bandage_keys <- function(x) {
-  grid::setChildren(x, key_grobs(x$keys, x$text, width_px(grid::unit(1, "npc")))$grobs)
+  top <- if (is.null(x$top)) 6 else x$top
+  grid::setChildren(x, key_grobs(x$keys, x$text, width_px(grid::unit(1, "npc")), top)$grobs)
 }
 
 key_font <- grid::gpar(fontsize = 8.25, col = "grey15")
@@ -462,12 +467,12 @@ swatch_grob <- function(k, at, mid) {
   )
 }
 
-# The entries laid along lines across `room` px, a new line where the next
-# would run past it; a line holding a stretch under an entry is two tall
-key_grobs <- function(data, text, room) {
+# The entries laid along lines across `room` px from `top` px under the
+# viewport's top edge, a new line where the next would run past it; a line
+# holding a stretch under an entry is two tall
+key_grobs <- function(data, text, room, top = 6) {
   grobs <- list()
   at <- 6
-  top <- 6
   tall <- 16
   for (i in seq_len(nrow(data))) {
     k <- data[i, ]
@@ -539,7 +544,9 @@ heightDetails.bandage_key_guide <- function(x) {
 #' the rest of the graph's key follows.
 #' @inheritParams geom_bandage_nodes
 #' @param text write each entry's words beside its bar; faceted, the panel's
-#'   title already does
+#'   title already does. A bar without its words stands just above the panel,
+#'   clear of the drawing, so it needs a coord with `clip = "off"` and room
+#'   under the panel's title, as [autoplot()][autoplot.bandage_layout] gives it
 #' @export
 geom_bandage_keys <- function(data = NULL, text = TRUE) {
   ggplot2::layer(

@@ -335,6 +335,21 @@ test_that("faceted, each panel draws its own walk's bar", {
   expect_equal(levels(keys_of(g)$panel), c("K12", "IAI39"))
 })
 
+test_that("faceted, a panel's bar stands above the panel's top edge, off the drawing, at any size", {
+  g <- bandage_layout(pggb, walks = lifted, facet = "walk")
+  p <- ggplot2::autoplot(g)
+  expect_identical(p$coordinates$clip, "off")
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  bar <- function(text) {
+    key <- GeomBandageKey$draw_panel(transform(keys_of(g)[1, ], ink = colour), NULL, NULL, text = text)
+    rect <- Filter(function(c) inherits(c, "rect"), grid::makeContent(key)$children)[[1]]
+    grid::convertY(rect$y, "inches", valueOnly = TRUE) - grid::convertY(grid::unit(1, "npc"), "inches", valueOnly = TRUE)
+  }
+  expect_gt(bar(FALSE) - 4 / 96, 0)
+  expect_lt(bar(TRUE), 0)
+})
+
 test_that("faceted, one key below the panels names the shading, then the graph's key", {
   g <- bandage_layout(pggb, walks = lifted, facet = "walk")
   guide <- ggplot2::autoplot(g)$guides$guides$bandage_keys
