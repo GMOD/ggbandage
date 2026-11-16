@@ -140,8 +140,9 @@ pinned_top_left <- function(gt) {
 #' of the pass it is on. Over the bar, a line over each of a pass's stretches,
 #' a dotted hairline joining them, and the pass's name, with the bp it steps
 #' again, over its longest stretch where it does not run into a name already
-#' written, as bandage-core's figure draws it. Stack it under the layout's
-#' plot with patchwork, as `autoplot(g) / bandage_pass_bar(g)`.
+#' written along a bar as wide as the layout's `width`, as bandage-core's
+#' figure draws it. Stack it under the layout's plot with patchwork, as
+#' `autoplot(g) / bandage_pass_bar(g)`.
 #' @param layout a `bandage_layout` that lifts a walk by pass
 #' @return a ggplot
 #' @export
@@ -158,7 +159,7 @@ bandage_pass_bar <- function(layout) {
   bp <- key$end - key$start
   unit <- axis_unit(max(bp))
   at <- function(walk) length(walks) + 1 - match(walk, walks)
-  bp_per_px <- max(bp) / PASS_BAR_PX
+  bp_per_px <- max(bp) / (layout$meta$width - 2 * PASS_BAR_SIDE_PX)
   runs <- joined_runs(layout$pass_runs, bp_per_px)
   marks <- pass_marks(layout$pass_runs, passes, bp, walks, bp_per_px)
   half <- 0.18
@@ -212,9 +213,9 @@ bandage_pass_bar <- function(layout) {
     )
 }
 
-# The px a pass bar's names and joins are measured at, as bandage-core
-# measures them along a bar this wide
-PASS_BAR_PX <- 600
+# The bar runs the layout's width less this at each side, as bandage-core's
+# does, which measures its names and joins in px along it
+PASS_BAR_SIDE_PX <- 12
 # a name's px a letter, in the bar's 11 px type
 PASS_NAME_CHAR_PX <- 6.2
 

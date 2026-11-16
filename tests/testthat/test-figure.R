@@ -286,6 +286,8 @@ test_that("the pass bar draws the walk in its own colour, each pass's stretches 
   expect_equal(nrow(built$data[[3]]), 0)
   expect_equal(built$data[[5]]$label, g$passes$text)
   expect_equal(built$data[[5]]$x, c(3, 9))
+  narrow <- ggplot2::ggplot_build(bandage_pass_bar(bandage_layout(gfa, walks = by_pass(), engine = "stress", width = 150)))
+  expect_equal(narrow$data[[5]]$label, g$passes$text[1])
   expect_equal(built$plot$scales$get_scales("x")$name, "bp along dup")
   expect_error(bandage_pass_bar(bandage_layout(pggb, walks = "K12")), "lifts no walk")
 })
