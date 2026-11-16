@@ -225,6 +225,32 @@ test_that("a walk lifted by pass has each pass named on the graph in its colour,
   expect_s3_class(swatch_grob(heads, 6, grid::unit(0.5, "npc")), "segments")
 })
 
+test_that("a head the layout marks halo stands on a white halo drawn under every head, and a core that marks none draws none", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(repeat_gfa, gfa)
+  g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
+  expect_gt(nrow(g$arrows), 1)
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  drawn <- function(g) {
+    p <- ggplot2::ggplot(g) + geom_bandage_arrows()
+    b <- ggplot2::ggplot_build(p)
+    grob <- GeomBandageArrow$draw_panel(b$data[[1]], b$layout$panel_params[[1]], b$layout$coord)
+    grob$children
+  }
+  bare <- drawn(g)
+  expect_length(bare, 1)
+  expect_true(is.na(bare[[1]]$gp$col))
+  g$arrows$halo <- seq_len(nrow(g$arrows)) == 1
+  haloed <- drawn(g)
+  expect_length(haloed, 2)
+  expect_equal(haloed[[1]]$gp$col, "white")
+  expect_equal(haloed[[1]]$gp$lwd, 3)
+  expect_equal(length(unique(haloed[[1]]$id)), 1)
+  expect_equal(length(unique(haloed[[2]]$id)), nrow(g$arrows))
+})
+
 test_that("a walk's passes take the names given them, one name or many, and a graph where it steps no node twice the passes stated", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))

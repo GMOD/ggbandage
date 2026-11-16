@@ -198,7 +198,7 @@ path_layer <- function(mapping, data, pick, ...) {
 
 GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
   required_aes = c("x", "y", "angle", "length", "halfwidth"),
-  default_aes = ggplot2::aes(fill = "grey30", alpha = 1),
+  default_aes = ggplot2::aes(fill = "grey30", alpha = 1, halo = FALSE),
   draw_key = ggplot2::draw_key_polygon,
   draw_panel = function(data, panel_params, coord) {
     if (!nrow(data)) {
@@ -211,15 +211,26 @@ GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
     # tip, left barb, notch, right barb, in px off the tip
     dx <- rbind(0, -ux * d$length - uy * d$halfwidth, -ux * notch, -ux * d$length + uy * d$halfwidth)
     dy <- rbind(0, -uy * d$length + ux * d$halfwidth, -uy * notch, -uy * d$length - ux * d$halfwidth)
-    n <- nrow(d)
-    grid::polygonGrob(
-      x = grid::unit(rep(d$x, each = 4), "native") + px(as.vector(dx)),
-      y = grid::unit(rep(d$y, each = 4), "native") + px(as.vector(dy)),
-      id = rep(seq_len(n), each = 4),
-      gp = grid::gpar(col = NA, fill = ggplot2::alpha(d$fill, d$alpha))
-    )
+    heads <- function(rows, gp) {
+      grid::polygonGrob(
+        x = grid::unit(rep(d$x[rows], each = 4), "native") + px(as.vector(dx[, rows])),
+        y = grid::unit(rep(d$y[rows], each = 4), "native") + px(as.vector(dy[, rows])),
+        id = rep(seq_along(rows), each = 4),
+        gp = gp
+      )
+    }
+    haloed <- which(d$halo)
+    grid::gTree(children = do.call(grid::gList, c(
+      if (length(haloed)) {
+        list(heads(haloed, grid::gpar(col = "white", fill = NA, lwd = 2 * HEAD_HALO_PX, linejoin = "round")))
+      },
+      list(heads(seq_len(nrow(d)), grid::gpar(col = NA, fill = ggplot2::alpha(d$fill, d$alpha))))
+    )))
   }
 )
+
+# px of white each side of a head's outline, under a head wider than its lane
+HEAD_HALO_PX <- 1.5
 
 # css px of text as ggplot2's size, in mm
 px_size <- function(px) px * 72 / 96 / ggplot2::.pt
@@ -629,17 +640,26 @@ geom_bandage_keys <- function(data = NULL, text = TRUE) {
 }
 
 #' Strand arrowheads, a fixed size at any zoom
+#'
+#' A head wider than its lane stands on a white halo, as the Bandage view
+#' draws it, where the layout's `arrows` table marks it `halo`.
 #' @inheritParams geom_bandage_nodes
 #' @export
 geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
   ggplot2::layer(
     geom = GeomBandageArrow, stat = "identity", position = "identity",
-    data = table_from(data, function(m) m$arrows),
+    data = table_from(data, function(m) haloed_heads(m$arrows)),
     mapping = with_defaults(mapping, ggplot2::aes(
       x = x, y = y, angle = angle, length = length, halfwidth = halfWidth,
-      fill = I(color), alpha = I(alpha)
+      fill = I(color), alpha = I(alpha), halo = halo
     )),
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(...)
   )
+}
+
+# A core whose figure data has no halo column puts no head on a halo
+haloed_heads <- function(arrows) {
+  arrows$halo <- if (is.null(arrows$halo)) logical(nrow(arrows)) else arrows$halo
+  arrows
 }

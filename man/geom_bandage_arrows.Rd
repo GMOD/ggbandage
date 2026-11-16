@@ -14,5 +14,6 @@ geom_bandage_arrows(mapping = NULL, data = NULL, ...)
 \item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
 }
 \description{
-Strand arrowheads, a fixed size at any zoom
+A head wider than its lane stands on a white halo, as the Bandage view
+draws it, where the layout's \code{arrows} table marks it \code{halo}.
 }
