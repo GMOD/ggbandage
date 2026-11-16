@@ -255,7 +255,8 @@ Rscript scripts/gallery.R c4_stress  # one figure, and the docs
 Rscript scripts/gallery.R --check    # what CI runs: offline, draws nothing
 ```
 
-`--check` fails when a snippet calls a function no attached package defines, or
+`--check` fails when a snippet calls a function that neither R's default
+packages nor the libraries the snippet loads define, or
 when `docs/gallery.md` or the README cards differ from what the script writes.
 
 ## The syng graphs

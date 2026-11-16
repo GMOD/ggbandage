@@ -28,22 +28,27 @@ autoplot(rows)
 
 ## Reading walk rows
 
-- **x:** bp from the left flank, counted along each walk, not reference
-  coordinates
+- **x:** distance from the left flank in bp, kb or Mb, counted along each
+  walk, not reference coordinates
 - **Readout:** a bar's bp between the flanks, so GRCh38 reads 31 kb at KIV-2
 
-| Mark | Meaning |
-| --- | --- |
-| Gradient colour | Sequence on the reference's path, coloured by the reference position it covers. A duplicated stretch repeats its colours, an inverted one runs them backwards |
-| Charcoal | Sequence on non-reference nodes. It can still resemble the reference, as an extra repeat copy does |
-| Letter | A block of non-reference nodes that two or more drawn rows walk. A is the block with the most bp; `autoplot()` fills the three largest |
-| White, dashed | Graph sequence outside the extracted subgraph. From a walk file, the readout names where, e.g. `34 kb on nodes filed near chr22:20.3 Mb` |
-| White, solid dark | Not in the graph: bp of the walk's contig between its W lines, which its departure from the reference says the graph lacks. Walk files only |
-| White, solid dark, the whole row | No step on the reference: the haplotype has no step on the reference across the window. The readout states the stretch between its departure's ends and its own bp there, e.g. `no step on GRCh38 across 54 kb · 120 kb of its own`. Walk files only |
-| White, dotted | Of its own, not read: the walk's own sequence between a departure's ends that the cut did not read. Walk files only |
-| Pale blue ribbon | Neighbouring rows walk the same graph nodes |
-| Violet ribbon | Neighbouring rows walk the same graph nodes backwards |
+| Mark | Key | Meaning |
+| --- | --- | --- |
+| Gradient colour | The position scale | Sequence on the reference's path, coloured by the reference position it covers. A duplicated stretch repeats its colours, an inverted one runs them backwards |
+| Charcoal | off the GRCh38 path, by the reference's name | Sequence on non-reference nodes. It can still resemble the reference, as an extra repeat copy does |
+| Letter | The block letters | A block of non-reference nodes that two or more drawn rows walk. A is the block with the most bp; `autoplot()` fills the three largest |
+| Hollow grey box | nodes not shown | A stretch whose nodes the cut did not load, drawn as the graph draws its placeholder. The row gets no ribbons or letters, and its readout ends `not compared` |
+| White, dashed pale outline | out of view | Graph sequence beyond the part drawn |
+| White, solid dark outline | left out of graph | bp of the walk's contig that the graph builder dropped. Walk files only |
+| White, solid dark outline, the whole row | no step on the reference | The haplotype has no step on the reference across the window. The readout states the stretch between its departure's ends and its own bp there. Walk files only |
+| White, dotted pale outline | own sequence not drawn | The walk's own sequence between a departure's ends, on nodes the cut did not read. Walk files only |
+| White, dotted dark outline | not drawn or left out of graph | Some of each of the two above. Walk files only |
+| White, dashed dark outline | not drawn | Graph sequence the walk went on to after leaving the view. Walk files only |
+| Pale blue ribbon | ribbon: next row walks the same nodes | Neighbouring rows walk the same graph nodes |
+| Violet ribbon | ribbon: next row walks them backwards | Neighbouring rows walk the same graph nodes backwards |
 
+- A readout longer than the room beside its bar goes onto two lines, or is cut
+  at the end and closed with `…`; `rows$rows$readout` has it whole
 - Shared nodes mean similar sequence, not shared ancestry
 - `autoplot(rows, ribbons = FALSE)` drops the ribbons, as for rows that share
   almost every node
