@@ -45,7 +45,7 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
       ),
       panel.spacing = grid::unit(12, "pt")
     )
-  if (keyed) {
+  if (keyed || faceted) {
     p <- p + ggplot2::theme(legend.location = "plot")
   }
   p <- p + if (m$pixelRows) {
