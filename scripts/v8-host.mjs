@@ -13,6 +13,80 @@ globalThis.performance ??= { now: () => Date.now() }
 // a bundle clones only parsed JSON, which a JSON round trip copies exactly
 globalThis.structuredClone ??= value => JSON.parse(JSON.stringify(value))
 
+// R's V8 is built without ICU: it has no Intl, toLocaleString groups no
+// digits and localeCompare orders by code unit. These give the en-US answers
+// a browser gives for the ASCII names and the counts a bundle sorts and prints
+const PUNCTUATION = ' _-,;:!?.\'"()[]{}@*/\\&#%`^+<=>|~$'
+
+function collationRank(ch) {
+  return /[a-z]/i.test(ch)
+    ? 0x20000 + ch.toLowerCase().codePointAt(0)
+    : /\d/.test(ch)
+      ? 0x10000 + ch.codePointAt(0)
+      : PUNCTUATION.includes(ch)
+        ? PUNCTUATION.indexOf(ch)
+        : 0x100 + ch.codePointAt(0)
+}
+
+function partOrder(a, b) {
+  return /^\d+$/.test(a) && /^\d+$/.test(b)
+    ? Number(a) - Number(b)
+    : collationRank(a) - collationRank(b)
+}
+
+function lowerFirst(a, b) {
+  return a !== b && a.toLowerCase() === b.toLowerCase() ? (a < b ? 1 : -1) : 0
+}
+
+function firstDifference(a, b, order) {
+  const at = a.findIndex((part, i) => i >= b.length || order(part, b[i]) !== 0)
+  return at === -1
+    ? a.length - b.length
+    : at >= b.length
+      ? 1
+      : order(a[at], b[at])
+}
+
+function collator(numeric) {
+  const parts = text => (numeric ? (text.match(/\d+|\D/g) ?? []) : [...text])
+  return (textA, textB) => {
+    const a = parts(String(textA))
+    const b = parts(String(textB))
+    const letters = firstDifference(a, b, partOrder)
+    return Math.sign(
+      letters === 0 ? firstDifference(a, b, lowerFirst) : letters,
+    )
+  }
+}
+
+function grouped(value) {
+  const size = Math.abs(value)
+  const sign = value < 0 ? '-' : ''
+  const [whole, fraction] = `${+size.toFixed(3)}`.split('.')
+  return size < 1e21
+    ? `${sign}${whole.replace(/\B(?=(\d{3})+$)/g, ',')}${fraction ? `.${fraction}` : ''}`
+    : size === Infinity
+      ? `${sign}∞`
+      : String(value)
+}
+
+if (!globalThis.Intl) {
+  globalThis.Intl = {
+    Collator: function Collator(_locales, { numeric = false } = {}) {
+      this.compare = collator(numeric)
+    },
+  }
+  const unnumbered = collator(false)
+  // eslint-disable-next-line no-extend-native
+  String.prototype.localeCompare = function (other) {
+    return unnumbered(this, other)
+  }
+  // eslint-disable-next-line no-extend-native
+  Number.prototype.toLocaleString = function () {
+    return grouped(Number(this))
+  }
+}
+
 const BASE64 =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 

@@ -277,3 +277,17 @@ test_that("a file's size is asked of a local path, a file:// URL, or the server'
   expect_identical(url_range("https://example.org/whole.walks.gz", 2, 3), as.raw(3:5))
   whole_bodies$clear()
 })
+
+test_that("the engine sorts names and groups digits as a browser does, where R's V8 has no ICU", {
+  ctx <- engine()
+  sorted <- function(by) {
+    ctx$eval(sprintf("['s10', 'S2', 'grch38', 's2', 'HG002', 'CHM13', 's_1', 's-1'].sort(%s).join()", by))
+  }
+  expect_identical(
+    sorted("new Intl.Collator('en', { numeric: true }).compare"),
+    "CHM13,grch38,HG002,s_1,s-1,s2,S2,s10"
+  )
+  expect_identical(sorted("(a, b) => a.localeCompare(b)"), "CHM13,grch38,HG002,s_1,s-1,s10,s2,S2")
+  expect_identical(ctx$eval("(1234567.5).toLocaleString('en-US')"), "1,234,567.5")
+  expect_identical(ctx$eval("(-999).toLocaleString() + ' ' + (0.12345).toLocaleString()"), "-999 0.123")
+})
