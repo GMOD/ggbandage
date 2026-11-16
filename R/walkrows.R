@@ -69,11 +69,11 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   not_loaded <- d$notLoaded
   kind <- ifelse(
     runs$unloaded, not_loaded$text,
-    ifelse(runs$onReference, "on the reference's path", "off the reference's path")
+    ifelse(runs$onReference, ON_PATH, OFF_PATH)
   )
   runs$kind <- factor(
     ifelse(runs$gap, causes[as.character(runs$cause)], kind),
-    levels = c("on the reference's path", "off the reference's path", causes, not_loaded$text)
+    levels = c(ON_PATH, OFF_PATH, causes, not_loaded$text)
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$end
@@ -267,7 +267,7 @@ bar_tiles <- function(runs, tile) {
   cover <- stats::aggregate(bp ~ row + at + kind, pieces, sum)
   cover <- cover[order(cover$row, cover$at, -cover$bp), ]
   tiles <- cover[!duplicated(cover[c("row", "at")]), c("row", "at", "kind")]
-  on <- pieces[pieces$kind == "on the reference's path", ]
+  on <- pieces[pieces$kind == ON_PATH, ]
   on <- on[order(on$row, on$at, -on$bp), ]
   on <- on[!duplicated(on[c("row", "at")]), c("row", "at", "position")]
   tiles <- merge(tiles, on, all.x = TRUE)
@@ -341,67 +341,37 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   reference <- rows$sample[1]
   half <- 0.2
   y <- nrow(rows) - rows$row
+  bar <- function(...) ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, ...)
   all$y <- y[all$row + 1]
   all$ink <- inks$colour
-  on <- all$kind == "on the reference's path"
-  tiles <- all[on | (walk_hued & all$kind == "off the reference's path"), ]
-  plain <- all[!on, ]
-  breaks <- diff(which(!on)) != 1 | diff(plain$row) != 0 | diff(as.integer(plain$kind)) != 0
-  stretch <- cumsum(c(TRUE, breaks))[seq_len(nrow(plain))]
-  plain <- data.frame(
-    row = tapply(plain$row, stretch, `[`, 1),
-    y = tapply(plain$y, stretch, `[`, 1),
-    xmin = tapply(plain$xmin, stretch, min),
-    xmax = tapply(plain$xmax, stretch, max),
-    kind = tapply(as.character(plain$kind), stretch, `[`, 1)
-  )
-  off <- paste(if (walk_hued) "grey above: on the" else "off the", reference, "path")
-  ribbon <- "ribbon: next row walks the same nodes"
-  inverted <- "ribbon: next row walks them backwards"
-  causes <- object$causes
-  not_loaded <- object$not_loaded
+  on <- all$kind == ON_PATH
+  marks <- rows_key(reference, object$causes, object$not_loaded, walk_hued)
+
+  tiles <- all[on | (walk_hued & all$kind == OFF_PATH), ]
+  tiles$fill <- ifelse(is.na(tiles$ink), "#9A9A9A", tiles$ink)
+  plain <- tile_stretches(all[!on, ], which(!on))
   plain$key <- ifelse(
-    plain$kind == causes[["elsewhere"]], causes[["outside"]],
-    ifelse(plain$kind %in% c(causes, not_loaded$text), plain$kind, off)
+    plain$kind == object$causes[["elsewhere"]], object$causes[["outside"]],
+    ifelse(plain$kind %in% names(marks$fill), plain$kind, marks$off)
   )
-  more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
-  block_fill <- if (walk_hued) NA else "#e8e8e8"
-  entry <- function(label, fill, outline, dash = "solid") data.frame(label, fill, outline, dash)
-  key_table <- rbind(
-    entry(off, if (walk_hued) STRIP_FILL else CHARCOAL, if (walk_hued) NA else CHARCOAL),
-    entry(causes[["outside"]], "white", "#9a9a9a", "22"),
-    entry(causes[["missing"]], "white", "#6e6e6e"),
-    entry(causes[["departure"]], "white", "#6e6e6e"),
-    entry(causes[["own"]], "white", "#9a9a9a", "12"),
-    entry(causes[["mixed"]], "white", "#6e6e6e", "12"),
-    entry(causes[["unread"]], "white", "#6e6e6e", "22"),
-    entry(not_loaded$text, not_loaded$fill, not_loaded$rim),
-    entry(ribbon, "#cfe0f2", "#cfe0f2"),
-    entry(inverted, "#b9abdb", "#b9abdb"),
-    entry(more, block_fill, "#7a7a7a")
-  )
-  keys <- stats::setNames(key_table$fill, key_table$label)
-  outlines <- stats::setNames(key_table$outline, key_table$label)
-  dashes <- stats::setNames(key_table$dash, key_table$label)
+  plain$fill <- ifelse(walk_hued & plain$key == marks$off, NA, marks$fill[plain$key])
+
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- if (walk_hued) character() else c("#d4785f", "#d9a94e", "#c98aa3")
   filled <- blocks[blocks$block < length(fills), ]
   filled$letter <- factor(filled$letter, levels = block_letters(seq_along(fills) - 1))
   others <- blocks[blocks$block >= length(fills), ]
-  others$key <- rep(more, nrow(others))
+  others$key <- rep(marks$more, nrow(others))
   lettered <- blocks[blocks$bp >= span * letter_share, ]
 
-  links <- object$links
-  if (!ribbons) {
-    links <- links[0, ]
-  }
-  key <- ifelse(links$b0 > links$b1, inverted, ribbon)
-  shown <- intersect(names(keys), c(plain$key, key, others$key))
-  strips <- all[walk_hued & on & all$row > 0 & off %in% shown, c("row", "y", "xmin", "xmax")]
+  links <- if (ribbons) object$links else object$links[0, ]
+  shown <- intersect(names(marks$fill), c(plain$key, ribbon_key(links), others$key))
+  strips <- all[walk_hued & on & all$row > 0 & marks$off %in% shown, c("row", "y", "xmin", "xmax")]
   rise <- if (nrow(strips)) STRIP_GAP + STRIP_HEIGHT else 0
+
   title <- paste(reference, "position, Mb")
-  fill <- if (walk_hued) {
+  position_fill <- if (walk_hued) {
     NULL
   } else if (hues == "bandage") {
     scale_fill_bandage_position(title)
@@ -411,75 +381,55 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   outline <- if (length(shown)) {
     ggplot2::scale_colour_manual(
       NULL,
-      values = outlines, breaks = shown,
+      values = marks$outline, breaks = shown,
       guide = ggplot2::guide_legend(
         order = 2, nrow = if (length(shown) > 4) 2, byrow = TRUE, override.aes = list(
-          fill = unname(keys[shown]), linewidth = 0.25, linetype = unname(dashes[shown])
+          fill = unname(marks$fill[shown]), linewidth = 0.25, linetype = unname(marks$dash[shown])
         )
       )
     )
   }
-  plain$fill <- ifelse(walk_hued & plain$key == off, NA, keys[plain$key])
-  if (walk_hued) {
-    tiles$fill <- ifelse(is.na(tiles$ink), "#9A9A9A", tiles$ink)
-  }
-  p <- ggplot2::ggplot()
-  if (nrow(links)) {
-    top <- y[links$row + 1] - half
-    bottom <- top - 1 + 2 * half + rise
-    p <- p + ggplot2::geom_polygon(
-      data = data.frame(
-        id = rep(seq_len(nrow(links)), each = 4),
-        x = c(rbind(links$a0, links$a1, links$b1, links$b0)),
-        y = c(rbind(top, top, bottom, bottom)),
-        key = rep(key, each = 4)
-      ),
-      ggplot2::aes(x = x, y = y, group = id, colour = key, fill = I(keys[key])),
+  ribbon_layer <- if (nrow(links)) {
+    ggplot2::geom_polygon(
+      data = ribbon_corners(links, y, half, rise),
+      ggplot2::aes(x = x, y = y, group = id, colour = key, fill = I(marks$fill[key])),
       linewidth = 0.1
     )
   }
-  p <- p +
+  swatch_layer <- if (nrow(swatches)) {
     ggplot2::geom_rect(
-      data = tiles,
-      if (walk_hued) {
-        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, fill = I(fill))
-      } else {
-        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, fill = position)
-      }
-    ) +
+      data = data.frame(swatches, y = y[swatches$row + 1]),
+      ggplot2::aes(
+        xmin = -span * 0.035, xmax = -span * 0.012,
+        ymin = y - half, ymax = y + half, fill = I(colour)
+      )
+    )
+  }
+  readout_layer <- if (readouts) {
+    ggplot2::layer(
+      geom = GeomBandageReadout, stat = "identity", position = "identity",
+      data = data.frame(x = rows$xmax, y = y, label = rows$readout),
+      mapping = ggplot2::aes(x = x, y = y, label = label),
+      inherit.aes = FALSE, show.legend = FALSE
+    )
+  }
+  ggplot2::ggplot() +
+    ribbon_layer +
+    ggplot2::geom_rect(data = tiles, if (walk_hued) bar(fill = I(fill)) else bar(fill = position)) +
     ggplot2::geom_rect(
       data = strips,
-      ggplot2::aes(
-        xmin = xmin, xmax = xmax, ymin = y + half + STRIP_GAP, ymax = y + half + rise
-      ),
+      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y + half + STRIP_GAP, ymax = y + half + rise),
       fill = STRIP_FILL
     ) +
     ggplot2::geom_rect(
-      data = plain,
-      ggplot2::aes(
-        xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half,
-        colour = key, fill = I(fill), linetype = I(dashes[key])
-      ),
+      data = plain, bar(colour = key, fill = I(fill), linetype = I(marks$dash[key])),
       linewidth = 0.25
     ) +
-    ggplot2::geom_rect(
-      data = others,
-      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half, colour = key),
-      fill = block_fill, linewidth = 0.25
-    ) +
-    ggplot2::geom_rect(
-      data = filled,
-      ggplot2::aes(
-        xmin = xmin, xmax = xmax, ymin = y - half, ymax = y + half,
-        alpha = letter, fill = I(fills[block + 1])
-      )
-    ) +
+    ggplot2::geom_rect(data = others, bar(colour = key), fill = marks$fill[[marks$more]], linewidth = 0.25) +
+    ggplot2::geom_rect(data = filled, bar(alpha = letter, fill = I(fills[block + 1]))) +
     ggplot2::geom_text(
       data = lettered,
-      ggplot2::aes(
-        x = (xmin + xmax) / 2, y = y, label = letter,
-        colour = I("grey10")
-      ),
+      ggplot2::aes(x = (xmin + xmax) / 2, y = y, label = letter, colour = I("grey10")),
       size = 2.6, fontface = "bold", show.legend = FALSE
     ) +
     ggplot2::scale_alpha_manual(
@@ -489,7 +439,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
         order = 3, override.aes = list(fill = fills[seq_along(levels(droplevels(filled$letter)))])
       )
     ) +
-    fill +
+    position_fill +
     outline +
     ggplot2::scale_y_continuous(
       breaks = y, labels = rows$label, expand = ggplot2::expansion(add = 0.4)
@@ -503,7 +453,73 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ) +
     ggplot2::labs(y = NULL) +
     ggplot2::coord_cartesian(clip = "off") +
-    ggplot2::theme_minimal(base_size = 10) +
+    rows_theme() +
+    swatch_layer +
+    readout_layer
+}
+
+ON_PATH <- "on the reference's path"
+OFF_PATH <- "off the reference's path"
+RIBBON <- "ribbon: next row walks the same nodes"
+INVERTED <- "ribbon: next row walks them backwards"
+
+# Neighbouring tiles of one row and kind as one stretch. `at` is each tile's
+# place among all the bars' tiles, so a tile left out between two parts them
+tile_stretches <- function(tiles, at) {
+  parts <- diff(at) != 1 | diff(tiles$row) != 0 | diff(as.integer(tiles$kind)) != 0
+  stretch <- cumsum(c(TRUE, parts))[seq_len(nrow(tiles))]
+  data.frame(
+    row = tapply(tiles$row, stretch, `[`, 1),
+    y = tapply(tiles$y, stretch, `[`, 1),
+    xmin = tapply(tiles$xmin, stretch, min),
+    xmax = tapply(tiles$xmax, stretch, max),
+    kind = tapply(as.character(tiles$kind), stretch, `[`, 1)
+  )
+}
+
+# The rows' key in the order it is drawn, as each entry's `fill`, `outline`
+# and `dash` by its label. `off` names sequence off the reference's path, or
+# under walk hues the grey strip over sequence on it, and `more` the shared
+# blocks past the filled ones
+rows_key <- function(reference, causes, not_loaded, walk_hued) {
+  off <- paste(if (walk_hued) "grey above: on the" else "off the", reference, "path")
+  more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
+  entry <- function(label, fill, outline, dash = "solid") data.frame(label, fill, outline, dash)
+  entries <- rbind(
+    entry(off, if (walk_hued) STRIP_FILL else CHARCOAL, if (walk_hued) NA else CHARCOAL),
+    entry(causes[["outside"]], "white", "#9a9a9a", "22"),
+    entry(causes[["missing"]], "white", "#6e6e6e"),
+    entry(causes[["departure"]], "white", "#6e6e6e"),
+    entry(causes[["own"]], "white", "#9a9a9a", "12"),
+    entry(causes[["mixed"]], "white", "#6e6e6e", "12"),
+    entry(causes[["unread"]], "white", "#6e6e6e", "22"),
+    entry(not_loaded$text, not_loaded$fill, not_loaded$rim),
+    entry(RIBBON, "#cfe0f2", "#cfe0f2"),
+    entry(INVERTED, "#b9abdb", "#b9abdb"),
+    entry(more, if (walk_hued) NA else "#e8e8e8", "#7a7a7a")
+  )
+  by_label <- function(column) stats::setNames(entries[[column]], entries$label)
+  list(off = off, more = more, fill = by_label("fill"), outline = by_label("outline"), dash = by_label("dash"))
+}
+
+ribbon_key <- function(links) ifelse(links$b0 > links$b1, INVERTED, RIBBON)
+
+# Each ribbon's four corners, from the foot of its upper bar to the top of the
+# lower one, `rise` higher where the lower bar carries a strip
+ribbon_corners <- function(links, y, half, rise) {
+  top <- y[links$row + 1] - half
+  bottom <- top - 1 + 2 * half + rise
+  data.frame(
+    id = rep(seq_len(nrow(links)), each = 4),
+    x = c(rbind(links$a0, links$a1, links$b1, links$b0)),
+    y = c(rbind(top, top, bottom, bottom)),
+    key = rep(ribbon_key(links), each = 4)
+  )
+}
+
+rows_theme <- function() {
+  list(
+    ggplot2::theme_minimal(base_size = 10),
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       panel.grid.major.y = ggplot2::element_blank(),
@@ -517,24 +533,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.key.size = grid::unit(10, "pt")
     )
-  if (nrow(swatches)) {
-    p <- p + ggplot2::geom_rect(
-      data = data.frame(swatches, y = y[swatches$row + 1]),
-      ggplot2::aes(
-        xmin = -span * 0.035, xmax = -span * 0.012,
-        ymin = y - half, ymax = y + half, fill = I(colour)
-      )
-    )
-  }
-  if (readouts) {
-    p <- p + ggplot2::layer(
-      geom = GeomBandageReadout, stat = "identity", position = "identity",
-      data = data.frame(x = rows$xmax, y = y, label = rows$readout),
-      mapping = ggplot2::aes(x = x, y = y, label = label),
-      inherit.aes = FALSE, show.legend = FALSE
-    )
-  }
-  p
+  )
 }
 
 # The unit an axis `span` bp long counts in
