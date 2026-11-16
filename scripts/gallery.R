@@ -19,7 +19,7 @@ standalone <- function(code) {
   needed <- Filter(function(name) uses(sprintf("(?<![.\\w])%s(?![.\\w])(?!\\s*=)", name)), names(definitions))
   libraries <- c(
     "library(ggbandage)",
-    if (uses("ggplot|guides\\(|element_text|margin\\(|scale_|coord_|theme")) "library(ggplot2)",
+    if (uses("ggplot|guides\\(|element_text|margin\\(|scale_|coord_|theme|annotate\\(|geom_(?!bandage)|labs\\(|aes\\(")) "library(ggplot2)",
     if (uses("wrap_plots|plot_layout|\\) / ")) "library(patchwork)"
   )
   paste(c(libraries, "", unlist(definitions[needed]), if (length(needed)) "", code), collapse = "\n")
@@ -359,7 +359,7 @@ ggplot(g) +
   ),
   figure(
     "kiv2_walks", "LPA's KIV-2 repeat, a panel per walk", "chr6:160,616,004-160,646,753",
-    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop of sequence GRCh38 does not have, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes and a dashed link that skips GRCh38 sequence",
+    "Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop of sequence GRCh38 does not have, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes, the node thickness and a skip too short to dash",
     r"(g <- bandage_layout(
   walks,
   region = kiv2, haplotypes = "HG00097#1", context = 30000,
@@ -388,16 +388,13 @@ autoplot(g))",
   ),
   figure(
     "ugt2b17_frequency", "UGT2B17's deletion, each node as wide as its frequency", "chr4:68,500,000-68,680,000",
-    "Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. Text inside the loop gives 51% of haplotypes walking it and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%",
+    "Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. A caption under the graph gives 51% of haplotypes walking the loop and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%",
     r"(ugt2b17 <- "chr4:68,500,000-68,680,000"
 g <- bandage_layout(walks, region = ugt2b17, genes = genes, nodeWidth = "frequency", contigThickness = 10)
 share <- median(g$nodes$frequency[g$nodes$node %in% g$exons$node[g$exons$gene == "UGT2B17"]])
-loop <- g$nodes[abs(g$nodes$frequency - share) < 0.01, ]
 autoplot(g) +
-  annotate(
-    "text", x = mean(range(loop$x)), y = mean(range(loop$y)), size = 3.5, colour = "grey15",
-    label = sprintf("%s of haplotypes walk the UGT2B17 loop,\nand %s take the dashed edge past it", scales::percent(share), scales::percent(1 - share))
-  ))",
+  labs(caption = sprintf("%s of haplotypes walk the UGT2B17 loop, and %s take the dashed edge past it", scales::percent(share), scales::percent(1 - share))) +
+  theme(plot.caption = element_text(size = 10, hjust = 0.5)))",
     width = 8, height = 5,
     note = c(
       "- Nearly every haplotype walks the flanks, which draw full width. Half the haplotypes",
@@ -479,11 +476,15 @@ readme_text <- function() {
   c(text[seq_len(from)], table, text[to:length(text)])
 }
 
-# The functions a snippet calls that no attached package defines
+# The functions a snippet calls that neither R's default packages nor the
+# libraries the snippet itself loads define
 unresolved <- function(f) {
-  body <- as.call(c(as.name("{"), as.list(parse(text = standalone(f$code)))))
+  code <- standalone(f$code)
+  loaded <- regmatches(code, gregexpr("(?<=library\\()[^)]+", code, perl = TRUE))[[1]]
+  defined <- unlist(lapply(c(loaded, "base", "stats", "utils", "graphics", "grDevices", "methods"), getNamespaceExports))
+  body <- as.call(c(as.name("{"), as.list(parse(text = code))))
   called <- codetools::findGlobals(eval(call("function", NULL, body)), merge = FALSE)$functions
-  missing <- called[!vapply(called, exists, TRUE)]
+  missing <- setdiff(called, defined)
   if (length(missing)) sprintf("%s calls %s", f$id, paste(missing, collapse = ", "))
 }
 

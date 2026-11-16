@@ -439,7 +439,7 @@ ggplot(g) +
 
 `chr6:160,616,004-160,646,753`
 
-![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop of sequence GRCh38 does not have, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes and a dashed link that skips GRCh38 sequence](../gallery/kiv2_walks.png)
+![Force-directed layout of the KIV-2 array cut from the walk file for HG00097, GRCh38 and HG00097 each lifted in a separate panel and shaded yellow to red along its length: HG00097 walks one loop of sequence GRCh38 does not have, drawn faded in GRCh38's panel. The panel titles give GRCh38 90.8 kb and HG00097 113 kb, each the region plus flank either side, and a key below the panels names the shading, the faded nodes, the node thickness and a skip too short to dash](../gallery/kiv2_walks.png)
 
 ```r
 library(ggbandage)
@@ -503,10 +503,11 @@ autoplot(g)
   HPRC's own `hprc-v2.1-mc-grch38.raw.vcf.gz`, or a cohort genotyped with
   `vg call`. Pass its table to `bandage_layout(frequencies = )`.
 
-![Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. Text inside the loop gives 51% of haplotypes walking it and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%](../gallery/ugt2b17_frequency.png)
+![Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. Off-reference alleles hang along the loop as dark specks, most a hairline wide. A caption under the graph gives 51% of haplotypes walking the loop and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%](../gallery/ugt2b17_frequency.png)
 
 ```r
 library(ggbandage)
+library(ggplot2)
 
 walks <- "https://jbrowse.org/demos/hprc/hprc-v2.1-mc-grch38-f8.GRCh38.walks.gz"
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
@@ -514,10 +515,7 @@ genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 ugt2b17 <- "chr4:68,500,000-68,680,000"
 g <- bandage_layout(walks, region = ugt2b17, genes = genes, nodeWidth = "frequency", contigThickness = 10)
 share <- median(g$nodes$frequency[g$nodes$node %in% g$exons$node[g$exons$gene == "UGT2B17"]])
-loop <- g$nodes[abs(g$nodes$frequency - share) < 0.01, ]
 autoplot(g) +
-  annotate(
-    "text", x = mean(range(loop$x)), y = mean(range(loop$y)), size = 3.5, colour = "grey15",
-    label = sprintf("%s of haplotypes walk the UGT2B17 loop,\nand %s take the dashed edge past it", scales::percent(share), scales::percent(1 - share))
-  )
+  labs(caption = sprintf("%s of haplotypes walk the UGT2B17 loop, and %s take the dashed edge past it", scales::percent(share), scales::percent(1 - share))) +
+  theme(plot.caption = element_text(size = 10, hjust = 0.5))
 ```
