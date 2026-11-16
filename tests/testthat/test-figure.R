@@ -77,6 +77,34 @@ test_that("a panel's key that would run past its right edge starts a new line", 
   expect_length(unique(vapply(bars, function(b) as.character(b$y), "")), 3)
 })
 
+test_that("a thickness group's name starts a new line with its first entry, not ending the line before", {
+  k <- rbind(
+    key_entry(text = strrep("w", 20), swatch = "swatch"),
+    key_entry(strong = "Node thickness"),
+    key_entry(text = strrep("w", 20), swatch = "swatch")
+  )
+  k$colour <- "#000000"
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  lines <- function(inches) {
+    grid::pushViewport(grid::viewport(width = grid::unit(inches, "inches")))
+    on.exit(grid::popViewport())
+    g <- grid::makeContent(grid::gTree(keys = k, text = TRUE, cl = "bandage_keys"))
+    texts <- Filter(function(c) inherits(c, "text"), g$children)
+    y <- vapply(texts, function(t) as.character(t$y), "")
+    stats::setNames(match(y, unique(y)), vapply(texts, function(t) t$label, ""))
+  }
+  heading <- function(l) l[["Node thickness"]]
+  after <- function(l) l[[3]]
+  one <- lines(8)
+  expect_equal(unname(one), c(1, 1, 1))
+  wide <- width_px(grid::grobWidth(grid::textGrob(strrep("w", 20), gp = key_font))) + 23
+  name <- width_px(grid::grobWidth(grid::textGrob("Node thickness", gp = key_bold)))
+  split <- lines((6 + wide + 16 + name + 16 + wide - 10) / 96)
+  expect_equal(heading(split), 2)
+  expect_equal(after(split), 2)
+})
+
 repeat_gfa <- paste(
   "S\tv1\tAAAA", "S\tv2\tCC", "S\tv3\tGGG",
   "L\tv1\t+\tv2\t+\t0M", "L\tv2\t+\tv3\t+\t0M", "L\tv2\t+\tv1\t+\t0M",

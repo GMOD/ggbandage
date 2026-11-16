@@ -467,39 +467,49 @@ swatch_grob <- function(k, at, mid) {
   )
 }
 
+# One entry's words as grobs, and the px it takes along its line
+entry_words <- function(k, text) {
+  said <- function(words, font) if (text && nzchar(words)) grid::textGrob(words, just = "left", gp = font)
+  wide_of <- function(g) if (is.null(g)) 0 else width_px(grid::grobWidth(g))
+  bar <- swatch_px(k$swatch)
+  e <- list(
+    bar = bar, gap = if (bar > 0) 5 else 0,
+    strong = said(k$strong, key_bold), words = said(k$text, key_font), under = said(k$under, key_font)
+  )
+  e$strong_px <- wide_of(e$strong)
+  spoken <- e$strong_px + wide_of(e$words)
+  e$wide <- max(bar + if (spoken > 0) e$gap + spoken else 0, wide_of(e$under))
+  e$heads <- bar == 0 && !is.null(e$strong) && is.null(e$words)
+  e
+}
+
 # The entries laid along lines across `room` px from `top` px under the
-# viewport's top edge, a new line where the next would run past it; a line
+# viewport's top edge, a new line where the next would run past it, or where
+# a group's name would end a line with its first entry on the next; a line
 # holding a stretch under an entry is two tall
 key_grobs <- function(data, text, room, top = 6) {
+  entries <- lapply(seq_len(nrow(data)), function(i) entry_words(data[i, ], text))
   grobs <- list()
   at <- 6
   tall <- 16
-  for (i in seq_len(nrow(data))) {
-    k <- data[i, ]
-    bar <- swatch_px(k$swatch)
-    gap <- if (bar > 0) 5 else 0
-    strong <- if (text && nzchar(k$strong)) grid::textGrob(k$strong, just = "left", gp = key_bold)
-    words <- if (text && nzchar(k$text)) grid::textGrob(k$text, just = "left", gp = key_font)
-    under <- if (text && nzchar(k$under)) grid::textGrob(k$under, just = "left", gp = key_font)
-    wide_of <- function(g) if (is.null(g)) 0 else width_px(grid::grobWidth(g))
-    said <- wide_of(strong) + wide_of(words)
-    wide <- max(bar + if (said > 0) gap + said else 0, wide_of(under))
-    if (at > 6 && at + wide > room) {
+  for (i in seq_along(entries)) {
+    e <- entries[[i]]
+    led <- if (e$heads && i < length(entries)) 16 + entries[[i + 1]]$wide else 0
+    if (at > 6 && at + e$wide + led > room) {
       at <- 6
       top <- top + tall + 4
       tall <- 16
     }
     mid <- grid::unit(1, "npc") - px(top + 4)
-    swatch <- if (bar > 0) swatch_grob(k, at, mid)
     placed <- list(
-      swatch,
-      if (!is.null(strong)) grid::editGrob(strong, x = px(at + bar + gap), y = mid),
-      if (!is.null(words)) grid::editGrob(words, x = px(at + bar + gap + wide_of(strong)), y = mid),
-      if (!is.null(under)) grid::editGrob(under, x = px(at), y = mid - px(16))
+      if (e$bar > 0) swatch_grob(data[i, ], at, mid),
+      if (!is.null(e$strong)) grid::editGrob(e$strong, x = px(at + e$bar + e$gap), y = mid),
+      if (!is.null(e$words)) grid::editGrob(e$words, x = px(at + e$bar + e$gap + e$strong_px), y = mid),
+      if (!is.null(e$under)) grid::editGrob(e$under, x = px(at), y = mid - px(16))
     )
     grobs <- c(grobs, Filter(Negate(is.null), placed))
-    if (!is.null(under)) tall <- 32
-    at <- at + wide + 16
+    if (!is.null(e$under)) tall <- 32
+    at <- at + e$wide + 16
   }
   list(grobs = do.call(grid::gList, grobs), height = top + tall)
 }
