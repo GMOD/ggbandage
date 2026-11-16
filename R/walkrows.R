@@ -30,7 +30,9 @@
 #'   `reversed`, and on a gap, the `cause` a walk-file cut states:
 #'   `missing`, `elsewhere`, `own`, `mixed`, `unread` or `departure`, else
 #'   `outside`; `causes`, the words bandage-core gives each
-#'   cause, which a gap's `kind` takes;
+#'   cause, which a gap's `kind` takes. A stretch whose nodes the cut did not
+#'   load has the `kind` `nodes not shown`, and its row, which ribbons and
+#'   blocks leave out, ends its readout `not compared`;
 #'   and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
@@ -64,15 +66,25 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   causes <- unlist(d$causes)
   runs$xmin <- runs$start
   runs$xmax <- runs$start + runs$bp
-  kind <- ifelse(runs$onReference, "on the reference's path", "off the reference's path")
+  not_loaded <- d$notLoaded
+  kind <- ifelse(
+    runs$unloaded, not_loaded$text,
+    ifelse(runs$onReference, "on the reference's path", "off the reference's path")
+  )
   runs$kind <- factor(
     ifelse(runs$gap, causes[as.character(runs$cause)], kind),
-    levels = c("on the reference's path", "off the reference's path", causes)
+    levels = c("on the reference's path", "off the reference's path", causes, not_loaded$text)
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$end
   rows$end <- NULL
-  rows$readout <- ifelse(rows$linked, rows$readout, paste(rows$readout, "\u00b7 no ribbons"))
+  rows$readout <- paste0(
+    rows$readout,
+    ifelse(
+      !rows$linked, paste0(PART, "no ribbons"),
+      ifelse(rows$unloadedBp > 0, paste0(PART, not_loaded$notCompared), "")
+    )
+  )
   blocks <- frame(d$blocks)
   big <- sort(unique(blocks$block[blocks$bp >= max(rows$bp) * letter_share]))
   blocks <- blocks[blocks$block %in% big, ]
@@ -83,7 +95,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   structure(
     list(
       rows = rows, runs = runs, links = frame(d$links), blocks = blocks,
-      causes = causes, origin = d$origin, reference = d$reference
+      causes = causes, not_loaded = not_loaded, origin = d$origin, reference = d$reference
     ),
     class = "bandage_walk_rows"
   )
@@ -103,8 +115,8 @@ ELLIPSIS <- "\u2026"
 
 # A readout as it fits `room`, by `measure`: whole; or on two lines, broken
 # between two of its parts where the longer line comes out shortest; or cut
-# by whole parts from the end, then to its total, closed with an ellipsis, as
-# bandage-core's walk rows cut one
+# by whole parts from the end, closed with an ellipsis, as bandage-core's
+# walk rows cut one, down to its total, which stands whatever the room
 fit_readout <- function(text, room, measure) {
   fits <- function(lines) all(vapply(lines, measure, 0) <= room)
   if (fits(text)) {
@@ -122,12 +134,16 @@ fit_readout <- function(text, room, measure) {
     } else {
       parts <- strsplit(text, PART, fixed = TRUE)[[1]]
       kept <- rev(seq_len(length(parts) - 1))
-      cuts <- c(
-        vapply(kept, function(k) paste(c(parts[seq_len(k)], ELLIPSIS), collapse = PART), ""),
-        paste0(sub(", of which .*", "", parts[1]), ", ", ELLIPSIS),
-        ELLIPSIS
-      )
-      c(Filter(fits, cuts), "")[1]
+      total <- sub(", of which .*", "", parts[1])
+      cuts <- vapply(kept, function(k) paste(c(parts[seq_len(k)], ELLIPSIS), collapse = PART), "")
+      shortest <- if (total != parts[1]) {
+        paste0(total, ", ", ELLIPSIS)
+      } else if (length(parts) > 1) {
+        paste0(total, PART, ELLIPSIS)
+      } else {
+        text
+      }
+      c(Filter(fits, cuts), shortest)[1]
     }
   }
 }
@@ -272,7 +288,9 @@ bar_tiles <- function(runs, tile) {
 #' letter marks a block of non-reference nodes that two or more drawn rows
 #' walk, the same letter wherever the block recurs, and the three largest
 #' blocks are filled and the rest grey, except under `hues = "walk"`, which
-#' outlines every block. White is sequence the extracted subgraph does not hold:
+#' outlines every block. A hollow grey box is a stretch whose nodes the cut
+#' did not load, drawn as the graph draws its placeholder. White is sequence
+#' the extracted subgraph does not hold:
 #' dashed where the graph holds it outside the subgraph, and for a cut from a
 #' walk file, solid dark where a departure says the graph lacks it or the
 #' haplotype has no step on the reference across the window, and dotted where
@@ -339,22 +357,30 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   ribbon <- "ribbon: next row walks the same nodes"
   inverted <- "ribbon: next row walks them backwards"
   causes <- object$causes
+  not_loaded <- object$not_loaded
   plain$key <- ifelse(
     plain$kind == causes[["elsewhere"]], causes[["outside"]],
-    ifelse(plain$kind %in% causes, plain$kind, off)
+    ifelse(plain$kind %in% c(causes, not_loaded$text), plain$kind, off)
   )
   more <- if (walk_hued) "outlined: a block several rows walk" else "more shared blocks"
-  labels <- c(off, causes[c("outside", "missing", "departure", "own", "mixed", "unread")], ribbon, inverted, more)
-  off_fill <- if (walk_hued) STRIP_FILL else CHARCOAL
-  off_ink <- if (walk_hued) NA else CHARCOAL
   block_fill <- if (walk_hued) NA else "#e8e8e8"
-  keys <- stats::setNames(
-    c(off_fill, rep("white", 6), "#cfe0f2", "#b9abdb", block_fill), labels
+  entry <- function(label, fill, outline, dash = "solid") data.frame(label, fill, outline, dash)
+  key_table <- rbind(
+    entry(off, if (walk_hued) STRIP_FILL else CHARCOAL, if (walk_hued) NA else CHARCOAL),
+    entry(causes[["outside"]], "white", "#9a9a9a", "22"),
+    entry(causes[["missing"]], "white", "#6e6e6e"),
+    entry(causes[["departure"]], "white", "#6e6e6e"),
+    entry(causes[["own"]], "white", "#9a9a9a", "12"),
+    entry(causes[["mixed"]], "white", "#6e6e6e", "12"),
+    entry(causes[["unread"]], "white", "#6e6e6e", "22"),
+    entry(not_loaded$text, not_loaded$fill, not_loaded$rim),
+    entry(ribbon, "#cfe0f2", "#cfe0f2"),
+    entry(inverted, "#b9abdb", "#b9abdb"),
+    entry(more, block_fill, "#7a7a7a")
   )
-  outlines <- stats::setNames(
-    c(off_ink, "#9a9a9a", "#6e6e6e", "#6e6e6e", "#9a9a9a", "#6e6e6e", "#6e6e6e", "#cfe0f2", "#b9abdb", "#7a7a7a"), labels
-  )
-  dashes <- stats::setNames(c("solid", "22", "solid", "solid", "12", "12", "22", "solid", "solid", "solid"), labels)
+  keys <- stats::setNames(key_table$fill, key_table$label)
+  outlines <- stats::setNames(key_table$outline, key_table$label)
+  dashes <- stats::setNames(key_table$dash, key_table$label)
   blocks <- object$blocks
   blocks$y <- y[blocks$row + 1]
   fills <- if (walk_hued) character() else c("#d4785f", "#d9a94e", "#c98aa3")
@@ -474,6 +500,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       )
     ) +
     ggplot2::labs(y = NULL) +
+    ggplot2::coord_cartesian(clip = "off") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),

@@ -7,9 +7,11 @@ import { parseRegion } from '@jbrowse/bandage-core/gbzCut'
 import { backboneGenes } from '@jbrowse/bandage-core/genes/backboneGenes'
 import {
   GAP_CAUSE_TEXT,
+  NOT_LOADED_TEXT,
   OUTSIDE_TEXT,
 } from '@jbrowse/bandage-core/gfa/departures'
 import {
+  NOT_COMPARED_TEXT,
   barEnd,
   walkRowReadout,
 } from '@jbrowse/bandage-core/layout/walkRowDraw'
@@ -23,6 +25,11 @@ import { walkRows as cutRows } from '@jbrowse/bandage-core/layout/walkRows'
 import { layoutEngine } from '@jbrowse/bandage-core/layoutEngines'
 import { layoutModeByValue } from '@jbrowse/bandage-core/layoutModes'
 import { withFrequencies } from '@jbrowse/bandage-core/nodeWidths'
+import { abgrHex } from '@jbrowse/bandage-core/renderer/colorBits'
+import {
+  NOT_LOADED_COLOR,
+  NOT_LOADED_FILL_COLOR,
+} from '@jbrowse/bandage-core/renderer/GeometryBuilder'
 import {
   engineSettingsOf,
   forceLayout,
@@ -147,6 +154,7 @@ export async function walkRows(source, name, spec) {
       cause: run.gap ? (run.cause ?? 'outside') : null,
       referenceStart: run.referenceStart ?? null,
       reversed: !!run.reversed,
+      unloaded: !!run.unloaded,
     })),
   )
   return {
@@ -157,6 +165,12 @@ export async function walkRows(source, name, spec) {
     ),
     walkNames: [cut.reference, ...cut.rows].map(r => r.name),
     causes: { ...GAP_CAUSE_TEXT, outside: OUTSIDE_TEXT },
+    notLoaded: {
+      text: NOT_LOADED_TEXT,
+      fill: abgrHex(NOT_LOADED_FILL_COLOR),
+      rim: abgrHex(NOT_LOADED_COLOR),
+      notCompared: NOT_COMPARED_TEXT,
+    },
     rows: {
       row: all.map((_, i) => i),
       name: all.map(r => r.name),
@@ -165,6 +179,7 @@ export async function walkRows(source, name, spec) {
       bp: all.map(r => r.bp),
       end: all.map(barEnd),
       offReferenceBp: all.map(r => r.offReferenceBp),
+      unloadedBp: all.map(r => r.unloadedBp ?? 0),
       linked: all.map(r => r.complete),
       stepless: all.map(r => !!r.stepless),
       placementChoice: all.map(r => !!r.placementChoice),
@@ -184,6 +199,7 @@ export async function walkRows(source, name, spec) {
       'cause',
       'referenceStart',
       'reversed',
+      'unloaded',
     ]),
     links: columns(walkRowLinks(all, join), ['row', 'a0', 'a1', 'b0', 'b1']),
     blocks: columns(walkRowBlocks(all, join), ['row', 'start', 'bp', 'block']),

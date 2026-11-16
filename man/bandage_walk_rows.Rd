@@ -59,7 +59,9 @@ with \code{kind} and, on the reference's path, \code{referenceStart} and
 \code{reversed}, and on a gap, the \code{cause} a walk-file cut states:
 \code{missing}, \code{elsewhere}, \code{own}, \code{mixed}, \code{unread} or \code{departure}, else
 \code{outside}; \code{causes}, the words bandage-core gives each
-cause, which a gap's \code{kind} takes;
+cause, which a gap's \code{kind} takes. A stretch whose nodes the cut did not
+load has the \code{kind} \verb{nodes not shown}, and its row, which ribbons and
+blocks leave out, ends its readout \verb{not compared};
 and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
 lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row

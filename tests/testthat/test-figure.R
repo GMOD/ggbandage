@@ -397,6 +397,24 @@ unloaded_gfa <- paste(
   sep = "\n"
 )
 
+test_that("walk rows draw a stretch the cut did not load hollow, key it as the graph does and say its row is not compared", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(unloaded_gfa, gfa)
+  w <- bandage_walk_rows(gfa)
+  expect_equal(as.character(w$runs$kind[w$runs$row == 1]), c("on the reference's path", "nodes not shown", "on the reference's path"))
+  expect_equal(w$rows$readout, c("75 kb", "120 kb (+45 kb) \u00b7 not compared"))
+  g <- bandage_layout(gfa, walks = c("R", "A"))
+  expect_equal(c(w$not_loaded$fill, w$not_loaded$rim), c(g$meta$inks$placeholderFill, g$meta$inks$placeholderRim))
+  built <- ggplot2::ggplot_build(autoplot(w))
+  hollow <- Filter(function(d) nrow(d) == 1 && !is.na(d$colour[1]) && "xmin" %in% names(d), built$data)
+  expect_length(hollow, 1)
+  expect_equal(c(hollow[[1]]$xmin, hollow[[1]]$xmax), c(20000, 95000), tolerance = 0.01)
+  expect_equal(as.character(hollow[[1]]$fill), w$not_loaded$fill)
+  expect_equal(hollow[[1]]$colour, w$not_loaded$rim)
+  expect_equal(as.vector(built$plot$scales$get_scales("colour")$get_breaks()), "nodes not shown")
+})
+
 test_that("a placeholder's length is labelled as the Bandage view labels it, every node's with nodeLengths", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
@@ -842,9 +860,9 @@ test_that("a readout with too little room wraps between two parts, or is cut by 
     "31 kb \u00b7 placement choice \u00b7 \u2026"
   )
   expect_equal(fit_readout(text, 12, nchar), "7.0 kb, \u2026")
-  expect_equal(fit_readout(text, 3, nchar), "\u2026")
-  expect_equal(fit_readout(text, 0, nchar), "")
-  expect_equal(fit_readout("31 kb", 3, nchar), "\u2026")
+  expect_equal(fit_readout(text, 0, nchar), "7.0 kb, \u2026")
+  expect_equal(fit_readout("31 kb", 3, nchar), "31 kb")
+  expect_equal(fit_readout("120 kb (+45 kb) \u00b7 not compared", 5, nchar), "120 kb (+45 kb) \u00b7 \u2026")
 })
 
 test_that("no readout is drawn past the plot's right edge, however narrow the plot", {

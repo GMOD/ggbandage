@@ -48,7 +48,9 @@ which may still resemble the reference, as an extra repeat copy does. A
 letter marks a block of non-reference nodes that two or more drawn rows
 walk, the same letter wherever the block recurs, and the three largest
 blocks are filled and the rest grey, except under \code{hues = "walk"}, which
-outlines every block. White is sequence the extracted subgraph does not hold:
+outlines every block. A hollow grey box is a stretch whose nodes the cut
+did not load, drawn as the graph draws its placeholder. White is sequence
+the extracted subgraph does not hold:
 dashed where the graph holds it outside the subgraph, and for a cut from a
 walk file, solid dark where a departure says the graph lacks it or the
 haplotype has no step on the reference across the window, and dotted where
