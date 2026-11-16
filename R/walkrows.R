@@ -258,23 +258,30 @@ bar_tiles <- function(runs, tile) {
   from <- pmax(runs$xmin[i], at * tile)
   to <- pmin(runs$xmax[i], (at + 1) * tile)
   mid <- (from + to) / 2 - runs$xmin[i]
-  pieces <- data.frame(
-    row = runs$row[i], at = at, bp = pmax(0, to - from), kind = runs$kind[i],
-    position = runs$referenceStart[i] +
-      ifelse(runs$reversed[i], runs$bp[i] - mid, mid)
+  position <- runs$referenceStart[i] + ifelse(runs$reversed[i], runs$bp[i] - mid, mid)
+  bp <- to - from
+  held <- bp > 0
+  kind <- as.integer(runs$kind[i])[held]
+  kinds <- nlevels(runs$kind)
+  across <- max(at) + 1
+  cell <- (runs$row[i] * across + at)[held]
+  covered <- rowsum(bp[held], cell * kinds + kind - 1)
+  share <- as.numeric(rownames(covered))
+  most <- order(share %/% kinds, -covered[, 1])
+  most <- most[!duplicated(share[most] %/% kinds)]
+  on <- which(kind == match(ON_PATH, levels(runs$kind)))
+  on <- on[order(cell[on], -bp[held][on])]
+  on <- on[!duplicated(cell[on])]
+  cells <- share[most] %/% kinds
+  row <- cells %/% across
+  ends <- tapply(runs$xmax, runs$row, max)
+  data.frame(
+    row = row,
+    xmin = cells %% across * tile,
+    xmax = pmin((cells %% across + 1) * tile, ends[as.character(row)]),
+    kind = factor(levels(runs$kind)[share[most] %% kinds + 1], levels = levels(runs$kind)),
+    position = position[held][on][match(cells, cell[on])]
   )
-  pieces <- pieces[pieces$bp > 0, ]
-  cover <- stats::aggregate(bp ~ row + at + kind, pieces, sum)
-  cover <- cover[order(cover$row, cover$at, -cover$bp), ]
-  tiles <- cover[!duplicated(cover[c("row", "at")]), c("row", "at", "kind")]
-  on <- pieces[pieces$kind == ON_PATH, ]
-  on <- on[order(on$row, on$at, -on$bp), ]
-  on <- on[!duplicated(on[c("row", "at")]), c("row", "at", "position")]
-  tiles <- merge(tiles, on, all.x = TRUE)
-  ends <- stats::aggregate(xmax ~ row, runs, max)
-  tiles$xmin <- tiles$at * tile
-  tiles$xmax <- pmin((tiles$at + 1) * tile, ends$xmax[match(tiles$row, ends$row)])
-  tiles[order(tiles$row, tiles$at), c("row", "xmin", "xmax", "kind", "position")]
 }
 
 #' Walk rows as the Bandage view draws them
