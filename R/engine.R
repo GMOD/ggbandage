@@ -369,9 +369,13 @@ as_bandage_layout <- function(d) {
 #' @export
 print.bandage_layout <- function(x, ...) {
   cat(sprintf(
-    "<bandage_layout> %d nodes, %d edge curves, %d panel(s), %s\n",
+    "<bandage_layout> %d nodes and %d links drawn, %d panel(s), %s\n",
     length(unique(x$nodes$node)), length(unique(x$edges$edge)),
     nrow(x$panels), x$meta$generator
   ))
+  folded <- x$graph_key$text[x$graph_key$section == "too-small"]
+  if (length(folded)) {
+    cat(folded, '; small_sites = "nodes" draws them\n', sep = "")
+  }
   invisible(x)
 }

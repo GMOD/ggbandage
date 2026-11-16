@@ -86,6 +86,22 @@ test_that("small sites are left out by default and listed in the sites table, an
   expect_error(bandage_layout(pggb, small_sites = "ticks"), "should be one of")
 })
 
+test_that("printed, a layout counts the nodes and links it draws and says what it leaves out", {
+  hidden <- bandage_layout(pggb, walks = lifted)
+  expect_equal(
+    utils::capture.output(print(hidden)),
+    c(
+      sprintf("<bandage_layout> 52 nodes and 69 links drawn, 1 panel(s), %s", hidden$meta$generator),
+      '1 node and 1 skip under 2 bp not drawn; small_sites = "nodes" draws them'
+    )
+  )
+  drawn <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
+  expect_equal(
+    utils::capture.output(print(drawn)),
+    sprintf("<bandage_layout> 54 nodes and 72 links drawn, 1 panel(s), %s", drawn$meta$generator)
+  )
+})
+
 test_that("the key wraps to the width the plot is drawn at", {
   g <- bandage_layout(pggb, walks = lifted)
   narrow <- drawn_keys(ggplot2::autoplot(g), 3)
