@@ -331,6 +331,26 @@ test_that("a walk row lifted in one flat colour gets a swatch of it", {
   expect_equal(nrow(row_swatches(rows$rows, NULL)), 0)
 })
 
+test_that("a link turning strand against the reference is painted over the nodes with the skips, and the rest under them", {
+  g <- bandage_layout(pggb, small_sites = "nodes")
+  skips <- unique(g$edges$edge[g$edges$deletion])
+  plain <- unique(g$edges$edge[!g$edges$deletion])
+  expect_gt(length(skips), 0)
+  painted <- function(g, over) {
+    picked <- geom_bandage_edges(data = g, over_nodes = over)$data
+    p <- ggplot2::autoplot(g)
+    paths <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))
+    drawn <- ggplot2::layer_data(p, if (over) utils::tail(paths, 1) else paths[1])
+    expect_equal(nrow(drawn), nrow(picked))
+    unique(picked$edge)
+  }
+  expect_setequal(painted(g, TRUE), skips)
+  expect_setequal(painted(g, FALSE), plain)
+  g$edges$turn <- g$edges$edge == plain[1]
+  expect_setequal(painted(g, TRUE), c(skips, plain[1]))
+  expect_setequal(painted(g, FALSE), plain[-1])
+})
+
 test_that("a lane's link draws in its walk's colour, offset like its lane", {
   g <- bandage_layout(pggb, walks = lifted)
   d <- ggplot2::layer_data(ggplot2::autoplot(g), 1)

@@ -4,9 +4,10 @@
 #' the geoms mix faded ink with, the node lengths the view writes, a panel per
 #' walk when faceted, the genes pinned on the backbone, the view's key at the
 #' top, and a reference bp axis under the layouts whose x is reference bp.
-#' Plain links lie under the nodes and links that skip reference sequence over
-#' them, so a deletion is never hidden under the nodes it skips. Every piece is
-#' an ordinary ggplot2 layer, scale or theme, so `+` changes any of it.
+#' Plain links lie under the nodes, and links that skip reference sequence or
+#' turn strand against it over them, so neither is hidden under the nodes it
+#' meets. Every piece is an ordinary ggplot2 layer, scale or theme, so `+`
+#' changes any of it.
 #' @param object a `bandage_layout`
 #' @param ... unused
 #' @param ncol panels across, for a faceted layout
@@ -17,10 +18,10 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
   keyed <- !faceted && nrow(key_rows(object)) > 0
   genes <- if (nrow(object$genes)) geom_bandage_genes(key = NULL)
   p <- ggplot2::ggplot(object) +
-    geom_bandage_edges(deletion = FALSE) +
+    geom_bandage_edges(over_nodes = FALSE) +
     genes[1] +
     geom_bandage_nodes() +
-    geom_bandage_edges(deletion = TRUE) +
+    geom_bandage_edges(over_nodes = TRUE) +
     geom_bandage_arrows() +
     genes[2:3] +
     geom_bandage_labels()

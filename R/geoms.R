@@ -154,22 +154,27 @@ geom_bandage_nodes <- function(mapping = NULL, data = NULL,
 
 #' Graph edges as their Bezier curves
 #'
-#' A link that skips reference sequence, dashed or short and solid, is a
-#' deletion's only mark, so draw it over the nodes it skips: plain links with
-#' `deletion = FALSE` before [geom_bandage_nodes()], and these with
-#' `deletion = TRUE` after it, as [autoplot()][autoplot.bandage_layout] and the
-#' Bandage view do.
+#' A link that skips reference sequence, dashed or short and solid, or that
+#' reads one reference node as the reference does and the next against it, is
+#' the only mark of what it joins, so draw it over the nodes it meets: plain
+#' links with `over_nodes = FALSE` before [geom_bandage_nodes()], and these
+#' with `over_nodes = TRUE` after it, as [autoplot()][autoplot.bandage_layout]
+#' and the Bandage view do.
 #' @inheritParams geom_bandage_nodes
-#' @param deletion `TRUE` for only the links that skip reference sequence,
-#'   `FALSE` for only the rest, `NULL` for all
+#' @param over_nodes `TRUE` for only the links the Bandage view paints over the
+#'   nodes, those whose rows have `deletion` or `turn`, `FALSE` for only the
+#'   rest, `NULL` for all
 #' @export
 geom_bandage_edges <- function(mapping = NULL, data = NULL,
-                               background = "white", deletion = NULL, ...) {
+                               background = "white", over_nodes = NULL, ...) {
   path_layer(mapping, data, function(m) {
     e <- edges_of(m, background)
-    if (is.null(deletion)) e else e[e$deletion == deletion, ]
+    if (is.null(over_nodes)) e else e[painted_over(e) == over_nodes, ]
   }, ...)
 }
+
+# A core whose figure data has no turn column marks no link as turning
+painted_over <- function(e) if (is.null(e$turn)) e$deletion else e$deletion | e$turn
 
 # ggplot2 keys a layer under any legend whose aesthetic it maps, I() or not,
 # so the default inks would stroke solid over every key's own swatch
