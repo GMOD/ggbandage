@@ -2,7 +2,7 @@
 % Please edit documentation in R/geoms.R
 \name{geom_bandage_labels}
 \alias{geom_bandage_labels}
-\title{Node lengths, where the Bandage view writes them}
+\title{Node lengths and pass names, where the Bandage view writes them}
 \usage{
 geom_bandage_labels(data = NULL)
 }
@@ -10,11 +10,14 @@ geom_bandage_labels(data = NULL)
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
 }
 \value{
-the leaders and the labels, two layers
+the leaders and the labels of the lengths, then of the passes, four
+layers
 }
 \description{
 Each placeholder's length, the bp of a stretch the cut did not load, and
 every node's where the layout was made with \code{nodeLengths = TRUE}, on a pale
 backing at the place the Bandage view gives it, with a leader to its loop
-where the label stands off. \link[=autoplot.bandage_layout]{autoplot()} adds it.
+where the label stands off. A walk lifted by pass has each pass named in
+the pass's colour beside one of its threads.
+\link[=autoplot.bandage_layout]{autoplot()} adds it.
 }

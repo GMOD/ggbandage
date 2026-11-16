@@ -123,6 +123,74 @@ test_that("a walk passing a node twice draws two threads there, and the key says
   expect_true("a thread per pass through a node" %in% drawn_keys(p, 8)$labels)
 })
 
+by_pass <- function(...) list("ref#0#chr", list(walk = "dup#1#chr", color = list(field = "pass"), ...))
+
+test_that("a walk lifted by pass has each pass named on the graph in its colour, keyed, and its heads keyed", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(repeat_gfa, gfa)
+  g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
+  expect_equal(g$passes$text, c("pass 1", "pass 2"))
+  expect_equal(c(g$passes$start, g$passes$end), c(0, 6, 6, 12))
+  named <- g$labels[g$labels$kind == "pass", ]
+  expect_equal(named$text, g$passes$text)
+  expect_equal(named$color, g$passes$color)
+  p <- ggplot2::autoplot(g)
+  drawn <- Filter(function(d) "label" %in% names(d) && nrow(d) > 0, ggplot2::ggplot_build(p)$data)
+  expect_length(drawn, 1)
+  expect_equal(drawn[[1]]$label, g$passes$text)
+  expect_equal(as.character(drawn[[1]]$colour), g$passes$color)
+  keyed <- drawn_keys(p, 8)$labels
+  expect_true(all(c("pass 1", "pass 2", "the way the walk runs") %in% keyed))
+  heads <- key_rows(g)[key_rows(g)$swatch == "heads", ]
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_s3_class(swatch_grob(heads, 6, grid::unit(0.5, "npc")), "segments")
+})
+
+test_that("a walk's passes take the names given them, one name or many, and a graph where it steps no node twice the passes stated", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(repeat_gfa, gfa)
+  named <- bandage_layout(gfa, walks = by_pass(passNames = c("first", "second")), engine = "stress")
+  expect_equal(named$passes$text, c("first", "second"))
+  stated <- function(spans, names) {
+    bandage_layout(pggb, walks = list(list(walk = "K12", color = list(field = "pass"), passes = spans, passNames = names)))$passes
+  }
+  expect_equal(stated(data.frame(start = c(0, 200), end = c(200, 400)), c("a", "b"))$text, c("a", "b"))
+  expect_equal(stated(data.frame(start = 0, end = 200), "only")$text, "only")
+  expect_equal(nrow(bandage_layout(pggb, walks = "K12")$passes), 0)
+})
+
+test_that("the pass bar draws the walk in its own colour, each pass's stretches in the pass's, under a bracket and a name", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(repeat_gfa, gfa)
+  g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
+  built <- ggplot2::ggplot_build(bandage_pass_bar(g))
+  ground <- built$data[[1]]
+  expect_equal(c(ground$xmin, ground$xmax), c(0, 15))
+  expect_equal(as.character(ground$fill), g$keys$stops[g$keys$walk == "dup"])
+  stretches <- built$data[[2]]
+  expect_equal(stretches$xmin, c(0, 6))
+  expect_equal(stretches$xmax, c(6, 12))
+  expect_equal(as.character(stretches$fill), g$passes$color)
+  expect_equal(built$data[[4]]$label, c("pass 1", "pass 2"))
+  expect_equal(built$plot$scales$get_scales("x")$name, "bp along dup")
+  expect_error(bandage_pass_bar(bandage_layout(pggb, walks = "K12")), "lifts no walk")
+})
+
+test_that("pass stretches a hairline apart join, and those of another pass or further apart do not", {
+  runs <- data.frame(
+    walk = "w", pass = c(0, 0, 0, 1, 1), color = c("a", "a", "a", "b", "b"),
+    start = c(0, 11, 40, 51, 60), end = c(10, 20, 50, 59, 70)
+  )
+  joined <- joined_runs(runs, 2)
+  expect_equal(joined$start, c(0, 40, 51))
+  expect_equal(joined$end, c(20, 50, 70))
+  expect_equal(joined$pass, c(0, 0, 1))
+})
+
 placed_keys <- function(plot, width, height) {
   grDevices::pdf(NULL, width = width, height = height)
   on.exit(grDevices::dev.off())
@@ -423,7 +491,7 @@ test_that("a placeholder's length is labelled as the Bandage view labels it, eve
   g <- bandage_layout(gfa, layout = "auto", referencePath = "R")
   expect_equal(g$labels$kind, "placeholder")
   expect_equal(g$labels$text, "75 kb")
-  drawn <- ggplot2::layer_data(ggplot2::autoplot(g), length(ggplot2::autoplot(g)$layers))
+  drawn <- ggplot2::layer_data(ggplot2::autoplot(g), length(ggplot2::autoplot(g)$layers) - 2)
   expect_equal(drawn$label, "75 kb")
   expect_true("nodes not shown" %in% g$graph_key$text)
   every <- bandage_layout(gfa, layout = "auto", referencePath = "R", nodeLengths = TRUE)

@@ -146,7 +146,16 @@ walk_origin <- function(walk) {
 #'   full or by a prefix such as `"HG00097#1"` or `"HG00097"`, which lifts
 #'   every walk it begins. Walks lifted together share one panel, one flat
 #'   colour each, side by side where they share nodes. Once one of them
-#'   passes a node twice, each draws a thread per pass
+#'   passes a node twice, each draws a thread per pass. A walk given as a
+#'   list takes its colour too, as
+#'   `list(walk = "HG01106#1", color = list(field = "pass"))`: `field` is
+#'   `"walk"` for one flat colour, `"progress"` to shade it start to end, or
+#'   `"pass"` to colour each trip it makes round nodes it steps again, with
+#'   `scheme` naming the colour family. Under `"pass"`, `passNames` names the
+#'   passes in place of `pass 1`, `pass 2`, and `passes`, a data frame of
+#'   `start` and `end` in bp from the walk's first base, states them for a
+#'   graph where the walk steps no node twice. [bandage_pass_bar()] draws the
+#'   passes along the walk
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
@@ -192,7 +201,7 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
   spec <- c(
     list(layout = layout, width = width, height = height),
     if (!is.null(src$region)) list(region = src$region),
-    if (length(walks)) list(walks = as.list(walks)),
+    if (length(walks)) list(walks = walk_layers(walks)),
     if (!is.null(facet)) list(facet = facet),
     if (!is.null(frequencies)) list(frequencies = frequency_map(frequencies)),
     list(...)
@@ -208,6 +217,25 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
     warning(unbound_genes(genes, d$unbound), call. = FALSE)
   }
   as_bandage_layout(d)
+}
+
+# Each lifted walk as the engine reads it: a name, or a list whose pass names
+# and stated passes stay arrays however few there are
+walk_layers <- function(walks) {
+  lapply(as.list(walks), function(layer) {
+    if (is.list(layer)) {
+      if (!is.null(layer$passNames)) {
+        layer$passNames <- as.list(layer$passNames)
+      }
+      if (is.data.frame(layer$passes)) {
+        layer$passes <- lapply(
+          seq_len(nrow(layer$passes)),
+          function(i) list(start = layer$passes$start[i], end = layer$passes$end[i])
+        )
+      }
+    }
+    layer
+  })
 }
 
 warn_unmatched <- function(d) {
@@ -304,13 +332,16 @@ as_bandage_layout <- function(d) {
   genes <- upright(frame(d$pins))
   exons <- upright(frame(d$exons))
   labels <- upright(frame(d$labels), c("y", "y1", "y2"))
+  passes <- frame(d$passes)
+  pass_runs <- frame(d$passRuns)
   graph_key <- frame(d$meta$graphKey)
 
   structure(
     list(
       nodes = nodes, edges = edges, arrows = arrows, rows = rows,
       panels = panels, keys = keys, genes = genes, exons = exons,
-      labels = labels, graph_key = graph_key, meta = d$meta
+      labels = labels, passes = passes, pass_runs = pass_runs,
+      graph_key = graph_key, meta = d$meta
     ),
     class = "bandage_layout"
   )

@@ -136,22 +136,23 @@ graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
 
 - The Rhesus boxes either side of RHD share many of their nodes, so GRCh38
   walks them twice
-- The snippet colours HG01106#1 by its pass through each node, in the graph and
-  in the strip. From 85 to 160 kb, HG01106#1 walks nodes it walked earlier. That
-  stretch is close to the 69 kb by which HG01106#1 is longer than grch38, and
-  holds a second RHD, the blue thread round the RHD loop, and a third pass
-  through the Rhesus box
-- `bandage_walk_steps()` gives the pass of each step for the strip, and the
-  layout's node table gives the pass of each thread for the graph
+- `color = list(field = "pass")` colours HG01106#1 wherever it steps a node
+  again, by the trip it is on. A pass starts where the walk comes back to a node
+  it stepped earlier, and `bandage_pass_bar()` draws the passes along the walk
+- HG01106#1 walks the RHD loop twice, on passes 1 and 2 of about 70 kb each, so
+  it has a second RHD. Pass 2 is close to the 69 kb by which HG01106#1 is
+  longer than grch38
+- Pass 3 is a short third trip through the Rhesus box
+- A pass is a trip round nodes the graph shares between copies, so three passes
+  do not mean three copies of a gene
 - Six of the 18 other haplotypes span about 132 kb. They walk the boxes once and
   skip RHD, the deletion that most often makes blood RhD-negative. HG01258#2, in
   purple, is one
 
-![Force-directed syng graph of RHD with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 coloured by its pass through each node, orange the first time, blue the second and green the third. Round the loop at the top, labelled RHD, run a grey grch38 thread, an orange first-pass thread and a blue second-pass thread, HG01106#1's second RHD, labelled second pass where the loop meets the threads to RHCE. A short green thread at the far left, where the walks come in, is labelled third pass. HG01258#2 skips the RHD loop and runs down past TMEM50A and round to RHCE. A strip below shows HG01106#1 along its length by pass, orange with a blue stretch and a short green one, and walk rows give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
+![Force-directed syng graph of RHD with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 in blue, coloured by pass wherever it steps a node again, pass 1 orange, pass 2 pink and pass 3 amber, with arrowheads along its lane pointing the way it runs. Round the loop at the top, labelled RHD, run a grey grch38 thread and HG01106#1's orange pass 1 and pink pass 2 threads side by side. Pass 1 is labelled where the loop meets the threads to RHCE, pass 2 at the left where the walks come in, and pass 3, a short amber thread, beside it. HG01258#2 skips the RHD loop and runs down past TMEM50A and round to RHCE. A bar below shows HG01106#1 along its 272 kb under a bracket for each pass, orange from 10 to 80 kb, pink to 150 kb, a short amber stretch after it, and blue for the rest. Walk rows give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
 
 ```r
 library(ggbandage)
-library(ggplot2)
 library(patchwork)
 
 genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
@@ -159,44 +160,17 @@ genes <- "https://jbrowse.org/ucsc/hg38/ncbiRefSeq.gff.gz"
 rhd_syng <- system.file("extdata", "rhd.syng.gfa.gz", package = "ggbandage")
 dup <- "HG01106#1"
 del <- "HG01258#2"
-passes <- c("first pass" = "#D55E00", "second pass" = "#0072B2", "third pass" = "#009E73")
 lifted <- list(
   list(walk = "grch38", color = list(field = "walk", scheme = "grey")),
-  list(walk = dup),
+  list(walk = dup, color = list(field = "pass")),
   list(walk = del, color = list(field = "walk", scheme = "purple"))
 )
 g <- bandage_layout(rhd_syng, walks = lifted, genes = genes)
 g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
 g$exons <- g$exons[0, ]
-mine <- g$nodes$walk %in% 1
-g$nodes$pass_name <- ifelse(mine, names(passes)[pmax(0, g$nodes$pass, na.rm = TRUE) + 1], NA)
-g$nodes$color[mine] <- passes[g$nodes$pass_name[mine]]
-threads <- g$nodes[mine & g$nodes$pass_name != "first pass", ]
-spot <- function(x, y) (threads$x - x)^2 + (threads$y - y)^2
-later <- threads[which.max(spot(stats::median(g$nodes$x), stats::median(g$nodes$y))), ]
-for (pass in setdiff(threads$pass_name, later$pass_name)) {
-  gap <- ifelse(threads$pass_name == pass, Reduce(pmin, Map(spot, later$x, later$y)), -Inf)
-  later <- rbind(later, threads[which.max(gap), ])
-}
-steps <- bandage_walk_steps(rhd_syng)
-steps <- steps[startsWith(steps$walk, paste0(dup, "#")), ]
-steps$kb <- floor((steps$start + steps$end) / 2000)
-cover <- stats::aggregate(cbind(bp = end - start) ~ kb + pass, steps, sum)
-cover <- cover[order(cover$kb, -cover$bp), ]
-cover <- cover[!duplicated(cover$kb), ]
-cover$pass <- names(passes)[cover$pass + 1]
 rows <- bandage_walk_rows(rhd_syng, haplotypes = c(dup, del))
-along <- ggplot(cover) +
-  geom_rect(aes(xmin = kb, xmax = kb + 1, ymin = 0, ymax = 1, fill = pass)) +
-  scale_fill_manual(NULL, values = passes) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  labs(x = sprintf("kb along %s, coloured by its pass through each node", dup)) +
-  theme_minimal(10) +
-  theme(panel.grid = element_blank(), legend.position = "top")
-autoplot(g) + guides(bandage_keys = "none") +
-  geom_label(aes(x, y, label = pass_name, colour = I(passes[pass_name])), data = later, size = 3.2, fontface = "bold", fill = "white", hjust = 1.05) +
-  along + autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) +
-  plot_layout(ncol = 1, heights = c(5, 0.35, 1.2))
+autoplot(g) / bandage_pass_bar(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) +
+  plot_layout(heights = c(5, 0.6, 1.2))
 ```
 
 ## C4 in two graph builders, the same haplotype in each
@@ -205,24 +179,23 @@ autoplot(g) + guides(bandage_keys = "none") +
 
 - The left graph is cut from the HPRC Minigraph-Cactus walk file, and the right
   is the syng graph of [C4 copies as threads](#c4-copies-as-threads-round-an-impg-syng-graph)
-- The snippet finds HG01978#2's three C4 copies in the syng graph, where each is
-  one pass round the ring, and colours the same bp of HG01978#2 in both graphs
-  and in the strip below
-- `bandage_walk_steps()` gives each step's bp along its walk and its pass, which
-  joins the step to the layout's thread for that pass
+- In the syng graph each C4 copy is one pass round the ring, so
+  `color = list(field = "pass")` finds HG01978#2's three copies there, and
+  `passNames` names them
+- In the Minigraph-Cactus graph each copy has nodes of its own, so HG01978#2
+  steps no node twice there and has no passes to find. The snippet states them
+  through `passes`, handing it the syng graph's `sy$passes` in bp along the
+  walk, so the same bp of HG01978#2 take the same colour in both graphs
+- The Minigraph-Cactus cut keeps about 1 kb of flank past each end, so the
+  snippet shifts the passes by that flank
+- `bandage_pass_bar()` draws the copies along the walk
 - In the Minigraph-Cactus graph, copy 1 is a loop off GRCh38's path, and the
   loop's last stretch is the start of copy 2, which runs on along GRCh38's line.
   In the syng graph, all three are passes round the ring, which GRCh38 runs twice
-- The snippet colours the walk's links as well as its nodes, each link by the
-  node it leaves. It labels copy 1 at its node farthest from the middle of the
-  drawing, and each later copy at its node farthest from the labels already
-  placed, each label beside its node on the side away from the middle
-- The Minigraph-Cactus cut keeps about 1 kb of flank past each end, so the
-  snippet centres that walk on the syng walk before matching bp
 - The snippet turns off each graph's key, since side by side each key would
   run into the other column
 
-![Two graphs over one strip. The strip shows HG01978#2 along its length in three solid colours, copy 1 orange, copy 2 blue and copy 3 green, between dark grey flanks. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, labelled beside its tip, whose last stretch back to GRCh38's line is blue, the start of copy 2; copy 2 then runs blue along GRCh38's line past C4A, and copy 3 runs green on along it past C4B to the right. Right, titled syng folds them onto one ring, the impg syng graph: orange, blue and green threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy](../gallery/c4_two_graphs.png)
+![Two graphs over one bar. The bar shows HG01978#2 along its 116 kb in blue, under a bracket for each C4 copy, copy 1 orange from 8.5 to 41 kb, copy 2 pink to 74 kb and copy 3 amber to 107 kb. Left, titled Minigraph-Cactus lays the three copies out in a line, the HPRC walk file's C4 with GRCh38 in grey: copy 1 is an orange loop off GRCh38's path at the lower left, labelled beside it, copy 2 starts pink on the loop's last stretch and runs along GRCh38's line past C4A, and copy 3 runs amber on along it past C4B to the right, with arrowheads pointing the way the walk runs. Right, titled syng folds them onto one ring, the impg syng graph: orange, pink and amber threads run side by side round one ring that also carries the C4A and C4B labels, each thread labelled with its copy, and the walk's flanks leave the ring in blue](../gallery/c4_two_graphs.png)
 
 ```r
 library(ggbandage)
@@ -235,48 +208,25 @@ syng <- "https://raw.githubusercontent.com/GMOD/jbrowse-plugin-graphgenomeviewer
 
 c4 <- "chr6:31,972,047-32,055,647"
 hap <- "HG01978#2"
-copies <- c("copy 1" = "#D55E00", "copy 2" = "#0072B2", "copy 3" = "#009E73")
-lift <- function(reference) list(list(walk = reference, color = list(field = "walk", scheme = "grey")), list(walk = hap))
-mc <- bandage_layout(walks, region = c4, haplotypes = hap, walks = lift("GRCh38"), genes = genes)
+lift <- function(reference, ...) {
+  list(
+    list(walk = reference, color = list(field = "walk", scheme = "grey")),
+    list(walk = hap, color = list(field = "pass"), passNames = paste("copy", 1:3), ...)
+  )
+}
 sy <- bandage_layout(syng, walks = lift("grch38"), genes = genes)
 mc_steps <- bandage_walk_steps(walks, c4, haplotypes = hap)
-sy_steps <- bandage_walk_steps(syng)
-mc_steps <- mc_steps[startsWith(mc_steps$walk, paste0(hap, "#")), ]
-sy_steps <- sy_steps[startsWith(sy_steps$walk, paste0(hap, "#")), ]
-ring <- sy_steps$node %in% sy_steps$node[sy_steps$pass > 0]
-breaks <- c(min(sy_steps$start[ring]), min(sy_steps$start[sy_steps$pass == 1]), min(sy_steps$start[sy_steps$pass == 2]), max(sy_steps$end[sy_steps$pass == 2]))
-painted <- function(g, steps, title) {
-  shift <- (max(steps$end) - max(sy_steps$end)) / 2
-  steps$copy <- as.character(cut((steps$start + steps$end) / 2 - shift, breaks, labels = names(copies), right = FALSE))
-  mine <- g$nodes$walk %in% 1
-  at <- match(paste(g$nodes$name, pmax(0, g$nodes$pass, na.rm = TRUE)), paste(steps$node, steps$pass))
-  g$nodes$copy <- ifelse(mine, steps$copy[at], NA)
-  g$nodes$color[mine] <- ifelse(is.na(g$nodes$copy[mine]), "#3a3a3a", copies[g$nodes$copy[mine]])
-  lane <- g$edges$walk %in% 1
-  leaves <- match(paste(g$edges$x0, g$edges$y0), paste(g$nodes$x, g$nodes$y)[mine])
-  g$edges$color[lane] <- ave(g$nodes$color[mine][leaves][lane], g$edges$edge[lane], g$edges$pass[lane], FUN = function(c) c[!is.na(c)][1])
+mc_bp <- max(mc_steps$end[startsWith(mc_steps$walk, paste0(hap, "#"))])
+flank <- (mc_bp - with(sy$keys[sy$keys$walk == hap, ], end - start)) / 2
+copies <- sy$passes[c("start", "end")] + flank
+mc <- bandage_layout(walks, region = c4, haplotypes = hap, walks = lift("GRCh38", passes = copies), genes = genes)
+drawn <- function(g, title) {
   g$genes <- g$genes[g$genes$gene %in% c("C4A", "C4B"), ]
   g$exons <- g$exons[0, ]
-  own <- g$nodes[g$nodes$copy %in% names(copies), ]
-  spot <- function(x, y) (own$x - x)^2 + (own$y - y)^2
-  spots <- own[which.max(ifelse(own$copy == "copy 1", spot(stats::median(g$nodes$x), stats::median(g$nodes$y)), -Inf)), ]
-  for (copy in names(copies)[-1]) {
-    gap <- ifelse(own$copy == copy, Reduce(pmin, Map(spot, spots$x, spots$y)), -Inf)
-    spots <- rbind(spots, own[which.max(gap), ])
-  }
-  autoplot(g) + guides(bandage_keys = "none") + ggtitle(title) +
-    geom_label(aes(x, y, label = copy, colour = I(copies[copy]), hjust = ifelse(x < stats::median(g$nodes$x), 1.05, -0.05)), data = spots, size = 3.4, fontface = "bold", fill = "white")
+  autoplot(g) + guides(bandage_keys = "none") + ggtitle(title)
 }
-along <- ggplot(data.frame(copy = names(copies), start = breaks[1:3], end = breaks[2:4])) +
-  annotate("rect", xmin = 0, xmax = max(sy_steps$end) / 1000, ymin = 0, ymax = 1, fill = "#3a3a3a") +
-  geom_rect(aes(xmin = start / 1000, xmax = end / 1000, ymin = 0, ymax = 1, fill = I(copies[copy]))) +
-  geom_text(aes((start + end) / 2000, 0.5, label = copy), colour = "white", fontface = "bold", size = 3.4) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  labs(x = "kb along HG01978#2", title = "HG01978#2, coloured by C4 copy in both graphs") +
-  theme_minimal(10) +
-  theme(panel.grid = element_blank())
-graphs <- painted(mc, mc_steps, "Minigraph-Cactus lays the three copies out in a line") | painted(sy, sy_steps, "syng folds them onto one ring")
-(graphs + plot_layout(widths = c(1.3, 1))) / along + plot_layout(heights = c(6, 0.6))
+graphs <- drawn(mc, "Minigraph-Cactus lays the three copies out in a line") | drawn(sy, "syng folds them onto one ring")
+(graphs + plot_layout(widths = c(1.3, 1))) / bandage_pass_bar(sy) + plot_layout(heights = c(6, 0.8))
 ```
 
 ## Core, shell and cloud at GSTM1

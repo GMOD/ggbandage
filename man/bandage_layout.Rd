@@ -33,7 +33,16 @@ directory beside it). An index or walk file needs \code{region}}
 full or by a prefix such as \code{"HG00097#1"} or \code{"HG00097"}, which lifts
 every walk it begins. Walks lifted together share one panel, one flat
 colour each, side by side where they share nodes. Once one of them
-passes a node twice, each draws a thread per pass}
+passes a node twice, each draws a thread per pass. A walk given as a
+list takes its colour too, as
+\code{list(walk = "HG01106#1", color = list(field = "pass"))}: \code{field} is
+\code{"walk"} for one flat colour, \code{"progress"} to shade it start to end, or
+\code{"pass"} to colour each trip it makes round nodes it steps again, with
+\code{scheme} naming the colour family. Under \code{"pass"}, \code{passNames} names the
+passes in place of \verb{pass 1}, \verb{pass 2}, and \code{passes}, a data frame of
+\code{start} and \code{end} in bp from the walk's first base, states them for a
+graph where the walk steps no node twice. \code{\link[=bandage_pass_bar]{bandage_pass_bar()}} draws the
+passes along the walk}
 
 \item{facet}{\code{"walk"} for a panel per walk}
 

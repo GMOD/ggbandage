@@ -248,19 +248,28 @@ placed_labels <- function(data, kinds, ink, params, mapping = ggplot2::aes(),
   )
 }
 
-#' Node lengths, where the Bandage view writes them
+#' Node lengths and pass names, where the Bandage view writes them
 #'
 #' Each placeholder's length, the bp of a stretch the cut did not load, and
 #' every node's where the layout was made with `nodeLengths = TRUE`, on a pale
 #' backing at the place the Bandage view gives it, with a leader to its loop
-#' where the label stands off. [autoplot()][autoplot.bandage_layout] adds it.
+#' where the label stands off. A walk lifted by pass has each pass named in
+#' the pass's colour beside one of its threads.
+#' [autoplot()][autoplot.bandage_layout] adds it.
 #' @inheritParams geom_bandage_nodes
-#' @return the leaders and the labels, two layers
+#' @return the leaders and the labels of the lengths, then of the passes, four
+#'   layers
 #' @export
 geom_bandage_labels <- function(data = NULL) {
-  placed_labels(
-    data, c("placeholder", "length"), SIZE_INK,
-    list(colour = SIZE_INK, fill = ggplot2::alpha("white", 0.8), border.colour = NA)
+  c(
+    placed_labels(
+      data, c("placeholder", "length"), SIZE_INK,
+      list(colour = SIZE_INK, fill = ggplot2::alpha("white", 0.8), border.colour = NA)
+    ),
+    placed_labels(
+      data, "pass", GENE_INK, list(fill = "white", fontface = "bold"),
+      ggplot2::aes(colour = I(color))
+    )
   )
 }
 
@@ -461,6 +470,11 @@ swatch_grob <- function(k, at, mid) {
     threads = grid::segmentsGrob(
       x(0), mid + px(c(3, 0, -3)), x(18), mid + px(c(3, 0, -3)),
       gp = grid::gpar(col = ink(), lwd = lwd(1.5), lineend = "butt")
+    ),
+    heads = grid::segmentsGrob(
+      x(0), mid, x(c(9, 18)), mid,
+      arrow = grid::arrow(angle = 25, length = px(5), type = "closed"),
+      gp = grid::gpar(col = ink(), fill = ink(), lwd = lwd(1.5), lineend = "butt", linejoin = "mitre")
     ),
     overhang = grid::polygonGrob(
       x = x(c(0, 8, 8, 18, 10, 10)), y = mid + px(c(0, 5, -5, 0, 5, -5)), id = rep(1:2, each = 3),
