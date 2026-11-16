@@ -338,9 +338,11 @@ exon_key <- function(colour, label) {
 CHARCOAL <- "#3c4148"
 
 # The graph's key as bandage-core's graphKey states it, an entry a row, each
-# thickness group's entries after its name
+# thickness group's entries after its name, less the exon outline's where the
+# layout's exons have been dropped
 key_rows <- function(model) {
   k <- model$graph_key
+  k <- k[k$section != "exon" | nrow(model$exons) > 0, ]
   if (!nrow(k)) {
     return(empty_key())
   }

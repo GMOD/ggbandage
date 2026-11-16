@@ -461,6 +461,14 @@ test_that("the exon outline and the gene's name take bandage-core's exon gold, t
   expect_equal(g$graph_key$color[g$graph_key$section == "exon"], g$meta$inks$exon)
 })
 
+test_that("the key drops the exon outline once the layout's exons are dropped", {
+  g <- bandage_layout(rgfa, genes = test_path("testdata", "ecoli_genes.bed"))
+  outlined <- sum(key_rows(g)$swatch == "outline")
+  expect_gt(outlined, 0)
+  g$exons <- g$exons[0, ]
+  expect_equal(sum(key_rows(g)$swatch == "outline"), outlined - 1)
+})
+
 test_that("a gene dropped from the layout's genes goes unnamed", {
   g <- bandage_layout(rgfa, genes = test_path("testdata", "ecoli_genes.bed"))
   names_drawn <- function(g) nrow(ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_genes(key = NULL), 3))
