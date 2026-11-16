@@ -21,8 +21,8 @@ legend entry
 }
 \description{
 Outlines each exon round the stretch of node that carries it, under the
-nodes, and names each gene where the Bandage view places its name, with a
-leader to its pin. Needs a layout made with \code{genes}; add it before
+nodes, on the nodes the drawing strokes, and names each gene where the
+Bandage view places its name, with a leader to its pin. Needs a layout made with \code{genes}; add it before
 \code{\link[=geom_bandage_nodes]{geom_bandage_nodes()}} so the nodes draw over the outline. A gene whose
 row is dropped from the layout's \code{genes} goes unnamed, and one dropped
 from its \code{exons} unoutlined.

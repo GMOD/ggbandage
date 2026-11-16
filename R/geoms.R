@@ -321,18 +321,19 @@ inked <- function(colour) {
   }
 }
 
+# An exon's stretch is outlined only on a node the drawing strokes
 exons_of <- function(model, outline) {
   e <- model$exons
   width <- tapply(model$nodes$width, model$nodes$node, max)
   e$width <- as.numeric(width[e$node]) + 2 * outline
-  e
+  e[!is.na(e$width), ]
 }
 
 #' Genes pinned on the backbone
 #'
 #' Outlines each exon round the stretch of node that carries it, under the
-#' nodes, and names each gene where the Bandage view places its name, with a
-#' leader to its pin. Needs a layout made with `genes`; add it before
+#' nodes, on the nodes the drawing strokes, and names each gene where the
+#' Bandage view places its name, with a leader to its pin. Needs a layout made with `genes`; add it before
 #' [geom_bandage_nodes()] so the nodes draw over the outline. A gene whose
 #' row is dropped from the layout's `genes` goes unnamed, and one dropped
 #' from its `exons` unoutlined.

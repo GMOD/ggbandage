@@ -86,6 +86,31 @@ test_that("small sites are left out by default and listed in the sites table, an
   expect_error(bandage_layout(pggb, small_sites = "ticks"), "should be one of")
 })
 
+test_that("nothing is drawn on a folded site: no node, link, arrowhead, label or exon outline, and no exon on a node only the lanes cross", {
+  bed <- tempfile(fileext = ".bed")
+  on.exit(unlink(bed))
+  writeLines("chr\t1004670\t1004700\tgeneB\t0\t+", bed)
+  folded <- function(g) unlist(strsplit(g$sites$nodes, ",", fixed = TRUE))
+  lanes_only <- function(g) unlist(strsplit(g$sites$laneNodes, ",", fixed = TRUE))
+  skips <- function(g) as.numeric(unlist(strsplit(g$sites$links, ",", fixed = TRUE)))
+  outlined <- function(g) unique(exons_of(g, 3)$node)
+  for (walks in list(NULL, lifted)) {
+    g <- bandage_layout(pggb, walks = walks, genes = bed, nodeLengths = TRUE)
+    expect_equal(folded(g), "38+")
+    expect_false(any(folded(g) %in% c(g$nodes$node, g$arrows$node, g$labels$item, outlined(g))))
+    expect_false(any(skips(g) %in% c(g$edges$edge, g$arrows$edge)))
+    p <- ggplot2::autoplot(g)
+    exon_layer <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))[2]
+    expect_equal(nrow(ggplot2::layer_data(p, exon_layer)), nrow(exons_of(g, 3)))
+  }
+  expect_equal(lanes_only(g), "29+")
+  expect_false("29+" %in% g$nodes$node)
+  expect_false("29+" %in% outlined(g))
+  expect_true(all(c("28+", "30+") %in% outlined(g)))
+  drawn <- bandage_layout(pggb, walks = lifted, genes = bed, small_sites = "nodes")
+  expect_true("29+" %in% outlined(drawn))
+})
+
 test_that("printed, a layout counts the nodes and links it draws and says what it leaves out", {
   hidden <- bandage_layout(pggb, walks = lifted)
   expect_equal(
