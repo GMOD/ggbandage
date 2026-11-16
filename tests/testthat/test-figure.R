@@ -3,11 +3,11 @@ rgfa <- test_path("testdata", "ecoli_rgfa_slice.gfa.gz")
 walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.gz")
 lifted <- c("K12#1#chr:1004500-1004961", "IAI39#1#chr:2249412-2249872")
 
-drawn_keys <- function(plot, width) {
+drawn_keys <- function(plot, width, side = "top") {
   grDevices::pdf(NULL, width = width, height = 6)
   on.exit(grDevices::dev.off())
   gt <- ggplot2::ggplotGrob(plot)
-  box <- gt$grobs[[which(gt$layout$name == "guide-box-top")]]
+  box <- gt$grobs[[which(gt$layout$name == paste0("guide-box-", side))]]
   find <- function(x) {
     if (inherits(x, "bandage_key_guide")) {
       return(x)
@@ -55,6 +55,18 @@ test_that("under compress the key says node lengths are not to scale", {
   expect_false(note %in% drawn_keys(ggplot2::autoplot(plain), 8)$labels)
   unlifted <- bandage_layout(pggb, bubbleSpread = "compress")
   expect_true(note %in% drawn_keys(ggplot2::autoplot(unlifted), 8)$labels)
+})
+
+test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and says nothing once small sites are drawn", {
+  line <- "1 node and 1 skip under 2 bp not drawn"
+  bare <- bandage_layout(pggb, walks = lifted)
+  expect_equal(bare$graph_key$text[bare$graph_key$section == "too-small"], line)
+  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(bare), 8)$labels, 1), line)
+  faceted <- bandage_layout(pggb, walks = lifted, facet = "walk")
+  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(faceted), 8, "bottom")$labels, 1), line)
+  drawn <- bandage_layout(pggb, walks = lifted, smallSites = "nodes")
+  expect_false("too-small" %in% drawn$graph_key$section)
+  expect_false(any(grepl("not drawn$", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
 })
 
 test_that("the key wraps to the width the plot is drawn at", {
