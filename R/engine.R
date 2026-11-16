@@ -150,9 +150,11 @@ walk_origin <- function(walk) {
 #' @param facet `"walk"` for a panel per walk
 #' @param width the width in px the drawing is fit to, which decides whether
 #'   strand arrows show
-#' @param height the height in px the drawing is fit to. A force layout keeps
-#'   what lies beside the reference clear of it at `width` by `height`, so
-#'   pass the size the plot is drawn at
+#' @param height the height in px the drawing is fit to. Under
+#'   `engine = "stress"` the layout keeps what lies beside the reference clear
+#'   of it at `width` by `height`, and a compressing `bubbleSpread` sizes its
+#'   shortest nodes for `width`, so pass the size the plot is drawn at. The
+#'   default engine under the default spread lays out the same at any size
 #' @param region a 1-based locus, as a genome browser writes it, such as
 #'   `"GRCh38#0#chr6:31,000,001-31,100,000"`, `"chr6:31000001..31100000"` or
 #'   one base, `"chr6:31,000,001"`. On an index or walk file, the

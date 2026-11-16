@@ -61,12 +61,14 @@ test_that("a GFA reads from a URL, plain or gzipped", {
   }
 })
 
-test_that("a force layout is sized for the width and height it is fit to", {
-  at <- function(width, height) {
-    g <- bandage_layout(rgfa, width = width, height = height)
+test_that("a stress layout is sized for the width and height it is fit to, a compressed one for the width, and an FMMM one for neither", {
+  at <- function(width, height, ...) {
+    g <- bandage_layout(rgfa, width = width, height = height, ...)
     g$nodes[c("node", "x", "y")]
   }
-  expect_identical(at(900, 800), at(900, 800))
-  expect_false(identical(at(900, 800), at(1200, 800)))
-  expect_false(identical(at(1200, 100), at(1200, 800)))
+  expect_identical(at(900, 800), at(1200, 100))
+  expect_false(identical(at(900, 800, engine = "stress"), at(1200, 800, engine = "stress")))
+  expect_false(identical(at(1200, 100, engine = "stress"), at(1200, 800, engine = "stress")))
+  expect_false(identical(at(900, 800, bubbleSpread = "compress"), at(1200, 800, bubbleSpread = "compress")))
+  expect_identical(at(1200, 100, bubbleSpread = "compress"), at(1200, 800, bubbleSpread = "compress"))
 })
