@@ -399,6 +399,15 @@ test_that("the exon outline and the gene's name take bandage-core's exon gold, t
   expect_equal(g$graph_key$color[g$graph_key$section == "exon"], g$meta$inks$exon)
 })
 
+test_that("a gene dropped from the layout's genes goes unnamed", {
+  g <- bandage_layout(rgfa, genes = test_path("testdata", "ecoli_genes.bed"))
+  names_drawn <- function(g) nrow(ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_genes(key = NULL), 3))
+  expect_equal(names_drawn(g), 1)
+  g$genes <- g$genes[g$genes$gene != "geneA", ]
+  expect_equal(names_drawn(g), 0)
+  expect_no_error(ggplot2::ggplot_build(autoplot(g)))
+})
+
 test_that("a gene file naming the backbone otherwise warns, and gene_names binds it", {
   bed <- tempfile(fileext = ".bed")
   on.exit(unlink(bed))

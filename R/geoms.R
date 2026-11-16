@@ -284,7 +284,9 @@ exons_of <- function(model, outline) {
 #' Outlines each exon round the stretch of node that carries it, under the
 #' nodes, and names each gene where the Bandage view places its name, with a
 #' leader to its pin. Needs a layout made with `genes`; add it before
-#' [geom_bandage_nodes()] so the nodes draw over the outline.
+#' [geom_bandage_nodes()] so the nodes draw over the outline. A gene whose
+#' row is dropped from the layout's `genes` goes unnamed, and one dropped
+#' from its `exons` unoutlined.
 #' @inheritParams geom_bandage_nodes
 #' @param outline px the outline reaches past each side of the node
 #' @param colour the outline's colour, the Bandage view's exon gold when `NULL`
@@ -307,7 +309,8 @@ geom_bandage_genes <- function(data = NULL, outline = 3, colour = NULL,
     placed_labels(
       data, "gene", GENE_INK,
       list(text.colour = GENE_INK, fill = ggplot2::alpha("white", 0.85), fontface = "italic"),
-      ggplot2::aes(colour = I(ink)), ink
+      ggplot2::aes(colour = I(ink)),
+      function(m, labels) ink(m, labels[labels$item %in% m$genes$gene, ])
     ),
     if (!is.null(key)) {
       list(ggplot2::guides(bandage_genes = exon_key(if (is.null(colour)) core_exon() else colour, key)))
