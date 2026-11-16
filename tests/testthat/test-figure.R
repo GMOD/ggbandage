@@ -380,6 +380,7 @@ test_that("faceted, a panel's bar stands above the panel's top edge, off the dra
 
 test_that("faceted, one key below the panels names the shading, then the graph's key", {
   g <- bandage_layout(pggb, walks = lifted, facet = "walk")
+  expect_equal(ggplot2::autoplot(g)$theme$legend.location, "plot")
   guide <- ggplot2::autoplot(g)$guides$guides$bandage_keys
   expect_equal(guide$params$position, "bottom")
   expect_equal(guide$params$grob$keys$text, c("each walk, start to end", key_rows(g)$text))
@@ -836,6 +837,17 @@ test_that("a gap in a walk row says what the walk file's departures state of it"
 test_that("a layout of a walk file keys a walk by what its departures state", {
   g <- bandage_layout(records, region = "chr1:1001-5000", walks = "HG002#1", context = 0)
   expect_equal(g$keys$note, ", 1.3 kb left out of graph, 700 bp own sequence not drawn")
+})
+
+test_that("the rows' axis counts in bp, kb or Mb by the longest bar", {
+  axis <- function(w) ggplot2::autoplot(w)$scales$get_scales("x")
+  short <- axis(bandage_walk_rows(pggb))
+  expect_equal(short$name, "bp from the left flank")
+  expect_equal(short$labels(c(0, 200, 400)), c("0", "200", "400"))
+  long <- axis(bandage_walk_rows(records, "chr1:1001-5000", context = 0))
+  expect_equal(long$name, "kb from the left flank")
+  expect_equal(long$labels(c(0, 2000, 4000)), c("0", "2", "4"))
+  expect_equal(axis_unit(3e6), list(name = "Mb", bp = 1e6))
 })
 
 test_that("the room past the bars fits the readout reaching furthest", {

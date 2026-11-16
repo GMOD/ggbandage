@@ -279,7 +279,8 @@ bar_tiles <- function(runs, tile) {
 
 #' Walk rows as the Bandage view draws them
 #'
-#' A bar per walk on an axis of bp from the left flank, the walk's label on y
+#' A bar per walk on an axis of bp from the left flank, in bp, kb or Mb by the
+#' longest bar, the walk's label on y
 #' and its readout past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
 #' the reference shows the same colours wherever it recurs and an inverted
@@ -325,6 +326,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   walk_hued <- hues == "walk"
   rows <- object$rows
   span <- max(rows$xmax)
+  unit <- axis_unit(span)
   all <- bar_tiles(object$runs, span / 600)
   inks <- row_inks(rows, layout, all$row, (all$xmin + all$xmax) / 2)
   if (walk_hued && all(is.na(inks$colour))) {
@@ -493,8 +495,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       breaks = y, labels = rows$label, expand = ggplot2::expansion(add = 0.4)
     ) +
     ggplot2::scale_x_continuous(
-      "kb from the left flank",
-      labels = function(x) format(x / 1000, big.mark = ",", scientific = FALSE, trim = TRUE),
+      paste(unit$name, "from the left flank"),
+      labels = function(x) format(x / unit$bp, big.mark = ",", scientific = FALSE, trim = TRUE),
       expand = ggplot2::expansion(
         mult = c(if (nrow(swatches)) 0.045 else 0.01, if (readouts) readout_room(rows, span) else 0.02)
       )
@@ -533,6 +535,17 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     )
   }
   p
+}
+
+# The unit an axis `span` bp long counts in
+axis_unit <- function(span) {
+  if (span < 2000) {
+    list(name = "bp", bp = 1)
+  } else if (span < 2e6) {
+    list(name = "kb", bp = 1000)
+  } else {
+    list(name = "Mb", bp = 1e6)
+  }
 }
 
 STRIP_FILL <- "#8c8c8c"

@@ -39,7 +39,8 @@ beside it where the walk is one flat colour; \code{hues = "walk"} takes the
 row's colours from there}
 }
 \description{
-A bar per walk on an axis of bp from the left flank, the walk's label on y
+A bar per walk on an axis of bp from the left flank, in bp, kb or Mb by the
+longest bar, the walk's label on y
 and its readout past the bar's end. Sequence on the reference's path takes
 the colour of the reference position it covers, so a duplicated stretch of
 the reference shows the same colours wherever it recurs and an inverted
