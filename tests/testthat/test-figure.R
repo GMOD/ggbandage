@@ -584,6 +584,19 @@ test_that("the key drops the exon outline once the layout's exons are dropped", 
   expect_equal(sum(key_rows(g)$swatch == "outline"), outlined - 1)
 })
 
+test_that("each gene is named as bandage-core names it: a pin with no label, as an accession beside a symbol, is outlined and not named", {
+  bed <- tempfile(fileext = ".bed")
+  on.exit(unlink(bed))
+  writeLines(c("chr\t1004520\t1004560\tgeneB\t0\t+", "chr\t1004600\t1004650\tLOC105378878\t0\t+"), bed)
+  g <- bandage_layout(pggb, genes = bed)
+  expect_equal(g$genes$gene, c("geneB", "LOC105378878"))
+  expect_equal(g$genes$label, c("geneB", NA))
+  expect_true("LOC105378878" %in% g$exons$gene)
+  named <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_genes(key = NULL), 3)
+  expect_equal(named$label, "geneB")
+  expect_equal(c(named$x, named$y), unlist(g$labels[g$labels$kind == "gene", c("x", "y")], use.names = FALSE))
+})
+
 test_that("a gene dropped from the layout's genes goes unnamed", {
   g <- bandage_layout(rgfa, genes = test_path("testdata", "ecoli_genes.bed"))
   names_drawn <- function(g) nrow(ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_genes(key = NULL), 3))
