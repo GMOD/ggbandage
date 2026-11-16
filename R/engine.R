@@ -184,6 +184,15 @@ walk_origin <- function(walk) {
 #'   `name` and `frequency` such as [vcf_frequencies()] returns, or a numeric
 #'   vector named by node. They override any `AF` tag and what the walks give,
 #'   and `nodeWidth = "frequency"` draws them
+#' @param small_sites `"hidden"`, the default, leaves out each site too small
+#'   to draw at `width` by `height`: nodes off the reference, or a link
+#'   skipping reference sequence, whose bp with the reference between where
+#'   they attach span under 3 px of the drawn reference. The key's last line
+#'   counts what it leaves out, and the layout's `sites` table lists each site:
+#'   where it attaches (`refName`, `start`, `end`, and `x`, `y` in the
+#'   drawing), its `bp`, the `nodes` and `links` it folds, and how many of the
+#'   shown haplotypes step it, `count` of `total`. `"nodes"` draws every node
+#'   and link at any size
 #' @param ... other figure spec fields, such as `referencePath`,
 #'   `colorScheme`, `contigThickness`, `quality`, `engine`
 #'   (`"fmmm"`, the default, or `"stress"`), and `bubbleSpread` (`"auto"`, the
@@ -196,10 +205,12 @@ walk_origin <- function(walk) {
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, height = 800, region = NULL,
                            genes = NULL, gene_names = NULL, haplotypes = NULL,
-                           context = NULL, frequencies = NULL, ...) {
+                           context = NULL, frequencies = NULL,
+                           small_sites = c("hidden", "nodes"), ...) {
+  small_sites <- match.arg(small_sites)
   src <- graph_source(gfa, region, haplotypes, context)
   spec <- c(
-    list(layout = layout, width = width, height = height),
+    list(layout = layout, width = width, height = height, smallSites = small_sites),
     if (!is.null(src$region)) list(region = src$region),
     if (length(walks)) list(walks = walk_layers(walks)),
     if (!is.null(facet)) list(facet = facet),
@@ -310,6 +321,13 @@ frame <- function(x) {
   as.data.frame(cols, stringsAsFactors = FALSE)
 }
 
+# The columns of the sites table, which the core leaves out with small sites
+# drawn
+no_sites <- sapply(
+  c("site", "refName", "start", "end", "bp", "x", "y", "count", "total", "nodes", "links", "laneNodes", "laneLinks"),
+  function(column) NULL
+)
+
 # y down, as on screen, becomes y up, and the panels become a factor in the
 # order the core placed them
 as_bandage_layout <- function(d) {
@@ -332,6 +350,7 @@ as_bandage_layout <- function(d) {
   genes <- upright(frame(d$pins))
   exons <- upright(frame(d$exons))
   labels <- upright(frame(d$labels), c("y", "y1", "y2"))
+  sites <- upright(frame(if (is.null(d$sites)) no_sites else d$sites))
   passes <- frame(d$passes)
   pass_runs <- frame(d$passRuns)
   graph_key <- frame(d$meta$graphKey)
@@ -341,7 +360,7 @@ as_bandage_layout <- function(d) {
       nodes = nodes, edges = edges, arrows = arrows, rows = rows,
       panels = panels, keys = keys, genes = genes, exons = exons,
       labels = labels, passes = passes, pass_runs = pass_runs,
-      graph_key = graph_key, meta = d$meta
+      sites = sites, graph_key = graph_key, meta = d$meta
     ),
     class = "bandage_layout"
   )

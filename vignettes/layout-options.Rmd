@@ -18,4 +18,5 @@ lists the rest.
 | `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
 | `genes` | A GFF3 or BED file pinned onto the reference |
 | `context = 30000` | On a walk file, 30 kb of reference past each end of `region`, so the drawing shows where straight reference meets the variation. Default: what the browser readers keep |
+| `small_sites = "nodes"` | Every node and link drawn, however small at the figure's size. Default leaves out sites under 3 px of the drawn reference, as the browser readers do at overview; the key's last line counts them and the layout's `sites` table lists them |
 | `bubbleSpread = "compress"` | Long and short nodes drawn nearer the mean length, so one long insertion doesn't fill the figure. Default draws length proportional to bp |

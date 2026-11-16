@@ -38,7 +38,7 @@ key_words <- function(g) {
 }
 
 test_that("the key is bandage-core's graph key: each lifted walk, what the lift fades, the thickness ends, the skip drawn", {
-  g <- bandage_layout(pggb, walks = lifted, smallSites = "nodes")
+  g <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
   k <- drawn_keys(ggplot2::autoplot(g), 8)
   expect_equal(k$labels, key_words(g))
   expect_equal(utils::head(k$labels, 3), c("K12", "IAI39", "only in other haplotypes"))
@@ -64,9 +64,26 @@ test_that("the key ends with what the drawing leaves out as too small, bare or f
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(bare), 8)$labels, 1), line)
   faceted <- bandage_layout(pggb, walks = lifted, facet = "walk")
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(faceted), 8, "bottom")$labels, 1), line)
-  drawn <- bandage_layout(pggb, walks = lifted, smallSites = "nodes")
+  drawn <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
   expect_false("too-small" %in% drawn$graph_key$section)
   expect_false(any(grepl("not drawn$", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
+})
+
+test_that("small sites are left out by default and listed in the sites table, and small_sites = \"nodes\" draws every node", {
+  hidden <- bandage_layout(pggb, walks = lifted)
+  expect_equal(hidden$meta$smallSites$mode, "hidden")
+  expect_equal(hidden$sites$nodes, c("", "38+"))
+  expect_equal(hidden$sites$links, c("37", "50,51"))
+  expect_equal(hidden$sites$refName, c("K12#1#chr", "K12#1#chr"))
+  expect_false("38+" %in% hidden$nodes$node)
+  expect_false(any(c(37, 50, 51) %in% hidden$edges$edge))
+  drawn <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
+  expect_null(drawn$meta$smallSites)
+  expect_equal(nrow(drawn$sites), 0)
+  expect_named(drawn$sites, names(hidden$sites))
+  expect_true("38+" %in% drawn$nodes$node)
+  expect_true(all(c(37, 50, 51) %in% drawn$edges$edge))
+  expect_error(bandage_layout(pggb, small_sites = "ticks"), "should be one of")
 })
 
 test_that("the key wraps to the width the plot is drawn at", {

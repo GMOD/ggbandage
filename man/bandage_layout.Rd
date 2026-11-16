@@ -17,6 +17,7 @@ bandage_layout(
   haplotypes = NULL,
   context = NULL,
   frequencies = NULL,
+  small_sites = c("hidden", "nodes"),
   ...
 )
 }
@@ -80,6 +81,16 @@ one when \code{NULL}}
 \code{name} and \code{frequency} such as \code{\link[=vcf_frequencies]{vcf_frequencies()}} returns, or a numeric
 vector named by node. They override any \code{AF} tag and what the walks give,
 and \code{nodeWidth = "frequency"} draws them}
+
+\item{small_sites}{\code{"hidden"}, the default, leaves out each site too small
+to draw at \code{width} by \code{height}: nodes off the reference, or a link
+skipping reference sequence, whose bp with the reference between where
+they attach span under 3 px of the drawn reference. The key's last line
+counts what it leaves out, and the layout's \code{sites} table lists each site:
+where it attaches (\code{refName}, \code{start}, \code{end}, and \code{x}, \code{y} in the
+drawing), its \code{bp}, the \code{nodes} and \code{links} it folds, and how many of the
+shown haplotypes step it, \code{count} of \code{total}. \code{"nodes"} draws every node
+and link at any size}
 
 \item{...}{other figure spec fields, such as \code{referencePath},
 \code{colorScheme}, \code{contigThickness}, \code{quality}, \code{engine}
