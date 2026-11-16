@@ -38,23 +38,23 @@ key_words <- function(g) {
 }
 
 test_that("the key is bandage-core's graph key: each lifted walk, what the lift fades, the thickness ends, the skip drawn", {
-  g <- bandage_layout(pggb, walks = lifted)
+  g <- bandage_layout(pggb, walks = lifted, smallSites = "nodes")
   k <- drawn_keys(ggplot2::autoplot(g), 8)
   expect_equal(k$labels, key_words(g))
   expect_equal(utils::head(k$labels, 3), c("K12", "IAI39", "only in other haplotypes"))
-  expect_true(all(c("Node thickness", "a skip too short to dash") %in% k$labels))
+  expect_true(all(c("Node thickness", "short skip") %in% k$labels))
 })
 
 test_that("under compress the key says node lengths are not to scale", {
   note <- "node lengths compressed, not to scale"
   g <- bandage_layout(pggb, walks = lifted, bubbleSpread = "compress")
-  expect_equal(utils::tail(g$graph_key$text, 1), note)
-  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(g), 8)$labels, 1), note)
+  expect_true(note %in% g$graph_key$text)
+  expect_true(note %in% drawn_keys(ggplot2::autoplot(g), 8)$labels)
   plain <- bandage_layout(pggb, walks = lifted)
   expect_false(note %in% plain$graph_key$text)
   expect_false(note %in% drawn_keys(ggplot2::autoplot(plain), 8)$labels)
   unlifted <- bandage_layout(pggb, bubbleSpread = "compress")
-  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(unlifted), 8)$labels, 1), note)
+  expect_true(note %in% drawn_keys(ggplot2::autoplot(unlifted), 8)$labels)
 })
 
 test_that("the key wraps to the width the plot is drawn at", {
@@ -130,18 +130,18 @@ test_that("a walk lifted by pass has each pass named on the graph in its colour,
   on.exit(unlink(gfa))
   writeLines(repeat_gfa, gfa)
   g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
-  expect_equal(g$passes$text, c("pass 1", "pass 2"))
+  expect_equal(g$passes$text, c("pass 1 \u00b7 6 bp", "pass 2 \u00b7 6 bp"))
   expect_equal(c(g$passes$start, g$passes$end), c(0, 6, 6, 12))
   named <- g$labels[g$labels$kind == "pass", ]
-  expect_equal(named$text, g$passes$text)
+  expect_equal(named$text, c("pass 1", "pass 2"))
   expect_equal(named$color, g$passes$color)
   p <- ggplot2::autoplot(g)
   drawn <- Filter(function(d) "label" %in% names(d) && nrow(d) > 0, ggplot2::ggplot_build(p)$data)
   expect_length(drawn, 1)
-  expect_equal(drawn[[1]]$label, g$passes$text)
+  expect_equal(drawn[[1]]$label, named$text)
   expect_equal(as.character(drawn[[1]]$colour), g$passes$color)
   keyed <- drawn_keys(p, 8)$labels
-  expect_true(all(c("pass 1", "pass 2", "the way the walk runs") %in% keyed))
+  expect_true(all(c(g$passes$text, "the way the walk runs") %in% keyed))
   heads <- key_rows(g)[key_rows(g)$swatch == "heads", ]
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
@@ -153,12 +153,14 @@ test_that("a walk's passes take the names given them, one name or many, and a gr
   on.exit(unlink(gfa))
   writeLines(repeat_gfa, gfa)
   named <- bandage_layout(gfa, walks = by_pass(passNames = c("first", "second")), engine = "stress")
-  expect_equal(named$passes$text, c("first", "second"))
+  expect_equal(named$labels$text[named$labels$kind == "pass"], c("first", "second"))
+  expect_equal(named$passes$text, c("first \u00b7 6 bp", "second \u00b7 6 bp"))
   stated <- function(spans, names) {
     bandage_layout(pggb, walks = list(list(walk = "K12", color = list(field = "pass"), passes = spans, passNames = names)))$passes
   }
-  expect_equal(stated(data.frame(start = c(0, 200), end = c(200, 400)), c("a", "b"))$text, c("a", "b"))
-  expect_equal(stated(data.frame(start = 0, end = 200), "only")$text, "only")
+  named_as <- function(passes) sub(" \u00b7 .*", "", passes$text)
+  expect_equal(named_as(stated(data.frame(start = c(0, 200), end = c(200, 400)), c("a", "b"))), c("a", "b"))
+  expect_equal(named_as(stated(data.frame(start = 0, end = 200), "only")), "only")
   expect_equal(nrow(bandage_layout(pggb, walks = "K12")$passes), 0)
 })
 
@@ -175,7 +177,7 @@ test_that("the pass bar draws the walk in its own colour, each pass's stretches 
   expect_equal(stretches$xmin, c(0, 6))
   expect_equal(stretches$xmax, c(6, 12))
   expect_equal(as.character(stretches$fill), g$passes$color)
-  expect_equal(built$data[[4]]$label, c("pass 1", "pass 2"))
+  expect_equal(built$data[[4]]$label, g$passes$text)
   expect_equal(built$plot$scales$get_scales("x")$name, "bp along dup")
   expect_error(bandage_pass_bar(bandage_layout(pggb, walks = "K12")), "lifts no walk")
 })

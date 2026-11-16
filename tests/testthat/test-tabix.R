@@ -5,8 +5,8 @@ format2 <- test_path("testdata", "ecoli_pggb_format2.graph.bed.gz")
 bare_nodes <- function(g) sub("[+-]$", "", unique(g$nodes$node))
 
 test_that("a window over a whole index draws the graph the GFA does", {
-  whole <- bandage_layout(pggb)
-  cut <- bandage_layout(index, region = "K12#1#chr:1004500-1004961")
+  whole <- bandage_layout(pggb, smallSites = "nodes")
+  cut <- bandage_layout(index, region = "K12#1#chr:1004500-1004961", smallSites = "nodes")
   expect_setequal(bare_nodes(cut), bare_nodes(whole))
   expect_equal(length(unique(cut$edges$edge)), length(unique(whole$edges$edge)))
 })
