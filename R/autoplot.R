@@ -136,9 +136,11 @@ pinned_top_left <- function(gt) {
 #'
 #' A bar for each walk a layout lifts with `color = list(field = "pass")`, in
 #' the walk's own colour, each stretch on a node it steps again in the colour
-#' of the pass it is on, under a bracket over each pass's extent with its
-#' name. Stack it under the layout's plot with patchwork, as
-#' `autoplot(g) / bandage_pass_bar(g)`.
+#' of the pass it is on. Over the bar, a line over each of a pass's stretches,
+#' a dotted hairline joining them, and the pass's name, with the bp it steps
+#' again, over its longest stretch where it does not run into a name already
+#' written, as bandage-core's figure draws it. Stack it under the layout's
+#' plot with patchwork, as `autoplot(g) / bandage_pass_bar(g)`.
 #' @param layout a `bandage_layout` that lifts a walk by pass
 #' @return a ggplot
 #' @export
@@ -155,9 +157,12 @@ bandage_pass_bar <- function(layout) {
   bp <- key$end - key$start
   unit <- axis_unit(max(bp))
   at <- function(walk) length(walks) + 1 - match(walk, walks)
-  runs <- joined_runs(layout$pass_runs, max(bp) / 600)
+  bp_per_px <- max(bp) / PASS_BAR_PX
+  runs <- joined_runs(layout$pass_runs, bp_per_px)
+  marks <- pass_marks(layout$pass_runs, passes, bp, walks, bp_per_px)
   half <- 0.18
   rise <- half + 0.12
+  leg <- 0.08
   ggplot2::ggplot() +
     ggplot2::geom_rect(
       data = data.frame(y = at(walks), bp = bp, colour = key$stops),
@@ -167,19 +172,24 @@ bandage_pass_bar <- function(layout) {
       data = data.frame(runs, y = at(runs$walk)),
       ggplot2::aes(xmin = start, xmax = end, ymin = y - half, ymax = y + half, fill = I(color))
     ) +
+    ggplot2::geom_segment(
+      data = data.frame(marks$between, y = at(marks$between$walk) + rise + leg),
+      ggplot2::aes(x = start, xend = end, y = y, yend = y, colour = I(color)),
+      linewidth = px_linewidth(0.75), linetype = "12"
+    ) +
     ggplot2::geom_path(
       data = data.frame(
-        x = c(rbind(passes$start, passes$start, passes$end, passes$end)),
-        y = rep(at(passes$walk), each = 4) + rise + c(0, 0.08, 0.08, 0),
-        id = rep(seq_len(nrow(passes)), each = 4),
-        colour = rep(passes$color, each = 4)
+        x = c(rbind(marks$own$start, marks$own$start, marks$own$end, marks$own$end)),
+        y = rep(at(marks$own$walk), each = 4) + rise + c(0, leg, leg, 0),
+        id = rep(seq_len(nrow(marks$own)), each = 4),
+        colour = rep(marks$own$color, each = 4)
       ),
       ggplot2::aes(x = x, y = y, group = id, colour = I(colour)),
-      linewidth = 0.5
+      linewidth = px_linewidth(1.5)
     ) +
     ggplot2::geom_text(
-      data = data.frame(passes, y = at(passes$walk)),
-      ggplot2::aes(x = (start + end) / 2, y = y + rise + 0.14, label = text, colour = I(color)),
+      data = data.frame(marks$names, y = at(marks$names$walk)),
+      ggplot2::aes(x = x, y = y + rise + leg + 0.06, label = text, colour = I(color)),
       size = 3, fontface = "bold", vjust = 0
     ) +
     ggplot2::scale_x_continuous(
@@ -199,6 +209,39 @@ bandage_pass_bar <- function(layout) {
       panel.grid = ggplot2::element_blank(),
       axis.title.x = ggplot2::element_text(size = 9, colour = "grey30")
     )
+}
+
+# The px a pass bar's names and joins are measured at, as bandage-core
+# measures them along a bar this wide
+PASS_BAR_PX <- 600
+# a name's px a letter, in the bar's 11 px type
+PASS_NAME_CHAR_PX <- 6.2
+
+# Each pass's own stretches, those a hair apart as one; the gaps between
+# them, dotted; and the pass's name over its longest stretch, kept inside the
+# bar and left off where it would run into a name already placed, the passes
+# in order
+pass_marks <- function(runs, passes, bp, walks, bp_per_px) {
+  own <- joined_runs(runs[order(match(runs$walk, walks), runs$pass, runs$start), ], bp_per_px)
+  same <- own$walk[-1] == own$walk[-nrow(own)] & own$pass[-1] == own$pass[-nrow(own)]
+  between <- data.frame(
+    walk = own$walk[-1][same], color = own$color[-1][same],
+    start = own$end[-nrow(own)][same], end = own$start[-1][same]
+  )
+  named <- data.frame(walk = character(), text = character(), color = character(), x = numeric(), half = numeric())
+  for (i in seq_len(nrow(passes))) {
+    mine <- own[own$walk == passes$walk[i] & own$pass == passes$pass[i], ]
+    if (nrow(mine)) {
+      longest <- which.max(mine$end - mine$start)
+      half <- (nchar(passes$text[i]) * PASS_NAME_CHAR_PX / 2 + 2) * bp_per_px
+      x <- min(max((mine$start[longest] + mine$end[longest]) / 2, half), bp[match(passes$walk[i], walks)] - half)
+      placed <- named[named$walk == passes$walk[i], ]
+      if (all(x + half <= placed$x - placed$half | x - half >= placed$x + placed$half)) {
+        named[nrow(named) + 1, ] <- list(passes$walk[i], passes$text[i], passes$color[i], x, half)
+      }
+    }
+  }
+  list(own = own, between = between, names = named)
 }
 
 # Stretches of one walk and pass nearer than `gap` bp as one, so the hairline

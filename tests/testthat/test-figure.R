@@ -187,6 +187,13 @@ test_that("a walk lifted by pass has each pass named on the graph in its colour,
   expect_equal(as.character(drawn[[1]]$colour), g$passes$color)
   keyed <- drawn_keys(p, 8)$labels
   expect_true(all(c(g$passes$text, "the way the walk runs") %in% keyed))
+  layers <- vapply(p$layers, function(l) class(l$geom)[1], "")
+  leaders <- ggplot2::layer_data(p, utils::tail(which(layers == "GeomSegment"), 1))
+  expect_equal(c(leaders$xend, leaders$yend), c(named$x2, named$y2))
+  expect_equal(as.character(leaders$colour), g$passes$color)
+  dots <- ggplot2::layer_data(p, which(layers == "GeomPoint"))
+  expect_equal(c(dots$x, dots$y), c(named$x2, named$y2))
+  expect_equal(as.character(dots$colour), g$passes$color)
   heads <- key_rows(g)[key_rows(g)$swatch == "heads", ]
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
@@ -222,9 +229,34 @@ test_that("the pass bar draws the walk in its own colour, each pass's stretches 
   expect_equal(stretches$xmin, c(0, 6))
   expect_equal(stretches$xmax, c(6, 12))
   expect_equal(as.character(stretches$fill), g$passes$color)
-  expect_equal(built$data[[4]]$label, g$passes$text)
+  brackets <- built$data[[4]]
+  expect_equal(brackets$x, c(0, 0, 6, 6, 6, 6, 12, 12))
+  expect_equal(as.character(unique(brackets$colour)), g$passes$color)
+  expect_equal(nrow(built$data[[3]]), 0)
+  expect_equal(built$data[[5]]$label, g$passes$text)
+  expect_equal(built$data[[5]]$x, c(3, 9))
   expect_equal(built$plot$scales$get_scales("x")$name, "bp along dup")
   expect_error(bandage_pass_bar(bandage_layout(pggb, walks = "K12")), "lifts no walk")
+})
+
+test_that("the pass bar marks each pass's own stretches, dots the gaps between them and names the pass over its longest where the name has room", {
+  runs <- data.frame(
+    walk = "w", pass = c(0, 0, 1, 2, 0, 1, 2), color = c("a", "a", "b", "c", "a", "b", "c"),
+    start = c(0, 50.5, 60, 100, 300, 310, 320), end = c(50, 60, 100, 102, 310, 320, 321)
+  )
+  passes <- data.frame(walk = "w", pass = 0:2, text = c("a", "a long name", "c"), color = c("a", "b", "c"))
+  marks <- pass_marks(runs, passes, 600, "w", 1)
+  expect_equal(marks$own$pass, c(0, 0, 1, 1, 2, 2))
+  expect_equal(marks$own$start, c(0, 300, 60, 310, 100, 320))
+  expect_equal(marks$own$end, c(60, 310, 100, 320, 102, 321))
+  expect_equal(marks$between$start, c(60, 100, 102))
+  expect_equal(marks$between$end, c(300, 310, 320))
+  expect_equal(marks$between$color, c("a", "b", "c"))
+  expect_equal(marks$names$text, c("a", "a long name"))
+  expect_equal(marks$names$x, c(30, 80))
+  expect_equal(pass_marks(runs[1, ], passes[1, ], 600, "w", 1)$names$x, 25)
+  passes$text[1] <- strrep("w", 20)
+  expect_equal(pass_marks(runs[1, ], passes[1, ], 600, "w", 1)$names$x, 20 * PASS_NAME_CHAR_PX / 2 + 2)
 })
 
 test_that("pass stretches a hairline apart join, and those of another pass or further apart do not", {
@@ -538,7 +570,7 @@ test_that("a placeholder's length is labelled as the Bandage view labels it, eve
   g <- bandage_layout(gfa, layout = "auto", referencePath = "R")
   expect_equal(g$labels$kind, "placeholder")
   expect_equal(g$labels$text, "75 kb")
-  drawn <- ggplot2::layer_data(ggplot2::autoplot(g), length(ggplot2::autoplot(g)$layers) - 2)
+  drawn <- ggplot2::layer_data(ggplot2::autoplot(g), length(ggplot2::autoplot(g)$layers) - 3)
   expect_equal(drawn$label, "75 kb")
   expect_true("nodes not shown" %in% g$graph_key$text)
   every <- bandage_layout(gfa, layout = "auto", referencePath = "R", nodeLengths = TRUE)

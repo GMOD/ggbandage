@@ -10,14 +10,15 @@ geom_bandage_labels(data = NULL)
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
 }
 \value{
-the leaders and the labels of the lengths, then of the passes, four
-layers
+the leaders and the labels of the lengths, then the leaders, the
+dots and the names of the passes, five layers
 }
 \description{
 Each placeholder's length, the bp of a stretch the cut did not load, and
 every node's where the layout was made with \code{nodeLengths = TRUE}, on a pale
 backing at the place the Bandage view gives it, with a leader to its loop
 where the label stands off. A walk lifted by pass has each pass named in
-the pass's colour beside one of its threads.
+the pass's colour beside one of its threads, with a leader in that colour
+to a dot on the thread.
 \link[=autoplot.bandage_layout]{autoplot()} adds it.
 }

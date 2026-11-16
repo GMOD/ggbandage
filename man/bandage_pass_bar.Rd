@@ -15,7 +15,9 @@ a ggplot
 \description{
 A bar for each walk a layout lifts with \code{color = list(field = "pass")}, in
 the walk's own colour, each stretch on a node it steps again in the colour
-of the pass it is on, under a bracket over each pass's extent with its
-name. Stack it under the layout's plot with patchwork, as
-\code{autoplot(g) / bandage_pass_bar(g)}.
+of the pass it is on. Over the bar, a line over each of a pass's stretches,
+a dotted hairline joining them, and the pass's name, with the bp it steps
+again, over its longest stretch where it does not run into a name already
+written, as bandage-core's figure draws it. Stack it under the layout's
+plot with patchwork, as \code{autoplot(g) / bandage_pass_bar(g)}.
 }

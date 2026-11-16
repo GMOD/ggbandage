@@ -254,11 +254,12 @@ placed_labels <- function(data, kinds, ink, params, mapping = ggplot2::aes(),
 #' every node's where the layout was made with `nodeLengths = TRUE`, on a pale
 #' backing at the place the Bandage view gives it, with a leader to its loop
 #' where the label stands off. A walk lifted by pass has each pass named in
-#' the pass's colour beside one of its threads.
+#' the pass's colour beside one of its threads, with a leader in that colour
+#' to a dot on the thread.
 #' [autoplot()][autoplot.bandage_layout] adds it.
 #' @inheritParams geom_bandage_nodes
-#' @return the leaders and the labels of the lengths, then of the passes, four
-#'   layers
+#' @return the leaders and the labels of the lengths, then the leaders, the
+#'   dots and the names of the passes, five layers
 #' @export
 geom_bandage_labels <- function(data = NULL) {
   c(
@@ -266,12 +267,46 @@ geom_bandage_labels <- function(data = NULL) {
       data, c("placeholder", "length"), SIZE_INK,
       list(colour = SIZE_INK, fill = ggplot2::alpha("white", 0.8), border.colour = NA)
     ),
-    placed_labels(
-      data, "pass", GENE_INK, list(fill = "white", fontface = "bold"),
-      ggplot2::aes(colour = I(color))
+    pass_labels(data)
+  )
+}
+
+# A pass's name as bandage-core's figure writes it: a leader in the pass's
+# colour from the name to a dot on the pass's thread, and the name in that
+# colour on a white chip ringed in it
+pass_labels <- function(data) {
+  passes <- table_from(data, function(m) m$labels[m$labels$kind == "pass", ])
+  list(
+    ggplot2::layer(
+      geom = ggplot2::GeomSegment, stat = "identity", position = "identity",
+      data = passes,
+      mapping = ggplot2::aes(x = x1, y = y1, xend = x2, yend = y2, colour = I(color)),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = list(linewidth = px_linewidth(1))
+    ),
+    ggplot2::layer(
+      geom = ggplot2::GeomPoint, stat = "identity", position = "identity",
+      data = passes,
+      mapping = ggplot2::aes(x = x2, y = y2, colour = I(color)),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = list(size = PASS_DOT_PX / ggplot2::.pt, stroke = 0, shape = 16)
+    ),
+    ggplot2::layer(
+      geom = ggplot2::GeomLabel, stat = "identity", position = "identity",
+      data = passes,
+      mapping = ggplot2::aes(x = x, y = y, label = text, size = I(px_size(size)), colour = I(color)),
+      inherit.aes = FALSE, show.legend = FALSE,
+      params = list(
+        label.padding = grid::unit(1.5, "pt"), label.r = grid::unit(2, "pt"),
+        fill = ggplot2::alpha("white", 0.9), fontface = "bold"
+      )
     )
   )
 }
+
+# a filled circle of pch 16 is as wide in px as its fontsize in pt, which
+# ggplot2 takes as size times .pt
+PASS_DOT_PX <- 4
 
 # The exon gold, the core's own where the caller gives no colour
 inked <- function(colour) {
