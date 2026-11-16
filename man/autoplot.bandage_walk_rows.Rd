@@ -19,7 +19,8 @@
 \item{...}{unused}
 
 \item{readouts}{write each bar's length and its difference from the
-reference past its end}
+reference past its end. A readout longer than the room beside its bar
+goes onto two lines, or is cut at the end and closed with an ellipsis}
 
 \item{ribbons}{join the graph nodes neighbouring rows share}
 

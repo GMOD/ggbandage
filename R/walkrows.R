@@ -91,10 +91,72 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
 
 # Room past the longest bar for the readouts, as a share of it: 30%, or what
 # the readout reaching furthest takes at about 0.7% a character, which fits a
-# figure 10 in wide
+# figure 10 in wide, up to half. A readout with less room than it needs wraps
+# or is cut as it is drawn
 readout_room <- function(rows, span) {
   reach <- (rows$xmax / span + 0.01 + nchar(rows$readout) * 0.007) - 1
-  max(0.3, reach)
+  min(0.5, max(0.3, reach))
+}
+
+PART <- " \u00b7 "
+ELLIPSIS <- "\u2026"
+
+# A readout as it fits `room`, by `measure`: whole; or on two lines, broken
+# between two of its parts where the longer line comes out shortest; or cut
+# by whole parts from the end, then to its total, closed with an ellipsis, as
+# bandage-core's walk rows cut one
+fit_readout <- function(text, room, measure) {
+  fits <- function(lines) all(vapply(lines, measure, 0) <= room)
+  if (fits(text)) {
+    text
+  } else {
+    at <- gregexpr(paste0(PART, "|, "), text)[[1]]
+    wraps <- lapply(seq_along(at)[at > 0], function(k) {
+      comma <- attr(at, "match.length")[k] == 2
+      c(substring(text, 1, at[k] - 1 + comma), substring(text, at[k] + attr(at, "match.length")[k]))
+    })
+    wraps <- Filter(fits, wraps)
+    if (length(wraps)) {
+      longer <- vapply(wraps, function(lines) max(vapply(lines, measure, 0)), 0)
+      paste(wraps[[which.min(longer)]], collapse = "\n")
+    } else {
+      parts <- strsplit(text, PART, fixed = TRUE)[[1]]
+      kept <- rev(seq_len(length(parts) - 1))
+      cuts <- c(
+        vapply(kept, function(k) paste(c(parts[seq_len(k)], ELLIPSIS), collapse = PART), ""),
+        paste0(sub(", of which .*", "", parts[1]), ", ", ELLIPSIS),
+        ELLIPSIS
+      )
+      c(Filter(fits, cuts), "")[1]
+    }
+  }
+}
+
+GeomBandageReadout <- ggplot2::ggproto("GeomBandageReadout", ggplot2::Geom,
+  required_aes = c("x", "y", "label"),
+  default_aes = ggplot2::aes(colour = "grey25", size = 2.8),
+  draw_key = ggplot2::draw_key_text,
+  draw_panel = function(data, panel_params, coord, gap = 6) {
+    if (nrow(data)) {
+      grid::gTree(readouts = coord$transform(data, panel_params), gap = gap, cl = "bandage_readouts")
+    } else {
+      grid::nullGrob()
+    }
+  }
+)
+
+#' @exportS3Method grid::makeContent
+makeContent.bandage_readouts <- function(x) {
+  d <- x$readouts
+  font <- grid::gpar(fontsize = d$size[1] * ggplot2::.pt, lineheight = 0.9)
+  measure <- function(text) width_px(grid::grobWidth(grid::textGrob(text, gp = font)))
+  wide <- width_px(grid::unit(1, "npc"))
+  room <- wide * (1 - d$x) - x$gap
+  lines <- vapply(seq_len(nrow(d)), function(i) fit_readout(d$label[i], room[i], measure), "")
+  grid::setChildren(x, grid::gList(grid::textGrob(
+    lines, grid::unit(d$x, "npc") + px(x$gap), grid::unit(d$y, "npc"),
+    hjust = 0, gp = grid::gpar(col = d$colour, fontsize = font$fontsize, lineheight = font$lineheight)
+  )))
 }
 
 # the share of the longest bar a block's stretch needs to be drawn and lettered
@@ -223,7 +285,8 @@ bar_tiles <- function(runs, tile) {
 #' @param object a `bandage_walk_rows`
 #' @param ... unused
 #' @param readouts write each bar's length and its difference from the
-#'   reference past its end
+#'   reference past its end. A readout longer than the room beside its bar
+#'   goes onto two lines, or is cut at the end and closed with an ellipsis
 #' @param ribbons join the graph nodes neighbouring rows share
 #' @param hues `"viridis"`; `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
@@ -435,10 +498,11 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     )
   }
   if (readouts) {
-    p <- p + ggplot2::geom_text(
-      data = data.frame(x = rows$xmax + span * 0.01, y = y, label = rows$readout),
-      ggplot2::aes(x = x, y = y, label = label),
-      hjust = 0, size = 2.8, colour = "grey25"
+    p <- p + ggplot2::layer(
+      geom = GeomBandageReadout, stat = "identity", position = "identity",
+      data = data.frame(x = rows$xmax, y = y, label = rows$readout),
+      mapping = ggplot2::aes(x = x, y = y, label = label),
+      inherit.aes = FALSE, show.legend = FALSE
     )
   }
   p

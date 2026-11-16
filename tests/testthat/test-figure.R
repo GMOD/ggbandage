@@ -796,7 +796,51 @@ test_that("the room past the bars fits the readout reaching furthest", {
   rows <- data.frame(xmax = c(100, 50), readout = c("1 kb", strrep("x", 80)))
   expect_equal(readout_room(rows, 100), 0.3)
   rows$xmax[2] <- 100
-  expect_equal(readout_room(rows, 100), 0.01 + 80 * 0.007)
+  rows$readout[2] <- strrep("x", 50)
+  expect_equal(readout_room(rows, 100), 0.01 + 50 * 0.007)
+  rows$readout[2] <- strrep("x", 200)
+  expect_equal(readout_room(rows, 100), 0.5)
+})
+
+test_that("a readout with too little room wraps between two parts, or is cut by whole parts and says so", {
+  text <- "7.0 kb, of which 1.3 kb left out of graph \u00b7 contig ends inside the window \u00b7 no ribbons"
+  expect_equal(fit_readout(text, 200, nchar), text)
+  expect_equal(
+    fit_readout(text, 50, nchar),
+    "7.0 kb, of which 1.3 kb left out of graph\ncontig ends inside the window \u00b7 no ribbons"
+  )
+  expect_equal(
+    fit_readout("31 kb \u00b7 placement choice \u00b7 contig ends inside the window", 28, nchar),
+    "31 kb \u00b7 placement choice \u00b7 \u2026"
+  )
+  expect_equal(fit_readout(text, 12, nchar), "7.0 kb, \u2026")
+  expect_equal(fit_readout(text, 3, nchar), "\u2026")
+  expect_equal(fit_readout(text, 0, nchar), "")
+  expect_equal(fit_readout("31 kb", 3, nchar), "\u2026")
+})
+
+test_that("no readout is drawn past the plot's right edge, however narrow the plot", {
+  w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
+  expect_gt(max(nchar(w$rows$readout)), 60)
+  readouts <- function(inches) {
+    grDevices::pdf(NULL, width = inches, height = 4)
+    on.exit(grDevices::dev.off())
+    gt <- ggplot2::ggplotGrob(autoplot(w))
+    panel <- gt$grobs[[which(gt$layout$name == "panel")]]
+    key <- Filter(function(c) inherits(c, "bandage_readouts"), panel$children)[[1]]
+    wide <- inches - sum(grid::convertWidth(gt$widths[-unique(gt$layout$l[gt$layout$name == "panel"])], "inches", valueOnly = TRUE))
+    grid::pushViewport(grid::viewport(width = grid::unit(wide, "inches")))
+    text <- grid::makeContent(key)$children[[1]]
+    ends <- grid::convertWidth(text$x, "inches", valueOnly = TRUE) +
+      vapply(strsplit(text$label, "\n"), function(lines) {
+        max(c(0, vapply(lines, function(l) grid::convertWidth(grid::grobWidth(grid::textGrob(l, gp = text$gp)), "inches", valueOnly = TRUE), 0)))
+      }, 0)
+    list(label = text$label, over = max(ends) - wide)
+  }
+  expect_equal(readouts(14)$label, w$rows$readout)
+  narrow <- readouts(5)
+  expect_lte(narrow$over, 0)
+  expect_false(identical(narrow$label, w$rows$readout))
 })
 
 # REF walks seven 1 kb nodes, DEL >1>6>7, INS >1>8>6>7 through a 2 kb node of
