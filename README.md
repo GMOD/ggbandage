@@ -1,8 +1,8 @@
 # ggbandage
 
 - **In:** a GFA file, or any region of a whole-genome pangenome that
-  [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) has indexed, local or
-  a url
+  [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix) has indexed, local or a
+  url
 - **Out:** a ggplot of the graph, laid out as
   [Bandage](https://github.com/rrwick/Bandage) lays it out
 
@@ -16,8 +16,8 @@ remotes::install_github("GMOD/ggbandage")
   (edges). [GFA](https://gfa-spec.github.io/GFA-spec/GFA1.html) is its file
   format
 - A **pangenome graph** holds many genomes, each haplotype as a **walk**: the
-  segments it passes through. HPRC names a walk `sample#haplotype#contig`,
-  such as `HG00097#1#JBIRDD010000043.1`
+  segments it passes through. HPRC names a walk `sample#haplotype#contig`, such
+  as `HG00097#1#JBIRDD010000043.1`
 - ggbandage also draws de novo assembly graphs, which have no walks
 
 ## Usage
@@ -48,21 +48,21 @@ gfa-to-tabix hprc-v2.1-mc-grch38.gfa --walks --refs GRCh38 -o hprc-v2.1-mc-grch3
 ```
 
 That writes `hprc-v2.1-mc-grch38.GRCh38.walks.gz` and its directory
-`hprc-v2.1-mc-grch38.GRCh38.walks.gz.idx`, in walk format 7, gfa-to-tabix
-4.0's, which records every place a haplotype leaves GRCh38 and rejoins it as a
+`hprc-v2.1-mc-grch38.GRCh38.walks.gz.idx`, in walk format 7, gfa-to-tabix 4.0's,
+which records every place a haplotype leaves GRCh38 and rejoins it as a
 departure. ggbandage reads format 7 only; rebuild an older walk file, a
 `.walks.bed.gz`, with gfa-to-tabix 4.0 or later.
 
-[Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`,
-`engine` and `genes`.
+[Layout options](vignettes/layout-options.Rmd) covers `walks`, `facet`, `engine`
+and `genes`.
 
 ## Region-specific pangenomes
 
 A whole-genome pangenome is too large to load, so gfa-to-tabix indexes it once
 and ggbandage reads one region at a time:
 
-1. Index the GFA once with gfa-to-tabix, where `--refs` names the genome
-   whose coordinates `region` uses:
+1. Index the GFA once with gfa-to-tabix, where `--refs` names the genome whose
+   coordinates `region` uses:
 
    ```console
    gfa-to-tabix graph.gfa --walks --refs GRCh38 -o graph
@@ -71,9 +71,9 @@ and ggbandage reads one region at a time:
    A graph shipped as `.gbz`, as HPRC's are, converts to GFA first with
    `vg convert -f graph.gbz > graph.gfa`
 
-2. Pass `graph.GRCh38.walks.gz`, a path or a url, to `bandage_layout()` with
-   a `region`; its directory, `graph.GRCh38.walks.gz.idx`, is read beside it.
-   From a url, ggbandage fetches the tiles under the region by range request
+2. Pass `graph.GRCh38.walks.gz`, a path or a url, to `bandage_layout()` with a
+   `region`; its directory, `graph.GRCh38.walks.gz.idx`, is read beside it. From
+   a url, ggbandage fetches the tiles under the region by range request
 
 [Region-specific pangenomes](vignettes/region-pangenomes.Rmd) covers the two
 kinds of index, exporting a region as GFA, and building a region's syng graph.
@@ -93,12 +93,12 @@ More, with code, in [the gallery](docs/gallery.md).
 
 - [Gallery](docs/gallery.md): every figure with its code, including your own
   colours and stacking loci with patchwork
-- [Region-specific pangenomes](vignettes/region-pangenomes.Rmd): creating and using an indexed
-  pangenome with gfa-to-tabix
-- [Walk rows](vignettes/walk-rows.Rmd): `bandage_walk_rows()` and how to read its
-  bars
-- [Developing](docs/developing.md): for contributors, with the file readers,
-  the engine bundle, the gallery and the test fixtures
+- [Region-specific pangenomes](vignettes/region-pangenomes.Rmd): creating and
+  using an indexed pangenome with gfa-to-tabix
+- [Walk rows](vignettes/walk-rows.Rmd): `bandage_walk_rows()` and how to read
+  its bars
+- [Developing](docs/developing.md): for contributors, with the file readers, the
+  engine bundle, the gallery and the test fixtures
 
 ## See also
 
@@ -118,7 +118,8 @@ Tutorials
 
 - The HPRC tutorials on jbrowse.org:
   [graph alleles and haplotypes](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc/)
-  and [repeat lengths](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc_repeats/)
+  and
+  [repeat lengths](https://jbrowse.org/jb2/docs/tutorials/pangenome_hprc_repeats/)
 
 Libraries
 
@@ -130,6 +131,13 @@ Libraries
   and drawing
 - [@jbrowse/graph-stress-layout](https://github.com/GMOD/graph-stress-layout)
   (npm): stress layout
+
+Technical note: ggbandage runs the same JavaScript as
+[BandageJS](https://github.com/cmdcolin/BandageJS) and the JBrowse graph genome
+viewer plugin. bandage-core compiles Bandage's own force-directed layout (FMMM,
+from OGDF) from C++ to wasm and bundles it into `inst/js/bandage.js`, which R
+runs in the embedded V8 engine. The reference-anchored layouts come from
+bandage-core and graph-stress-layout, and the R functions hide all of this.
 
 ## License
 
