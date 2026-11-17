@@ -3,6 +3,15 @@ rgfa <- test_path("testdata", "ecoli_rgfa_slice.gfa.gz")
 walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.gz")
 lifted <- c("K12#1#chr:1004500-1004961", "IAI39#1#chr:2249412-2249872")
 
+# bandage-core leaves out a site drawn under 3 px: its own nodes and links and
+# the reference between where it attaches, as drawn. The force layout floors
+# a node at 5 units and gives a link a fixed length, so at the default 1000 by
+# 800 px every site of the E. coli subgraph is drawn longer than that. A
+# thumbnail a fifth that size draws its sixteen 1 bp alleles, the two-node
+# site 13+,15+ and the skip 37 over the 1 bp node 29+ under it, and leaves
+# those 18 nodes and 1 skip out
+thumbnail <- function(...) bandage_layout(pggb, ..., width = 200, height = 160)
+
 drawn_keys <- function(plot, width, side = "top") {
   grDevices::pdf(NULL, width = width, height = 6)
   on.exit(grDevices::dev.off())
@@ -58,26 +67,30 @@ test_that("under compress the key says node lengths are not to scale", {
 })
 
 test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and says nothing once small sites are drawn", {
-  line <- "1 node and 1 skip under 2 bp not drawn"
-  bare <- bandage_layout(pggb, walks = lifted)
+  line <- "18 nodes and 1 skip under 5 bp not drawn"
+  bare <- thumbnail(walks = lifted)
   expect_equal(bare$graph_key$text[bare$graph_key$section == "too-small"], line)
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(bare), 8)$labels, 1), line)
-  faceted <- bandage_layout(pggb, walks = lifted, facet = "walk")
+  faceted <- thumbnail(walks = lifted, facet = "walk")
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(faceted), 8, "bottom")$labels, 1), line)
-  drawn <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
+  drawn <- thumbnail(walks = lifted, small_sites = "nodes")
   expect_false("too-small" %in% drawn$graph_key$section)
   expect_false(any(grepl("not drawn$", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
+  full <- bandage_layout(pggb, walks = lifted)
+  expect_false("too-small" %in% full$graph_key$section)
+  expect_equal(nrow(full$sites), 0)
 })
 
 test_that("small sites are left out by default and listed in the sites table, and small_sites = \"nodes\" draws every node", {
-  hidden <- bandage_layout(pggb, walks = lifted)
+  hidden <- thumbnail(walks = lifted)
   expect_equal(hidden$meta$smallSites$mode, "hidden")
-  expect_equal(hidden$sites$nodes, c("", "38+"))
-  expect_equal(hidden$sites$links, c("37", "50,51"))
-  expect_equal(hidden$sites$refName, c("K12#1#chr", "K12#1#chr"))
+  expect_equal(nrow(hidden$sites), 18)
+  expect_equal(hidden$sites$links[hidden$sites$nodes == ""], "37")
+  expect_equal(hidden$sites$links[hidden$sites$nodes == "38+"], "50,51")
+  expect_true(all(hidden$sites$refName == "K12#1#chr"))
   expect_false("38+" %in% hidden$nodes$node)
   expect_false(any(c(37, 50, 51) %in% hidden$edges$edge))
-  drawn <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
+  drawn <- thumbnail(walks = lifted, small_sites = "nodes")
   expect_null(drawn$meta$smallSites)
   expect_equal(nrow(drawn$sites), 0)
   expect_named(drawn$sites, names(hidden$sites))
@@ -94,33 +107,39 @@ test_that("nothing is drawn on a folded site: no node, link, arrowhead, label or
   lanes_only <- function(g) unlist(strsplit(g$sites$laneNodes, ",", fixed = TRUE))
   skips <- function(g) as.numeric(unlist(strsplit(g$sites$links, ",", fixed = TRUE)))
   outlined <- function(g) unique(exons_of(g, 3)$node)
+  # a lifted lane across a folded site runs along it as one stroke, which
+  # figure data gives the walk's own link there
+  plain_links <- function(g) g$edges$edge[is.na(g$edges$walk)]
   for (walks in list(NULL, lifted)) {
-    g <- bandage_layout(pggb, walks = walks, genes = bed, nodeLengths = TRUE)
-    expect_equal(folded(g), "38+")
+    g <- thumbnail(walks = walks, genes = bed, nodeLengths = TRUE)
+    expect_length(folded(g), 18)
+    expect_true("38+" %in% folded(g))
     expect_false(any(folded(g) %in% c(g$nodes$node, g$arrows$node, g$labels$item, outlined(g))))
-    expect_false(any(skips(g) %in% c(g$edges$edge, g$arrows$edge)))
+    expect_false(any(skips(g) %in% c(plain_links(g), g$arrows$edge)))
     p <- ggplot2::autoplot(g)
     exon_layer <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))[2]
     expect_equal(nrow(ggplot2::layer_data(p, exon_layer)), nrow(exons_of(g, 3)))
   }
-  expect_equal(lanes_only(g), "29+")
-  expect_false("29+" %in% g$nodes$node)
-  expect_false("29+" %in% outlined(g))
-  expect_true(all(c("28+", "30+") %in% outlined(g)))
-  drawn <- bandage_layout(pggb, walks = lifted, genes = bed, small_sites = "nodes")
-  expect_true("29+" %in% outlined(drawn))
+  expect_true(all(c("29+", "30+") %in% lanes_only(g)))
+  expect_false(any(lanes_only(g) %in% g$nodes$node))
+  expect_false(any(lanes_only(g) %in% outlined(g)))
+  expect_true("28+" %in% outlined(g))
+  drawn <- thumbnail(walks = lifted, genes = bed, small_sites = "nodes")
+  expect_true(all(c("29+", "30+") %in% outlined(drawn)))
 })
 
+# The thumbnail leaves out 18 of the 54 nodes and 37 of the 72 links: two
+# links each of the 16 one-node sites, four of 13+,15+ and the skip
 test_that("printed, a layout counts the nodes and links it draws and says what it leaves out", {
-  hidden <- bandage_layout(pggb, walks = lifted)
+  hidden <- thumbnail()
   expect_equal(
     utils::capture.output(print(hidden)),
     c(
-      sprintf("<bandage_layout> 52 nodes and 69 links drawn, 1 panel(s), %s", hidden$meta$generator),
-      '1 node and 1 skip under 2 bp not drawn; small_sites = "nodes" draws them'
+      sprintf("<bandage_layout> 36 nodes and 35 links drawn, 1 panel(s), %s", hidden$meta$generator),
+      '18 nodes and 1 skip under 5 bp not drawn; small_sites = "nodes" draws them'
     )
   )
-  drawn <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
+  drawn <- thumbnail(small_sites = "nodes")
   expect_equal(
     utils::capture.output(print(drawn)),
     sprintf("<bandage_layout> 54 nodes and 72 links drawn, 1 panel(s), %s", drawn$meta$generator)
@@ -239,6 +258,7 @@ test_that("a head the layout marks halo stands on a white halo drawn under every
     grob <- GeomBandageArrow$draw_panel(b$data[[1]], b$layout$panel_params[[1]], b$layout$coord)
     grob$children
   }
+  g$arrows$halo <- logical(nrow(g$arrows))
   bare <- drawn(g)
   expect_length(bare, 1)
   expect_true(is.na(bare[[1]]$gp$col))
@@ -649,6 +669,36 @@ test_that("a placeholder's length is labelled as the Bandage view labels it, eve
   every <- bandage_layout(gfa, layout = "auto", referencePath = "R", nodeLengths = TRUE)
   expect_equal(every$labels$kind[1], "placeholder")
   expect_setequal(every$labels$text, c("75 kb", "30 kb", "25 kb", "20 kb"))
+})
+
+# Three haplotypes leave the reference at one point for 300, 500 and 700 bp
+# the cut did not load, which the anchored layout lays on one spot
+one_spot_gfa <- c(
+  paste0("S\tr1\t", strrep("A", 2000)),
+  paste0("S\tr2\t", strrep("C", 2000)),
+  "L\tr1\t+\tr2\t+\t0M",
+  "W\tref\t0\tchr\t0\t4000\t>r1>r2",
+  unlist(Map(function(i, bp) {
+    c(
+      sprintf("S\tp%d\t*\tLN:i:%d\tnl:i:1", i, bp),
+      sprintf("L\tr1\t+\tp%d\t+\t0M", i),
+      sprintf("L\tp%d\t+\tr2\t+\t0M", i),
+      sprintf("W\th%d\t1\tchr\t0\t%d\t>r1>p%d>r2", i, 4000 + bp, i)
+    )
+  }, 0:2, c(300, 500, 700)))
+)
+
+test_that("placeholders on one spot take one length, the longest, and the key counts the rest under nodes not shown", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(one_spot_gfa, gfa)
+  g <- bandage_layout(gfa, layout = "auto")
+  expect_equal(g$labels$text[g$labels$kind == "placeholder"], "700 bp")
+  drawn <- ggplot2::layer_data(ggplot2::autoplot(g), length(ggplot2::autoplot(g)$layers) - 3)
+  expect_equal(drawn$label, "700 bp")
+  note <- "2 unlabelled, 500 bp or less each"
+  expect_equal(g$graph_key$under[g$graph_key$text == "nodes not shown"], note)
+  expect_true(note %in% drawn_keys(ggplot2::autoplot(g), 8)$labels)
 })
 
 test_that("a gene lands on the backbone nodes under it", {

@@ -186,8 +186,10 @@ walk_origin <- function(walk) {
 #'   and `nodeWidth = "frequency"` draws them
 #' @param small_sites `"hidden"`, the default, leaves out each site too small
 #'   to draw at `width` by `height`: nodes off the reference, or a link
-#'   skipping reference sequence, whose bp with the reference between where
-#'   they attach span under 3 px of the drawn reference. The key's last line
+#'   skipping reference sequence, drawn under 3 px long with the reference
+#'   between where they attach, as the layout draws them; a stretch the cut
+#'   did not load is measured by its bp at the drawn reference's px per bp
+#'   where that is shorter. The key's last line
 #'   counts what it leaves out, and the layout's `sites` table lists each site:
 #'   where it attaches (`refName`, `start`, `end`, and `x`, `y` in the
 #'   drawing), its `bp`, the `nodes` and `links` it folds, and how many of the
