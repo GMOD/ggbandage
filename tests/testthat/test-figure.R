@@ -244,12 +244,15 @@ test_that("a walk lifted by pass has each pass named on the graph in its colour,
   expect_s3_class(swatch_grob(heads, 6, grid::unit(0.5, "npc")), "segments")
 })
 
-test_that("a head the layout marks halo stands on a white halo drawn under every head, and a core that marks none draws none", {
+# bandage-core marks 21 of the 23 heads of the repeat lifted by pass halo,
+# each wider than its lane
+test_that("a head the layout marks halo stands on a white halo drawn under every head, and figure data must say which", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
   writeLines(repeat_gfa, gfa)
   g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
-  expect_gt(nrow(g$arrows), 1)
+  expect_equal(nrow(g$arrows), 23)
+  expect_equal(sum(g$arrows$halo), 21)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   drawn <- function(g) {
@@ -258,17 +261,18 @@ test_that("a head the layout marks halo stands on a white halo drawn under every
     grob <- GeomBandageArrow$draw_panel(b$data[[1]], b$layout$panel_params[[1]], b$layout$coord)
     grob$children
   }
-  g$arrows$halo <- logical(nrow(g$arrows))
-  bare <- drawn(g)
-  expect_length(bare, 1)
-  expect_true(is.na(bare[[1]]$gp$col))
-  g$arrows$halo <- seq_len(nrow(g$arrows)) == 1
   haloed <- drawn(g)
   expect_length(haloed, 2)
   expect_equal(haloed[[1]]$gp$col, "white")
   expect_equal(haloed[[1]]$gp$lwd, 3)
-  expect_equal(length(unique(haloed[[1]]$id)), 1)
-  expect_equal(length(unique(haloed[[2]]$id)), nrow(g$arrows))
+  expect_equal(length(unique(haloed[[1]]$id)), 21)
+  expect_equal(length(unique(haloed[[2]]$id)), 23)
+  g$arrows$halo <- logical(nrow(g$arrows))
+  bare <- drawn(g)
+  expect_length(bare, 1)
+  expect_true(is.na(bare[[1]]$gp$col))
+  g$arrows$halo <- NULL
+  expect_error(drawn(g), "halo")
 })
 
 test_that("a walk's passes take the names given them, one name or many, and a graph where it steps no node twice the passes stated", {
@@ -422,6 +426,24 @@ test_that("a link turning strand against the reference is painted over the nodes
   g$edges$turn <- g$edges$edge == plain[1]
   expect_setequal(painted(g, TRUE), c(skips, plain[1]))
   expect_setequal(painted(g, FALSE), plain[-1])
+  g$edges$turn <- NULL
+  expect_error(painted(g, TRUE), "turn")
+})
+
+# The reference steps B against its id; alt joins A to C against C's, a link
+# bandage-core paints over the nodes for turning strand against the reference
+test_that("figure data's turn puts a link turning strand against the reference over the nodes", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    "S\tA\tAAAA", "S\tB\tCCCC", "S\tC\tGGGG",
+    "L\tA\t+\tB\t-\t0M", "L\tB\t-\tC\t+\t0M", "L\tA\t+\tC\t-\t0M",
+    "W\tref\t0\tchr\t0\t12\t>A<B>C", "W\talt\t1\tchr\t0\t8\t>A<C"
+  ), gfa)
+  g <- bandage_layout(gfa, small_sites = "nodes")
+  expect_equal(unique(g$edges$edge[g$edges$turn]), 2)
+  expect_equal(unique(geom_bandage_edges(data = g, over_nodes = TRUE)$data$edge), 2)
+  expect_setequal(unique(geom_bandage_edges(data = g, over_nodes = FALSE)$data$edge), c(0, 1))
 })
 
 test_that("a lane's link draws in its walk's colour, offset like its lane", {

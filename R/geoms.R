@@ -169,12 +169,9 @@ geom_bandage_edges <- function(mapping = NULL, data = NULL,
                                background = "white", over_nodes = NULL, ...) {
   path_layer(mapping, data, function(m) {
     e <- edges_of(m, background)
-    if (is.null(over_nodes)) e else e[painted_over(e) == over_nodes, ]
+    if (is.null(over_nodes)) e else e[with(e, deletion | turn) == over_nodes, ]
   }, ...)
 }
-
-# A core whose figure data has no turn column marks no link as turning
-painted_over <- function(e) if (is.null(e$turn)) e$deletion else e$deletion | e$turn
 
 # ggplot2 keys a layer under any legend whose aesthetic it maps, I() or not,
 # so the default inks would stroke solid over every key's own swatch
@@ -648,7 +645,7 @@ geom_bandage_keys <- function(data = NULL, text = TRUE) {
 geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
   ggplot2::layer(
     geom = GeomBandageArrow, stat = "identity", position = "identity",
-    data = table_from(data, function(m) haloed_heads(m$arrows)),
+    data = table_from(data, function(m) m$arrows),
     mapping = with_defaults(mapping, ggplot2::aes(
       x = x, y = y, angle = angle, length = length, halfwidth = halfWidth,
       fill = I(color), alpha = I(alpha), halo = halo
@@ -656,10 +653,4 @@ geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(...)
   )
-}
-
-# A core whose figure data has no halo column puts no head on a halo
-haloed_heads <- function(arrows) {
-  arrows$halo <- if (is.null(arrows$halo)) logical(nrow(arrows)) else arrows$halo
-  arrows
 }
