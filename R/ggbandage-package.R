@@ -10,7 +10,7 @@ utils::globalVariables(c(
   "letter", "block", "key", "colour", "slide_x", "slide_y",
   "strong", "text", "under", "swatch", "px", "dashed", "rim", "rim_px",
   "size", "x1", "y1", "x2", "y2", "fill", "start", "end", "halo",
-  "deletion", "turn"
+  "deletion", "turn", "along", "runsOn"
 ))
 
 #' @export
