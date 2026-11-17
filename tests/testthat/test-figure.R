@@ -431,7 +431,9 @@ test_that("a link turning strand against the reference is painted over the nodes
 })
 
 # The reference steps B against its id; alt joins A to C against C's, a link
-# bandage-core paints over the nodes for turning strand against the reference
+# bandage-core paints over the nodes for turning strand against the reference.
+# The force layout lays A, B and C end to end on one line, and links 0 and 1
+# along them, so core paints those over the nodes too.
 test_that("figure data's turn puts a link turning strand against the reference over the nodes", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
@@ -442,8 +444,55 @@ test_that("figure data's turn puts a link turning strand against the reference o
   ), gfa)
   g <- bandage_layout(gfa, small_sites = "nodes")
   expect_equal(unique(g$edges$edge[g$edges$turn]), 2)
+  expect_equal(unique(g$edges$edge[g$edges$along]), c(0, 1))
+  expect_equal(unique(geom_bandage_edges(data = g, over_nodes = TRUE)$data$edge), c(0, 1, 2))
+  expect_equal(nrow(geom_bandage_edges(data = g, over_nodes = FALSE)$data), 0)
+  g$edges$along <- FALSE
   expect_equal(unique(geom_bandage_edges(data = g, over_nodes = TRUE)$data$edge), 2)
   expect_setequal(unique(geom_bandage_edges(data = g, over_nodes = FALSE)$data$edge), c(0, 1))
+})
+
+# bandage-core paints a plain link over the nodes where their ink would hide
+# it: on the rGFA slice's stress layout, link 201's ends lie apart along them
+test_that("a plain link figure data marks along is painted over the nodes, and figure data must say which", {
+  g <- bandage_layout(rgfa, layout = "stress")
+  expect_equal(unique(g$edges$edge[g$edges$along]), 201)
+  expect_false(any(with(g$edges[g$edges$edge == 201, ], deletion | turn)))
+  painted <- function(g, over) {
+    picked <- geom_bandage_edges(data = g, over_nodes = over)$data
+    p <- ggplot2::autoplot(g)
+    paths <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))
+    drawn <- ggplot2::layer_data(p, if (over) utils::tail(paths, 1) else paths[1])
+    expect_equal(nrow(drawn), nrow(picked))
+    unique(picked$edge)
+  }
+  expect_true(201 %in% painted(g, TRUE))
+  expect_false(201 %in% painted(g, FALSE))
+  g$edges$along <- NULL
+  expect_error(painted(g, TRUE), "along")
+})
+
+tails <- test_path("testdata", "tails.GRCh38.walks.gz")
+
+# HG002 leaves the reference after node 1 for 30 and 31 and comes back at 8,
+# past the cut chr1:1-1000, so no drawn link meets 31's far end
+test_that("a tail's free end no drawn link meets ends in a dark tab with no notch, keyed, and figure data must say which", {
+  g <- bandage_layout(tails, region = "chr1:1-1000", context = 0)
+  expect_equal(g$arrows$node[g$arrows$runsOn], "31+")
+  expect_equal(toupper(g$arrows$color[g$arrows$runsOn]), "#18181C")
+  keys <- key_rows(g)
+  expect_equal(keys$swatch[keys$text == "graph runs on past what is drawn"], "overhang")
+  built <- function(g) ggplot2::ggplot_build(ggplot2::ggplot(g) + geom_bandage_arrows())$data[[1]]
+  d <- built(g)
+  off <- head_outline(d)
+  tab <- which(d$runs_on)
+  expect_length(tab, 1)
+  expect_equal(off$dx[3, tab], (off$dx[2, tab] + off$dx[4, tab]) / 2)
+  expect_equal(off$dy[3, tab], (off$dy[2, tab] + off$dy[4, tab]) / 2)
+  heads <- head_outline(transform(d, runs_on = FALSE))
+  expect_false(isTRUE(all.equal(heads$dx[3, tab], (heads$dx[2, tab] + heads$dx[4, tab]) / 2)))
+  g$arrows$runsOn <- NULL
+  expect_error(built(g), "runsOn")
 })
 
 test_that("a lane's link draws in its walk's colour, offset like its lane", {

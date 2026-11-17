@@ -15,5 +15,7 @@ geom_bandage_arrows(mapping = NULL, data = NULL, ...)
 }
 \description{
 A head wider than its lane stands on a white halo, as the Bandage view
-draws it, where the layout's \code{arrows} table marks it \code{halo}.
+draws it, where the layout's \code{arrows} table marks it \code{halo}. A row marked
+\code{runsOn} is the dark tab past a node's free end that no drawn link meets,
+where the graph runs on past what is drawn: a triangle with no notch.
 }

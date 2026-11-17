@@ -18,8 +18,10 @@ Edges, nodes and arrowheads at the view's colours on white, the background
 the geoms mix faded ink with, the node lengths the view writes, a panel per
 walk when faceted, the genes pinned on the backbone, the view's key at the
 top, and a reference bp axis under the layouts whose x is reference bp.
-Plain links lie under the nodes, and links that skip reference sequence or
-turn strand against it over them, so neither is hidden under the nodes it
-meets. Every piece is an ordinary ggplot2 layer, scale or theme, so \code{+}
-changes any of it.
+Plain links lie under the nodes, and over them links that skip reference
+sequence or turn strand against it, and plain links the nodes would hide,
+their ends laid apart along them, so none is hidden under the nodes it
+meets. A dark tab past a node's free end that no drawn link meets says the
+graph runs on past what is drawn. Every piece is an ordinary ggplot2 layer,
+scale or theme, so \code{+} changes any of it.
 }

@@ -156,20 +156,21 @@ geom_bandage_nodes <- function(mapping = NULL, data = NULL,
 #'
 #' A link that skips reference sequence, dashed or short and solid, or that
 #' reads one reference node as the reference does and the next against it, is
-#' the only mark of what it joins, so draw it over the nodes it meets: plain
-#' links with `over_nodes = FALSE` before [geom_bandage_nodes()], and these
-#' with `over_nodes = TRUE` after it, as [autoplot()][autoplot.bandage_layout]
-#' and the Bandage view do.
+#' the only mark of what it joins, and a plain link whose ends the layout lays
+#' apart along the nodes would be hidden under them, so draw these over the
+#' nodes they meet: plain links with `over_nodes = FALSE` before
+#' [geom_bandage_nodes()], and these with `over_nodes = TRUE` after it, as
+#' [autoplot()][autoplot.bandage_layout] and the Bandage view do.
 #' @inheritParams geom_bandage_nodes
 #' @param over_nodes `TRUE` for only the links the Bandage view paints over the
-#'   nodes, those whose rows have `deletion` or `turn`, `FALSE` for only the
-#'   rest, `NULL` for all
+#'   nodes, those whose rows have `deletion`, `turn` or `along`, `FALSE` for
+#'   only the rest, `NULL` for all
 #' @export
 geom_bandage_edges <- function(mapping = NULL, data = NULL,
                                background = "white", over_nodes = NULL, ...) {
   path_layer(mapping, data, function(m) {
     e <- edges_of(m, background)
-    if (is.null(over_nodes)) e else e[with(e, deletion | turn) == over_nodes, ]
+    if (is.null(over_nodes)) e else e[with(e, deletion | turn | along) == over_nodes, ]
   }, ...)
 }
 
@@ -195,23 +196,18 @@ path_layer <- function(mapping, data, pick, ...) {
 
 GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
   required_aes = c("x", "y", "angle", "length", "halfwidth"),
-  default_aes = ggplot2::aes(fill = "grey30", alpha = 1, halo = FALSE),
+  default_aes = ggplot2::aes(fill = "grey30", alpha = 1, halo = FALSE, runs_on = FALSE),
   draw_key = ggplot2::draw_key_polygon,
   draw_panel = function(data, panel_params, coord) {
     if (!nrow(data)) {
       return(grid::nullGrob())
     }
     d <- coord$transform(data, panel_params)
-    ux <- cos(d$angle)
-    uy <- sin(d$angle)
-    notch <- d$length * 0.75
-    # tip, left barb, notch, right barb, in px off the tip
-    dx <- rbind(0, -ux * d$length - uy * d$halfwidth, -ux * notch, -ux * d$length + uy * d$halfwidth)
-    dy <- rbind(0, -uy * d$length + ux * d$halfwidth, -uy * notch, -uy * d$length - ux * d$halfwidth)
+    off <- head_outline(d)
     heads <- function(rows, gp) {
       grid::polygonGrob(
-        x = grid::unit(rep(d$x[rows], each = 4), "native") + px(as.vector(dx[, rows])),
-        y = grid::unit(rep(d$y[rows], each = 4), "native") + px(as.vector(dy[, rows])),
+        x = grid::unit(rep(d$x[rows], each = 4), "native") + px(as.vector(off$dx[, rows])),
+        y = grid::unit(rep(d$y[rows], each = 4), "native") + px(as.vector(off$dy[, rows])),
         id = rep(seq_along(rows), each = 4),
         gp = gp
       )
@@ -228,6 +224,18 @@ GeomBandageArrow <- ggplot2::ggproto("GeomBandageArrow", ggplot2::Geom,
 
 # px of white each side of a head's outline, under a head wider than its lane
 HEAD_HALO_PX <- 1.5
+
+# Each head's tip, left barb, notch and right barb, a column each, in px off
+# the tip; a tab past a free end has its notch at its base, a plain triangle
+head_outline <- function(d) {
+  ux <- cos(d$angle)
+  uy <- sin(d$angle)
+  notch <- ifelse(d$runs_on, d$length, d$length * 0.75)
+  list(
+    dx = rbind(0, -ux * d$length - uy * d$halfwidth, -ux * notch, -ux * d$length + uy * d$halfwidth),
+    dy = rbind(0, -uy * d$length + ux * d$halfwidth, -uy * notch, -uy * d$length - ux * d$halfwidth)
+  )
+}
 
 # css px of text as ggplot2's size, in mm
 px_size <- function(px) px * 72 / 96 / ggplot2::.pt
@@ -639,7 +647,9 @@ geom_bandage_keys <- function(data = NULL, text = TRUE) {
 #' Strand arrowheads, a fixed size at any zoom
 #'
 #' A head wider than its lane stands on a white halo, as the Bandage view
-#' draws it, where the layout's `arrows` table marks it `halo`.
+#' draws it, where the layout's `arrows` table marks it `halo`. A row marked
+#' `runsOn` is the dark tab past a node's free end that no drawn link meets,
+#' where the graph runs on past what is drawn: a triangle with no notch.
 #' @inheritParams geom_bandage_nodes
 #' @export
 geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
@@ -648,7 +658,7 @@ geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
     data = table_from(data, function(m) m$arrows),
     mapping = with_defaults(mapping, ggplot2::aes(
       x = x, y = y, angle = angle, length = length, halfwidth = halfWidth,
-      fill = I(color), alpha = I(alpha), halo = halo
+      fill = I(color), alpha = I(alpha), halo = halo, runs_on = runsOn
     )),
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(...)
