@@ -34,9 +34,10 @@ with_defaults <- function(mapping, defaults) {
   defaults
 }
 
-# The canvas strokes all of one faded colour as one path, so where faded
-# strokes overlap they do not darken. Separate translucent paths would, so a
-# faded colour is mixed with the background instead.
+# bandage-core paints what a lift fades opaque into one layer under the rest
+# and lays that layer down once at its alpha, so where faded strokes overlap
+# they do not darken. Over the background alone that is each faded stroke
+# drawn opaque in its colour mixed with the background, the faded layer first.
 ink <- function(color, alpha, background) {
   bg <- as.vector(grDevices::col2rgb(background)) / 255
   mixed <- bg + (grDevices::col2rgb(color) / 255 - bg) * rep(alpha, each = 3)
@@ -145,11 +146,23 @@ GeomBandagePath <- ggplot2::ggproto("GeomBandagePath", ggplot2::Geom,
 #' @param mapping aesthetics that override the defaults
 #' @param data a `bandage_layout`, or `NULL` for the plot's
 #' @param background what faded ink is mixed with, the plot's background
+#' @param faded `TRUE` for only the rows a lift fades, which the Bandage view
+#'   paints as one layer under everything else, `FALSE` for only the rest,
+#'   `NULL` for all
 #' @param ... passed to [ggplot2::layer()] params
 #' @export
 geom_bandage_nodes <- function(mapping = NULL, data = NULL,
-                               background = "white", ...) {
-  path_layer(mapping, data, function(m) nodes_of(m, background), ...)
+                               background = "white", faded = NULL, ...) {
+  path_layer(mapping, data, function(m) in_layer(nodes_of(m, background), faded), ...)
+}
+
+# The rows of the faded layer, or of the rest, as figure data's `faded` names
+# them; NULL for every row
+in_layer <- function(d, faded) {
+  if (is.null(d$faded)) {
+    stop("figure data has no `faded` column", call. = FALSE)
+  }
+  if (is.null(faded)) d else d[as.logical(d$faded) == faded, ]
 }
 
 #' Graph edges as their Bezier curves
@@ -167,9 +180,10 @@ geom_bandage_nodes <- function(mapping = NULL, data = NULL,
 #'   only the rest, `NULL` for all
 #' @export
 geom_bandage_edges <- function(mapping = NULL, data = NULL,
-                               background = "white", over_nodes = NULL, ...) {
+                               background = "white", over_nodes = NULL,
+                               faded = NULL, ...) {
   path_layer(mapping, data, function(m) {
-    e <- edges_of(m, background)
+    e <- in_layer(edges_of(m, background), faded)
     if (is.null(over_nodes)) e else e[with(e, deletion | turn | along) == over_nodes, ]
   }, ...)
 }
@@ -649,13 +663,16 @@ geom_bandage_keys <- function(data = NULL, text = TRUE) {
 #' A head wider than its lane stands on a white halo, as the Bandage view
 #' draws it, where the layout's `arrows` table marks it `halo`. A row marked
 #' `runsOn` is the dark tab past a node's free end that no drawn link meets,
-#' where the graph runs on past what is drawn: a triangle with no notch.
+#' where the graph runs on past what is drawn: a triangle with no notch. A
+#' faded head is filled opaque in its colour mixed with the background, as the
+#' faded nodes and links are.
 #' @inheritParams geom_bandage_nodes
 #' @export
-geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
+geom_bandage_arrows <- function(mapping = NULL, data = NULL,
+                                background = "white", faded = NULL, ...) {
   ggplot2::layer(
     geom = GeomBandageArrow, stat = "identity", position = "identity",
-    data = table_from(data, function(m) m$arrows),
+    data = table_from(data, function(m) heads_of(m, background, faded)),
     mapping = with_defaults(mapping, ggplot2::aes(
       x = x, y = y, angle = angle, length = length, halfwidth = halfWidth,
       fill = I(color), alpha = I(alpha), halo = halo, runs_on = runsOn
@@ -663,4 +680,12 @@ geom_bandage_arrows <- function(mapping = NULL, data = NULL, ...) {
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(...)
   )
+}
+
+heads_of <- function(model, background, faded) {
+  a <- in_layer(model$arrows, faded)
+  laid <- which(as.logical(a$faded))
+  a$color[laid] <- ink(a$color[laid], a$alpha[laid], background)
+  a$alpha[laid] <- 1
+  a
 }

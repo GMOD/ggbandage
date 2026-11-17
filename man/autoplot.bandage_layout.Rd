@@ -22,6 +22,7 @@ Plain links lie under the nodes, and over them links that skip reference
 sequence or turn strand against it, and plain links the nodes would hide,
 their ends laid apart along them, so none is hidden under the nodes it
 meets. A dark tab past a node's free end that no drawn link meets says the
-graph runs on past what is drawn. Every piece is an ordinary ggplot2 layer,
+graph runs on past what is drawn. Under a lift, what it fades is drawn first,
+as one layer under the rest. Every piece is an ordinary ggplot2 layer,
 scale or theme, so \code{+} changes any of it.
 }

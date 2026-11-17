@@ -50,7 +50,7 @@ test_that("the key is bandage-core's graph key: each lifted walk, what the lift 
   g <- bandage_layout(pggb, walks = lifted, small_sites = "nodes")
   k <- drawn_keys(ggplot2::autoplot(g), 8)
   expect_equal(k$labels, key_words(g))
-  expect_equal(utils::head(k$labels, 3), c("K12", "IAI39", "only in other haplotypes"))
+  expect_equal(utils::head(k$labels, 3), c("K12", "IAI39", "other haplotypes"))
   expect_true(all(c("Node thickness", "short skip") %in% k$labels))
 })
 
@@ -117,7 +117,8 @@ test_that("nothing is drawn on a folded site: no node, link, arrowhead, label or
     expect_false(any(folded(g) %in% c(g$nodes$node, g$arrows$node, g$labels$item, outlined(g))))
     expect_false(any(skips(g) %in% c(plain_links(g), g$arrows$edge)))
     p <- ggplot2::autoplot(g)
-    exon_layer <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))[2]
+    # after the faded layer's three path layers and the plain links under the nodes
+    exon_layer <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))[5]
     expect_equal(nrow(ggplot2::layer_data(p, exon_layer)), nrow(exons_of(g, 3)))
   }
   expect_true(all(c("29+", "30+") %in% lanes_only(g)))
@@ -417,7 +418,7 @@ test_that("a link turning strand against the reference is painted over the nodes
     picked <- geom_bandage_edges(data = g, over_nodes = over)$data
     p <- ggplot2::autoplot(g)
     paths <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))
-    drawn <- ggplot2::layer_data(p, if (over) utils::tail(paths, 1) else paths[1])
+    drawn <- ggplot2::layer_data(p, if (over) utils::tail(paths, 1) else paths[4])
     expect_equal(nrow(drawn), nrow(picked))
     unique(picked$edge)
   }
@@ -462,7 +463,7 @@ test_that("a plain link figure data marks along is painted over the nodes, and f
     picked <- geom_bandage_edges(data = g, over_nodes = over)$data
     p <- ggplot2::autoplot(g)
     paths <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomBandagePath"), TRUE))
-    drawn <- ggplot2::layer_data(p, if (over) utils::tail(paths, 1) else paths[1])
+    drawn <- ggplot2::layer_data(p, if (over) utils::tail(paths, 1) else paths[4])
     expect_equal(nrow(drawn), nrow(picked))
     unique(picked$edge)
   }
@@ -495,9 +496,39 @@ test_that("a tail's free end no drawn link meets ends in a dark tab with no notc
   expect_error(built(g), "runsOn")
 })
 
+# A lift fades what is off its walks. bandage-core paints those rows opaque
+# into one layer under everything else and lays the layer down once at its
+# alpha: over the background, each faded row opaque in its colour mixed with
+# the background, drawn before every row the lift keeps
+test_that("what a lift fades is drawn first, one layer under the rest, opaque in its colour mixed with the background", {
+  g <- bandage_layout(pggb, walks = lifted)
+  expect_equal(sum(g$nodes$faded), 178)
+  expect_equal(sum(g$edges$faded), 18)
+  p <- ggplot2::autoplot(g)
+  layer_rows <- function(i) nrow(ggplot2::layer_data(p, i))
+  faded_rows <- c(
+    nrow(geom_bandage_edges(data = g, over_nodes = FALSE, faded = TRUE)$data),
+    nrow(geom_bandage_nodes(data = g, faded = TRUE)$data),
+    nrow(geom_bandage_edges(data = g, over_nodes = TRUE, faded = TRUE)$data)
+  )
+  expect_equal(faded_rows[2], 178)
+  expect_equal(vapply(1:3, layer_rows, 1), faded_rows)
+  expect_equal(layer_rows(5), nrow(geom_bandage_edges(data = g, over_nodes = FALSE, faded = FALSE)$data))
+  expect_equal(layer_rows(6), nrow(geom_bandage_nodes(data = g, faded = FALSE)$data))
+  n <- ggplot2::layer_data(p, 2)
+  expect_equal(unique(n$colour), ink("#a0a0a0", 0.3, "white"))
+  heads <- g
+  heads$arrows$faded[1] <- TRUE
+  heads$arrows$alpha[1] <- 0.3
+  h <- geom_bandage_arrows(data = heads, faded = TRUE)$data
+  expect_equal(c(h$color, h$alpha), c(ink(g$arrows$color[1], 0.3, "white"), 1))
+  g$nodes$faded <- NULL
+  expect_error(geom_bandage_nodes(data = g)$data, "faded")
+})
+
 test_that("a lane's link draws in its walk's colour, offset like its lane", {
   g <- bandage_layout(pggb, walks = lifted)
-  d <- ggplot2::layer_data(ggplot2::autoplot(g), 1)
+  d <- ggplot2::layer_data(ggplot2::ggplot(g) + geom_bandage_edges(over_nodes = FALSE, faded = FALSE))
   lane <- toupper(d$colour) %in% toupper(g$keys$color)
   expect_true(any(lane))
   expect_true(all(is.finite(d$slide_x[lane]) & is.finite(d$slide_y[lane])))
@@ -695,7 +726,7 @@ test_that("faceted, one key below the panels names the shading, then the graph's
   guide <- ggplot2::autoplot(g)$guides$guides$bandage_keys
   expect_equal(guide$params$position, "bottom")
   expect_equal(guide$params$grob$keys$text, c("each walk, start to end", key_rows(g)$text))
-  expect_true("only in other haplotypes" %in% g$graph_key$text)
+  expect_true("other haplotypes" %in% g$graph_key$text)
   expect_false(any(nzchar(g$graph_key$strong)))
 })
 

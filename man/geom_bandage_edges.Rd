@@ -9,6 +9,7 @@ geom_bandage_edges(
   data = NULL,
   background = "white",
   over_nodes = NULL,
+  faded = NULL,
   ...
 )
 }
@@ -22,6 +23,10 @@ geom_bandage_edges(
 \item{over_nodes}{\code{TRUE} for only the links the Bandage view paints over the
 nodes, those whose rows have \code{deletion}, \code{turn} or \code{along}, \code{FALSE} for
 only the rest, \code{NULL} for all}
+
+\item{faded}{\code{TRUE} for only the rows a lift fades, which the Bandage view
+paints as one layer under everything else, \code{FALSE} for only the rest,
+\code{NULL} for all}
 
 \item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
 }

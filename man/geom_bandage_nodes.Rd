@@ -4,7 +4,13 @@
 \alias{geom_bandage_nodes}
 \title{Graph nodes as thick paths}
 \usage{
-geom_bandage_nodes(mapping = NULL, data = NULL, background = "white", ...)
+geom_bandage_nodes(
+  mapping = NULL,
+  data = NULL,
+  background = "white",
+  faded = NULL,
+  ...
+)
 }
 \arguments{
 \item{mapping}{aesthetics that override the defaults}
@@ -12,6 +18,10 @@ geom_bandage_nodes(mapping = NULL, data = NULL, background = "white", ...)
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
 
 \item{background}{what faded ink is mixed with, the plot's background}
+
+\item{faded}{\code{TRUE} for only the rows a lift fades, which the Bandage view
+paints as one layer under everything else, \code{FALSE} for only the rest,
+\code{NULL} for all}
 
 \item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
 }

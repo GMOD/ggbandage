@@ -8,7 +8,8 @@
 #' sequence or turn strand against it, and plain links the nodes would hide,
 #' their ends laid apart along them, so none is hidden under the nodes it
 #' meets. A dark tab past a node's free end that no drawn link meets says the
-#' graph runs on past what is drawn. Every piece is an ordinary ggplot2 layer,
+#' graph runs on past what is drawn. Under a lift, what it fades is drawn first,
+#' as one layer under the rest. Every piece is an ordinary ggplot2 layer,
 #' scale or theme, so `+` changes any of it.
 #' @param object a `bandage_layout`
 #' @param ... unused
@@ -20,11 +21,15 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
   keyed <- !faceted && nrow(key_rows(object)) > 0
   genes <- if (nrow(object$genes)) geom_bandage_genes(key = NULL)
   p <- ggplot2::ggplot(object) +
-    geom_bandage_edges(over_nodes = FALSE) +
+    geom_bandage_edges(over_nodes = FALSE, faded = TRUE) +
+    geom_bandage_nodes(faded = TRUE) +
+    geom_bandage_edges(over_nodes = TRUE, faded = TRUE) +
+    geom_bandage_arrows(faded = TRUE) +
+    geom_bandage_edges(over_nodes = FALSE, faded = FALSE) +
     genes[1] +
-    geom_bandage_nodes() +
-    geom_bandage_edges(over_nodes = TRUE) +
-    geom_bandage_arrows() +
+    geom_bandage_nodes(faded = FALSE) +
+    geom_bandage_edges(over_nodes = TRUE, faded = FALSE) +
+    geom_bandage_arrows(faded = FALSE) +
     genes[2:3] +
     geom_bandage_labels()
   if (faceted) {

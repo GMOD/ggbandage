@@ -4,12 +4,24 @@
 \alias{geom_bandage_arrows}
 \title{Strand arrowheads, a fixed size at any zoom}
 \usage{
-geom_bandage_arrows(mapping = NULL, data = NULL, ...)
+geom_bandage_arrows(
+  mapping = NULL,
+  data = NULL,
+  background = "white",
+  faded = NULL,
+  ...
+)
 }
 \arguments{
 \item{mapping}{aesthetics that override the defaults}
 
 \item{data}{a \code{bandage_layout}, or \code{NULL} for the plot's}
+
+\item{background}{what faded ink is mixed with, the plot's background}
+
+\item{faded}{\code{TRUE} for only the rows a lift fades, which the Bandage view
+paints as one layer under everything else, \code{FALSE} for only the rest,
+\code{NULL} for all}
 
 \item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
 }
@@ -17,5 +29,7 @@ geom_bandage_arrows(mapping = NULL, data = NULL, ...)
 A head wider than its lane stands on a white halo, as the Bandage view
 draws it, where the layout's \code{arrows} table marks it \code{halo}. A row marked
 \code{runsOn} is the dark tab past a node's free end that no drawn link meets,
-where the graph runs on past what is drawn: a triangle with no notch.
+where the graph runs on past what is drawn: a triangle with no notch. A
+faded head is filled opaque in its colour mixed with the background, as the
+faded nodes and links are.
 }

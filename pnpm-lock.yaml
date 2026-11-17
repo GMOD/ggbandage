@@ -12,8 +12,8 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-33d2a5c.tgz
-        version: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-33d2a5c.tgz
+        specifier: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-f791111.tgz
+        version: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-f791111.tgz
       '@jbrowse/graph-walks':
         specifier: file:../vendor/walks8-pack/jbrowse-graph-walks-7.0.0-730e752.tgz
         version: file:../vendor/walks8-pack/jbrowse-graph-walks-7.0.0-730e752.tgz
@@ -204,8 +204,8 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-33d2a5c.tgz':
-    resolution: {integrity: sha512-raRKz9E+9i1vKPzDu9OqYIhz2RGJ0VNr43uwd6KV1pzyJ2Ii8+OVQSkyshFrIEiEF1gdfT/VVDYZ8MXqFd0TPg==, tarball: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-33d2a5c.tgz}
+  '@jbrowse/bandage-core@file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-f791111.tgz':
+    resolution: {integrity: sha512-uWxAXW6Kia8suk0AYmzaMRNTWD3IqMwUOEeUuvjYnga5/zmgWn8Lvh0nU7+rsxyUlawu7FvabEO4CIhG0Np3EQ==, tarball: file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-f791111.tgz}
     version: 14.0.0
     engines: {node: '>=20'}
     hasBin: true
@@ -679,7 +679,7 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-33d2a5c.tgz':
+  '@jbrowse/bandage-core@file:../vendor/walks8-pack/jbrowse-bandage-core-14.0.0-f791111.tgz':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
