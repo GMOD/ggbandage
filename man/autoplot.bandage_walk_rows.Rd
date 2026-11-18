@@ -30,7 +30,9 @@ a layout coloured by position; or \code{"walk"} for each row in the colours
 \code{layout} lifts its walk in, a flat colour or a progress ramp, to set rows
 under walks lifted together. A ramp takes each bp of the bar the colour the
 drawing gives that contig position, so it starts past the ramp's first
-colour where the cut reaches beyond the flank. A grey
+colour where the cut reaches beyond the flank. A walk lifted with
+\code{color = list(field = "pass")} takes each pass's colour on the nodes it
+steps again, as its threads do. A grey
 strip above a row marks where its walk runs on the reference's path}
 
 \item{layout}{the \code{bandage_layout} drawn above the rows. A row whose walk

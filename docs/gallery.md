@@ -138,7 +138,7 @@ graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
   walks them twice
 - `color = list(field = "pass")` colours HG01106#1 wherever it steps a node
   again, by the trip it is on. A pass starts where the walk comes back to a node
-  it stepped earlier, and `bandage_pass_bar()` draws the passes along the walk
+  it stepped earlier, and HG01106#1's walk row takes the same colours
 - HG01106#1 walks the RHD loop twice, on passes 1 and 2 of about 70 kb each, so
   it has a second RHD. Pass 2 is close to the 69 kb by which HG01106#1 is
   longer than grch38
@@ -149,7 +149,7 @@ graph with [impg](https://github.com/pangenome/impg). ggbandage ships it in
   skip RHD, the deletion that most often makes blood RhD-negative. HG01258#2, in
   purple, is one
 
-![Force-directed syng graph of RHD with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 in blue, coloured by pass wherever it steps a node again, pass 1 orange, pass 2 pink and pass 3 amber, with arrowheads along its lane pointing the way it runs. Round the loop at the top, labelled RHD, run a grey grch38 thread and HG01106#1's orange pass 1 and pink pass 2 threads side by side. Pass 1 is labelled where the loop meets the threads to RHCE, pass 2 at the left where the walks come in, and pass 3, a short amber thread, beside it. HG01258#2 skips the RHD loop and runs down past TMEM50A and round to RHCE. A bar below shows HG01106#1 along its 272 kb under a bracket for each pass, orange from 10 to 80 kb, pink to 150 kb, a short amber stretch after it, and blue for the rest. Walk rows give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb](../gallery/syng_rhd.png)
+![Force-directed syng graph of RHD with RHD, TMEM50A and RHCE labelled and three walks lifted: grch38 in dark grey, HG01258#2 in purple, and HG01106#1 in blue, coloured by pass wherever it steps a node again, pass 1 orange, pass 2 indigo and pass 3 olive, with arrowheads along its lane pointing the way it runs. The key gives the bp each pass steps again: 54.9 kb, 57.5 kb and 7.6 kb. Round the loop at the top, labelled RHD, run a grey grch38 thread and HG01106#1's orange pass 1 and indigo pass 2 threads side by side. Pass 1 is labelled where the loop meets the threads to RHCE, pass 2 at the left where the walks come in, and pass 3, a short olive thread, beside it. HG01258#2 skips the RHD loop and runs down past TMEM50A and round to RHCE. Walk rows below give grch38 202 kb, HG01106#1 272 kb and HG01258#2 132 kb, and HG01106#1's row takes its threads' colours: blue, orange from 10 to 80 kb, indigo to 150 kb, a short olive stretch after it, and blue for the rest](../gallery/syng_rhd.png)
 
 ```r
 library(ggbandage)
@@ -169,8 +169,7 @@ g <- bandage_layout(rhd_syng, walks = lifted, genes = genes)
 g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
 g$exons <- g$exons[0, ]
 rows <- bandage_walk_rows(rhd_syng, haplotypes = c(dup, del))
-autoplot(g) / bandage_pass_bar(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) +
-  plot_layout(heights = c(5, 0.6, 1.2))
+autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(4, 1.2))
 ```
 
 ## C4 in two graph builders, the same haplotype in each

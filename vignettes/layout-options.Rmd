@@ -13,7 +13,7 @@ lists the rest.
 | Argument | Effect |
 | --- | --- |
 | `walks` | Haplotypes to colour |
-| `walks = list(list(walk = "HG01106#1", color = list(field = "pass")))` | A walk coloured by pass: each trip it makes round nodes it steps again takes its own colour and name. `bandage_pass_bar()` draws the passes along the walk |
+| `walks = list(list(walk = "HG01106#1", color = list(field = "pass")))` | A walk coloured by pass: each trip it makes round nodes it steps again takes its own colour and name. Its walk row under `hues = "walk"` takes the same colours, and `bandage_pass_bar()` draws the passes along the walk alone |
 | `facet = "walk"` | One panel per walk |
 | `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
 | `genes` | A GFF3 or BED file pinned onto the reference |

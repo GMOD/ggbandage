@@ -320,7 +320,9 @@ bar_tiles <- function(runs, tile) {
 #'   `layout` lifts its walk in, a flat colour or a progress ramp, to set rows
 #'   under walks lifted together. A ramp takes each bp of the bar the colour the
 #'   drawing gives that contig position, so it starts past the ramp's first
-#'   colour where the cut reaches beyond the flank. A grey
+#'   colour where the cut reaches beyond the flank. A walk lifted with
+#'   `color = list(field = "pass")` takes each pass's colour on the nodes it
+#'   steps again, as its threads do. A grey
 #'   strip above a row marks where its walk runs on the reference's path
 #' @param layout the `bandage_layout` drawn above the rows. A row whose walk
 #'   the layout lifts takes the name the layout's key gives it, and a swatch
@@ -571,10 +573,19 @@ columns_json <- function(x) {
   V8::JS(jsonlite::toJSON(x, dataframe = "columns", na = "null", digits = NA))
 }
 
+# The layout's pass runs with the key row of their walk, from 0
+pass_keys <- function(layout) {
+  runs <- layout$pass_runs
+  data.frame(
+    key = match(runs$walk, layout$keys$walk) - 1,
+    start = as.numeric(runs$start), end = as.numeric(runs$end), color = as.character(runs$color)
+  )
+}
+
 # Which key names each row's walk, `key`, and the colour bandage-core's walk
 # rows give `x` bp along bar `row`, `colour`: the lifted walk's flat colour,
-# or its progress ramp at the contig position `x` covers, NA on a row no
-# lifted walk inks
+# its progress ramp at the contig position `x` covers, or the colour of the
+# pass it is on where it steps a node again, NA on a row no lifted walk inks
 row_inks <- function(rows, layout, row = integer(), x = numeric()) {
   inks <- if (is.null(layout$keys)) {
     list(key = NULL, color = NULL)
@@ -583,7 +594,8 @@ row_inks <- function(rows, layout, row = integer(), x = numeric()) {
       "bandage.walkRowInks",
       columns_json(layout$keys[c("name", "stops", "field", "contig", "start", "end")]),
       columns_json(rows[c("name", "bp", "contig", "contigStart", "backward")]),
-      columns_json(data.frame(row = row, offset = x))
+      columns_json(data.frame(row = row, offset = x)),
+      columns_json(pass_keys(layout))
     )
   }
   list(

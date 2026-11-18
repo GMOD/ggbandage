@@ -215,6 +215,16 @@ test_that("a walk passing a node twice draws two threads there, and the key says
 
 by_pass <- function(...) list("ref#0#chr", list(walk = "dup#1#chr", color = list(field = "pass"), ...))
 
+# The fills a walk-hued row draws between two offsets along its bar
+row_fill <- function(rows, layout, label) {
+  p <- ggplot2::autoplot(rows, hues = "walk", layout = layout)
+  at <- which(vapply(p$layers, function(l) "ink" %in% names(l$data), TRUE))[1]
+  bar <- p$layers[[at]]$data
+  bar <- bar[rows$rows$label[bar$row + 1] == label, ]
+  middle <- (bar$xmin + bar$xmax) / 2
+  function(from, to) unique(toupper(bar$fill[middle > from & middle < to]))
+}
+
 test_that("a walk lifted by pass has each pass named on the graph in its colour, keyed, and its heads keyed", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
@@ -335,6 +345,38 @@ test_that("the pass bar marks each pass's own stretches, dots the gaps between t
   expect_equal(pass_marks(runs[1, ], passes[1, ], 600, "w", 1)$names$x, 25)
   passes$text[1] <- strrep("w", 20)
   expect_equal(pass_marks(runs[1, ], passes[1, ], 600, "w", 1)$names$x, 20 * PASS_NAME_CHAR_PX / 2 + 2)
+})
+
+test_that("a walk-hued row of a walk lifted by pass takes each pass's colour where the threads do", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(repeat_gfa, gfa)
+  g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
+  fill <- row_fill(bandage_walk_rows(gfa), g, "dup#1")
+  expect_equal(fill(0, 6), toupper(g$passes$color[1]))
+  expect_equal(fill(6, 12), toupper(g$passes$color[2]))
+  expect_equal(fill(12, 15), toupper(g$keys$stops[g$keys$field == "pass"]))
+})
+
+test_that("a backward row finds its walk's passes by contig position", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(c(
+    "S\ts1\t*\tLN:i:1000", "S\ts2\t*\tLN:i:500", "S\tr\t*\tLN:i:200",
+    "S\tu\t*\tLN:i:3000", "S\ts5\t*\tLN:i:1000",
+    "L\ts1\t+\ts2\t+\t0M", "L\ts2\t+\tr\t+\t0M", "L\tr\t+\tr\t+\t0M",
+    "L\tr\t+\tu\t+\t0M", "L\tu\t+\ts5\t+\t0M",
+    "P\tref#0#chr1\ts1+,s2+,r+,u+,s5+\t*", "P\thap#1#ctg\ts5-,u-,r-,r-,s2-,s1-\t*"
+  ), gfa)
+  g <- bandage_layout(gfa, walks = list(list(walk = "hap#1", color = list(field = "pass"))))
+  rows <- bandage_walk_rows(gfa, region = "chr1:1200-4500")
+  expect_true(rows$rows$backward[rows$rows$label == "hap"])
+  fill <- row_fill(rows, g, "hap")
+  own <- toupper(g$keys$stops[g$keys$field == "pass"])
+  expect_equal(fill(0, 490), own)
+  expect_equal(fill(510, 690), toupper(g$passes$color[2]))
+  expect_equal(fill(710, 890), toupper(g$passes$color[1]))
+  expect_equal(fill(910, 3900), own)
 })
 
 test_that("pass stretches a hairline apart join, and those of another pass or further apart do not", {
