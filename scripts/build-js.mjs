@@ -163,11 +163,18 @@ const banner = [
   decoder,
 ].join('\n')
 
-const js = base64Wasm(outputFiles[0].text).replace(
-  /"[^"\n]*?node_modules\/(?=\.pnpm\/)/g,
-  '"node_modules/',
+const escapeUnprintable = text =>
+  text.replace(/\\?[^\t\n\r\x20-\x7e]/g, match => {
+    if (match.length > 1) {
+      throw new Error('an unprintable character follows a backslash')
+    }
+    return `\\u${match.charCodeAt(0).toString(16).padStart(4, '0')}`
+  })
+
+const js = escapeUnprintable(
+  base64Wasm(outputFiles[0].text).replace(
+    /"[^"\n]*?node_modules\/(?=\.pnpm\/)/g,
+    '"node_modules/',
+  ),
 )
-if (/[^\t\n\r\x20-\x7e]/.test(js)) {
-  throw new Error('the bundle is not printable ASCII')
-}
 writeFileSync(OUT, `${banner}\n${js}`)
