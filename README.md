@@ -124,7 +124,7 @@ Tutorials
 Libraries
 
 - [gfa-to-tabix](https://github.com/GMOD/gfa-to-tabix): writes walk files and
-  segment indexes
+  node and link indexes
 - [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks) (npm): cuts a
   region out of a walk file
 - [@jbrowse/bandage-core](https://github.com/GMOD/bandage-core) (npm): layout
