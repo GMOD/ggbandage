@@ -550,6 +550,10 @@ swatch_grob <- function(k, at, mid) {
     overhang = grid::polygonGrob(
       x = x(c(0, 8, 8, 18, 10, 10)), y = mid + px(c(0, 5, -5, 0, 5, -5)), id = rep(1:2, each = 3),
       gp = grid::gpar(col = NA, fill = SIZE_INK)
+    ),
+    overrun = grid::polygonGrob(
+      x = x(c(0, 8, 4, 10, 18, 14)), y = mid + px(c(-4.5, -4.5, 4.5, 4.5, 4.5, -4.5)), id = rep(1:2, each = 3),
+      gp = grid::gpar(col = NA, fill = SIZE_INK)
     )
   )
 }

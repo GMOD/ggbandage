@@ -255,6 +255,13 @@ test_that("a walk lifted by pass has each pass named on the graph in its colour,
   expect_s3_class(swatch_grob(heads, 6, grid::unit(0.5, "npc")), "segments")
 })
 
+test_that("the edge marks' swatch is an up and a down triangle", {
+  g <- swatch_grob(key_entry(swatch = "overrun"), 0, grid::unit(0.5, "npc"))
+  expect_s3_class(g, "polygon")
+  y <- grid::convertY(g$y, "npc", valueOnly = TRUE) - 0.5
+  expect_equal(sign(y), c(-1, -1, 1, 1, 1, -1))
+})
+
 # bandage-core marks 21 of the 23 heads of the repeat lifted by pass halo,
 # each wider than its lane
 test_that("a head the layout marks halo stands on a white halo drawn under every head, and figure data must say which", {
