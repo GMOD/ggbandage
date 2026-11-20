@@ -286,8 +286,8 @@ placed_labels <- function(data, kinds, ink, params, mapping = ggplot2::aes(),
 #' Node lengths and pass names, where the Bandage view writes them
 #'
 #' Each placeholder's length, the bp of a stretch the cut did not load, and
-#' every node's where the layout was made with `nodeLengths = TRUE`, on a pale
-#' backing at the place the Bandage view gives it, with a leader to its loop
+#' every node's where node lengths are on (`nodeLengths` when the layout is
+#' made, else bandage-core's default), on a pale backing at the place the Bandage view gives it, with a leader to its loop
 #' where the label stands off. A walk lifted by pass has each pass named in
 #' the pass's colour beside one of its threads, with a leader in that colour
 #' to a dot on the thread.
