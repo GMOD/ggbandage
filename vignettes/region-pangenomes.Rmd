@@ -74,6 +74,9 @@ g <- bandage_layout(walks, region = "chr1:196,640,001-196,900,000", haplotypes =
 - `haplotypes` picks the `sample#haplotype` walks to cut, every one by default
 - `context` keeps that many bp of reference past each end, by default what
   the browser readers keep
+- `links` picks the links drawn: `"walked"`, the default, those walked by the
+  haplotypes shown, or `"between"`, those taken by any haplotype between the
+  nodes shown
 
 ## Exporting a region
 

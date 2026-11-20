@@ -1274,6 +1274,43 @@ test_that("a layout of a walk file keys a walk by what its departures state", {
   expect_equal(g$keys$note, ", 1.3 kb left out of graph, 700 bp own sequence not drawn")
 })
 
+link_lines <- function(gfa) grep("^L\t", strsplit(gfa, "\n", fixed = TRUE)[[1]], value = TRUE)
+
+test_that("a walk file cut lists the links its haplotypes walk unless asked for more", {
+  cut <- function(...) bandage_gfa(records, "chr1:1-10000", haplotypes = "HG002#1", context = 0, ...)
+  expect_equal(graph_source(records, "chr1:1-10000", "HG002#1", 0)$source$walks$links, "walked")
+  expect_identical(cut(), cut(links = "walked"))
+  unset <- graph_source(records, "chr1:1-10000", "HG002#1", 0)$source$walks
+  unset$links <- NULL
+  expect_identical(engine()$call("bandage.cutWalks", unset, await = TRUE), cut())
+})
+
+test_that("links = \"between\" adds the links another haplotype takes between the cut's nodes", {
+  cut <- function(links) bandage_gfa(records, "chr1:1-10000", haplotypes = "HG002#1", context = 0, links = links)
+  expect_equal(graph_source(records, "chr1:1-10000", "HG002#1", 0, "between")$source$walks$links, "between")
+  walked <- link_lines(cut("walked"))
+  between <- link_lines(cut("between"))
+  only_hg003_walks <- c("L\t3\t+\t19\t+\t0M", "L\t20\t+\t4\t+\t0M")
+  expect_setequal(setdiff(between, walked), only_hg003_walks)
+  expect_length(setdiff(walked, between), 0)
+  drawn <- function(links) {
+    bandage_layout(
+      records, region = "chr1:1-10000", haplotypes = "HG002#1", context = 0,
+      small_sites = "nodes", links = links
+    )
+  }
+  expect_setequal(drawn("between")$nodes$name, drawn("walked")$nodes$name)
+  expect_gt(length(unique(drawn("between")$edges$edge)), length(unique(drawn("walked")$edges$edge)))
+})
+
+test_that("links takes graph-walks' two words and no other, and walk rows and steps take none", {
+  expect_error(bandage_gfa(records, "chr1:1-10000", links = "all"), "should be one of")
+  expect_error(bandage_layout(records, region = "chr1:1-10000", links = "none"), "should be one of")
+  expect_error(bandage_layout(pggb, links = "none"), "should be one of")
+  expect_false("links" %in% names(formals(bandage_walk_rows)))
+  expect_false("links" %in% names(formals(bandage_walk_steps)))
+})
+
 test_that("the rows' axis counts in bp, kb or Mb by the longest bar", {
   axis <- function(w) ggplot2::autoplot(w)$scales$get_scales("x")
   short <- axis(bandage_walk_rows(pggb))

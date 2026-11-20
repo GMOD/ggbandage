@@ -34,13 +34,13 @@ is_walk_file <- function(x) grepl("\\.walks(\\.bed)?\\.gz$", bare_name(x))
 # a walk file it is the cut to make, which the engine reads as tables, since
 # GFA text has no line for the cut's departures, and anchors the region to
 # the sequence it resolves
-graph_source <- function(gfa, region, haplotypes, context) {
+graph_source <- function(gfa, region, haplotypes, context, links = "walked") {
   if (is_walk_file(gfa) || is_tabix_graph(gfa)) {
     if (is.null(region)) {
       stop("an index holds a whole genome's graph; give the `region` to draw")
     }
     source <- if (is_walk_file(gfa)) {
-      list(walks = walk_request(gfa, region, haplotypes, context))
+      list(walks = walk_request(gfa, region, haplotypes, context, links))
     } else {
       list(text = cut_tabix(engine(), gfa, region))
     }
@@ -66,8 +66,10 @@ core_region <- function(region) {
 #' @inheritParams bandage_layout
 #' @return GFA text, one string
 #' @export
-bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = NULL) {
-  source <- graph_source(gfa, region, haplotypes, context)$source
+bandage_gfa <- function(gfa, region = NULL, haplotypes = NULL, context = NULL,
+                        links = c("walked", "between")) {
+  links <- match.arg(links)
+  source <- graph_source(gfa, region, haplotypes, context, links)$source
   if (is.null(source$walks)) {
     source$text
   } else {
@@ -180,6 +182,12 @@ walk_origin <- function(walk) {
 #' @param context on a walk file, bp of reference kept past each end of
 #'   `region`; `NULL` keeps what the browser readers keep, graph-walks'
 #'   `WALK_CONTEXT`
+#' @param links on a walk file, the links drawn: `"walked"`, the default, for
+#'   those walked by the haplotypes shown, which are the reference and the
+#'   `haplotypes` asked for; or `"between"` for those taken by any haplotype
+#'   between the nodes shown, which adds, say, a deletion or a turn round a
+#'   repeat that only a haplotype left out of `haplotypes` has. The nodes are
+#'   the same either way. A GFA file or an index takes no notice of it
 #' @param frequencies each node's passes per haplotype, as a data frame of
 #'   `name` and `frequency` such as [vcf_frequencies()] returns, or a numeric
 #'   vector named by node. They override any `AF` tag and what the walks give,
@@ -208,9 +216,11 @@ bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, height = 800, region = NULL,
                            genes = NULL, gene_names = NULL, haplotypes = NULL,
                            context = NULL, frequencies = NULL,
-                           small_sites = c("hidden", "nodes"), ...) {
+                           small_sites = c("hidden", "nodes"),
+                           links = c("walked", "between"), ...) {
   small_sites <- match.arg(small_sites)
-  src <- graph_source(gfa, region, haplotypes, context)
+  links <- match.arg(links)
+  src <- graph_source(gfa, region, haplotypes, context, links)
   spec <- c(
     list(layout = layout, width = width, height = height, smallSites = small_sites),
     if (!is.null(src$region)) list(region = src$region),
@@ -300,9 +310,9 @@ unbound_genes <- function(genes, unbound) {
 
 # The engine reads the file's directory, `.idx` after its name, by the same
 # location
-walk_request <- function(file, region, haplotypes, context) {
+walk_request <- function(file, region, haplotypes, context, links) {
   c(
-    list(file = file),
+    list(file = file, links = links),
     if (!is.null(context)) list(context = context),
     if (length(haplotypes)) list(haplotypes = as.list(haplotypes)),
     parse_region(region)

@@ -4,7 +4,13 @@
 \alias{bandage_gfa}
 \title{The GFA a figure is drawn from}
 \usage{
-bandage_gfa(gfa, region = NULL, haplotypes = NULL, context = NULL)
+bandage_gfa(
+  gfa,
+  region = NULL,
+  haplotypes = NULL,
+  context = NULL,
+  links = c("walked", "between")
+)
 }
 \arguments{
 \item{gfa}{path or URL of a GFA file, plain or gzipped; of a gfa-to-tabix
@@ -25,6 +31,13 @@ one when \code{NULL}}
 \item{context}{on a walk file, bp of reference kept past each end of
 \code{region}; \code{NULL} keeps what the browser readers keep, graph-walks'
 \code{WALK_CONTEXT}}
+
+\item{links}{on a walk file, the links drawn: \code{"walked"}, the default, for
+those walked by the haplotypes shown, which are the reference and the
+\code{haplotypes} asked for; or \code{"between"} for those taken by any haplotype
+between the nodes shown, which adds, say, a deletion or a turn round a
+repeat that only a haplotype left out of \code{haplotypes} has. The nodes are
+the same either way. A GFA file or an index takes no notice of it}
 }
 \value{
 GFA text, one string

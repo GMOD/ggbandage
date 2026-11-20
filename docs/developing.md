@@ -30,6 +30,11 @@ fetches every byte it reads.
   which drops both
 - bandage-core's `laidOutGraph` takes GFA text only, so `scripts/figure.mjs`
   lays out the loaded graph with the same calls
+- `bandage_layout()` and `bandage_gfa()` pass their `links` argument to the
+  cut as graph-walks' option of the same name and values. Links drawn:
+  `"walked"`, the default, walked by the haplotypes shown, or `"between"`,
+  taken by any haplotype between the nodes shown. `bandage_walk_rows()` and
+  `bandage_walk_steps()` read walks alone, so their cuts stay on `"walked"`
 - The cut takes graph-walks' `CUT_PRESETS.figure`: the browser readers'
   `context`, `contained` and `attachBp`, so a region draws the graph BandageJS,
   the JBrowse graph plugin and sequenceTubeMap draw, with the step, byte and

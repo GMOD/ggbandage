@@ -18,6 +18,7 @@ bandage_layout(
   context = NULL,
   frequencies = NULL,
   small_sites = c("hidden", "nodes"),
+  links = c("walked", "between"),
   ...
 )
 }
@@ -93,6 +94,13 @@ where it attaches (\code{refName}, \code{start}, \code{end}, and \code{x}, \code
 drawing), its \code{bp}, the \code{nodes} and \code{links} it folds, and how many of the
 shown haplotypes step it, \code{count} of \code{total}. \code{"nodes"} draws every node
 and link at any size}
+
+\item{links}{on a walk file, the links drawn: \code{"walked"}, the default, for
+those walked by the haplotypes shown, which are the reference and the
+\code{haplotypes} asked for; or \code{"between"} for those taken by any haplotype
+between the nodes shown, which adds, say, a deletion or a turn round a
+repeat that only a haplotype left out of \code{haplotypes} has. The nodes are
+the same either way. A GFA file or an index takes no notice of it}
 
 \item{...}{other figure spec fields, such as \code{referencePath},
 \code{colorScheme}, \code{contigThickness}, \code{quality}, \code{engine}
