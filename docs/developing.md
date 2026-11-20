@@ -251,7 +251,7 @@ the README's cards from the same list, a card for each figure marked
 
 ```console
 Rscript scripts/gallery.R            # every figure
-Rscript scripts/gallery.R c4_stress  # one figure, and the docs
+Rscript scripts/gallery.R c4_genes   # one figure, and the docs
 Rscript scripts/gallery.R --check    # what CI runs: offline, draws nothing
 ```
 

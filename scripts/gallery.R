@@ -1,7 +1,7 @@
 # Draws gallery/*.png from hosted files, and writes docs/gallery.md
 # and the README's gallery table from the same code:
 #   Rscript scripts/gallery.R            every figure
-#   Rscript scripts/gallery.R c4_stress  one figure, and the docs
+#   Rscript scripts/gallery.R c4_genes   one figure, and the docs
 #   Rscript scripts/gallery.R --check    fails on a snippet calling a function
 #                                        that doesn't exist, or on stale docs
 
@@ -67,9 +67,9 @@ autoplot(rows))",
     width = 9, height = 5, readme = TRUE
   ),
   figure(
-    "cyp2d6_stress", "CYP2D6 deletion as an arch over the gene", "chr22:42,118,000-42,136,000",
-    "Stress layout of CYP2D6 from the hosted index, GRCh38 drawn straight and coloured by position from NDUFA6-DT to CYP2D7, exons outlined in gold: a dashed arch spans CYP2D6, the route of haplotypes that skip the gene, a small dashed arch at the left skips a short stretch of GRCh38, and non-reference sequence hangs in charcoal loops above and below",
-    r"(g <- bandage_layout(index, region = "chr22:42,118,000-42,136,000", engine = "stress", genes = genes)
+    "cyp2d6_deletion", "CYP2D6 deletion as a dashed edge past the gene", "chr22:42,118,000-42,136,000",
+    "Force-directed layout of CYP2D6 from the hosted index, GRCh38 coloured by position from NDUFA6-DT in red to CYP2D7 in magenta, exons outlined in gold: GRCh38 runs down the left, through CYP2D6 along the bottom and up to CYP2D7 at the top, and a dashed edge crosses from before CYP2D6 to after it, the route of haplotypes that skip the gene. A shorter dashed edge beside NDUFA6-DT skips a short stretch of GRCh38, and non-reference sequence hangs in charcoal loops off the reference at the left and the right",
+    r"(g <- bandage_layout(index, region = "chr22:42,118,000-42,136,000", genes = genes)
 autoplot(g))",
     width = 9, height = 5, readme = TRUE
   ),
@@ -322,21 +322,21 @@ autoplot(g, ncol = 2))",
     height = 3.5
   ),
   figure(
-    "kiv2_stress", "KIV-2 against a straight GRCh38 backbone, with LPA's exons", "chr6:160,616,004-160,646,753",
-    "Stress layout of the KIV-2 array from the hosted index: GRCh38 drawn straight and coloured by position, LPA's exons outlined in orange, non-reference nodes in charcoal hanging below in two tiers, node lengths compressed so the longest insertion draws as a bar shorter than the array, and dashed arches where haplotypes skip reference sequence",
-    r"(g <- bandage_layout(index, region = kiv2, engine = "stress", genes = genes, bubbleSpread = "compress")
+    "kiv2_exons", "KIV-2 from the segment index, with LPA's exons", "chr6:160,616,004-160,646,753",
+    "Force-directed layout of the KIV-2 array from the hosted index, GRCh38 coloured by position from red at the left to magenta at the upper right, LPA's exons outlined in gold: GRCh38's nodes run in short coloured stretches joined by links, and non-reference nodes hang off them in charcoal loops, the longest sweeping round the lower left. Two dashed edges skip reference sequence, one from the red stretch across to the blue ones and a shorter one on to the purple ones",
+    r"(g <- bandage_layout(index, region = kiv2, genes = genes)
 autoplot(g))",
-    width = 9, height = 3.2
+    width = 9, height = 5
   ),
   figure(
-    "c4_stress", "C4A and C4B in the stress layout", "chr6:31,978,000-32,040,000",
-    "Stress layout of the complement C4 genes in the MHC, GRCh38 drawn straight: non-reference sequence hangs in loops below C4A and C4B, and a dashed arch from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA",
+    "c4_genes", "C4A and C4B force-directed, with their genes", "chr6:31,978,000-32,040,000",
+    "Force-directed layout of the complement C4 genes in the MHC from the hosted index, GRCh38 coloured by position and its genes named from C2 at the left to TNXB at the upper right: GRCh38 runs right to C4A, down through CYP21A1P and TNXA and up through C4B to CYP21A2, a dashed edge from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA, and non-reference sequence hangs in two charcoal loops, one below C4A and one below C4B",
     r"(g <- bandage_layout(
   index,
-  region = "chr6:31,978,000-32,040,000", engine = "stress", genes = genes
+  region = "chr6:31,978,000-32,040,000", genes = genes
 )
 autoplot(g))",
-    height = 2.6
+    width = 9, height = 5
   ),
   figure(
     "ugt2b17_frequency", "UGT2B17's deletion, each node as wide as its frequency", "chr4:68,500,000-68,680,000",
