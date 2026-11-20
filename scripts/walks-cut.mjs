@@ -5,8 +5,9 @@ import { openFile } from './tabix-cut.mjs'
 
 // The reference over the region with `context` bp either side, the browser
 // readers' by default, and the walks of the haplotypes asked for, every one
-// when none are, as graph tables with every departure from the reference over
-// the cut, which no GFA line states. The cut follows the browser readers'
+// when none are, as graph tables with the links any haplotype takes between
+// their nodes and every departure from the reference over the cut, which no
+// GFA line states. The cut follows the browser readers'
 // rules, graph-walks' figure preset, so a region draws the graph they draw;
 // R asks for one region and waits, so the preset lifts every budget, and this
 // cut reads every abridged walk in full.
@@ -28,6 +29,7 @@ export async function walkCut({
       ...(context === undefined ? {} : { context }),
       haplotypes,
       expand: () => true,
+      links: 'between',
     },
   )
   return { tables, region: { refName: anchor, start, end } }
