@@ -14,6 +14,9 @@
 \item{ncol}{panels across, for a faceted layout}
 }
 \description{
+The layout's pane as the panel, so a plot whose panel is drawn at the
+layout's \code{width} by \code{height} draws the graph, its text and the room
+bandage-core left for the text at one scale, as a browser's canvas does.
 Edges, nodes and arrowheads at the view's colours on white, the background
 the geoms mix faded ink with, the node lengths the view writes, a panel per
 walk when faceted, the genes pinned on the backbone, the view's key at the

@@ -17,6 +17,7 @@ lists the rest.
 | `facet = "walk"` | One panel per walk |
 | `engine = "stress"` | Reference drawn straight, variants hanging off it. Default is Bandage's force-directed layout |
 | `genes` | A GFF3 or BED file pinned onto the reference |
+| `width = 840, height = 400` | The size, in px of 1/96 in, of the panel the graph is drawn in. bandage-core places node lengths and gene names for that size, so give the size the panel comes out at: the gallery's 9 by 5 in figures with the key on top have a panel of 840 by 400 px. Default: 1000 by 800 |
 | `context = 30000` | On a walk file, 30 kb of reference past each end of `region`, so the drawing shows where straight reference meets the variation. Default: what the browser readers keep |
 | `small_sites = "nodes"` | Every node and link drawn, however small at the figure's size. Default leaves out sites drawn under 3 px long with the reference between where they attach, as the browser readers do at overview; the key's last line counts them and the layout's `sites` table lists them |
 | `bubbleSpread = "compress"` | Long and short nodes drawn nearer the mean length, so one long insertion doesn't fill the figure. Default draws length proportional to bp |

@@ -159,13 +159,17 @@ walk_origin <- function(walk) {
 #'   graph where the walk steps no node twice. [bandage_pass_bar()] draws the
 #'   passes along the walk
 #' @param facet `"walk"` for a panel per walk
-#' @param width the width in px the drawing is fit to, which decides whether
-#'   strand arrows show
-#' @param height the height in px the drawing is fit to. Under
+#' @param width,height the size in px, 1/96 in, of the pane the drawing is fit
+#'   to and its labels placed in, as a browser's canvas. The layout's `pane`
+#'   is that pane in the drawing's units, `x` and `y` limits, which
+#'   [autoplot()][autoplot.bandage_layout] draws as the panel. Give the size
+#'   the panel is drawn at: a node's length and a gene's name are written in
+#'   10 and 11 px text, which only at that size stand where bandage-core left
+#'   room for them, and `width` decides whether strand arrows show. Under
 #'   `engine = "stress"` the layout keeps what lies beside the reference clear
 #'   of it at `width` by `height`, and a compressing `bubbleSpread` sizes its
-#'   shortest nodes for `width`, so pass the size the plot is drawn at. The
-#'   default engine under the default spread lays out the same at any size
+#'   shortest nodes for `width`. The default engine under the default spread
+#'   lays out the same at any size
 #' @param region a 1-based locus, as a genome browser writes it, such as
 #'   `"GRCh38#0#chr6:31,000,001-31,100,000"`, `"chr6:31000001..31100000"` or
 #'   one base, `"chr6:31,000,001"`. On an index or walk file, the
@@ -366,13 +370,14 @@ as_bandage_layout <- function(d) {
   passes <- frame(d$passes)
   pass_runs <- frame(d$passRuns)
   graph_key <- frame(d$meta$graphKey)
+  pane <- list(x = c(d$pane$minX, d$pane$maxX), y = -c(d$pane$maxY, d$pane$minY))
 
   structure(
     list(
       nodes = nodes, edges = edges, arrows = arrows, rows = rows,
       panels = panels, keys = keys, genes = genes, exons = exons,
       labels = labels, passes = passes, pass_runs = pass_runs,
-      sites = sites, graph_key = graph_key, meta = d$meta
+      sites = sites, graph_key = graph_key, pane = pane, meta = d$meta
     ),
     class = "bandage_layout"
   )

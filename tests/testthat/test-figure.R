@@ -832,6 +832,70 @@ one_spot_gfa <- c(
   }, 0:2, c(300, 500, 700)))
 )
 
+# The box bandage-core keeps clear for a label, in its px: a node's length in
+# 10 px text on a 13 px line (graphLabels.ts), a gene's name in 11 px text
+# with 4 px round it (overlayLabels.ts)
+core_box <- function(kind, text) {
+  length <- kind %in% c("length", "placeholder")
+  data.frame(
+    w = ifelse(length, nchar(text) * 5.7 + 6, nchar(text) * 6.2 + 8),
+    h = ifelse(length, 13, 11 + 2 * 4)
+  )
+}
+
+# The plot drawn with its panel `width` px wide and room for it below, its
+# panel's px for each of the layout's px, and each label it draws as the px
+# its backing takes
+drawn_labels <- function(p, g) {
+  panel_px <- function(device_width) {
+    grDevices::pdf(NULL, width = device_width, height = 2 * device_width)
+    on.exit(grDevices::dev.off())
+    grid::grid.draw(ggplot2::ggplotGrob(p))
+    grid::grid.force()
+    vps <- grid::grid.ls(viewports = TRUE, grobs = FALSE, print = FALSE)$name
+    grid::seekViewport(grep("^panel[.-]", vps, value = TRUE)[1])
+    width_px(grid::unit(1, "npc"))
+  }
+  around <- 8 - panel_px(8) / 96
+  device_width <- g$meta$width / 96 + around
+  grDevices::pdf(NULL, width = device_width, height = 2 * device_width)
+  on.exit(grDevices::dev.off())
+  built <- ggplot2::ggplot_build(p)
+  gt <- ggplot2::ggplot_gtable(built)
+  backed <- list()
+  find <- function(x) {
+    if (inherits(x$children$box, "roundrect")) {
+      backed[[length(backed) + 1]] <<- data.frame(
+        text = x$children[[2]]$children[[1]]$label,
+        w = width_px(x$children$box$width),
+        h = grid::convertHeight(x$children$box$height, "inches", valueOnly = TRUE) * 96
+      )
+    }
+    for (child in x$children) find(child)
+  }
+  find(gt$grobs[[which(startsWith(gt$layout$name, "panel"))[1]]])
+  x_range <- built$layout$panel_params[[1]]$x.range
+  list(
+    scale = panel_px(device_width) / diff(x_range) / g$meta$scaleX,
+    labels = do.call(rbind, backed)
+  )
+}
+
+test_that("laid out at the size its panel is drawn at, each length and gene name is drawn the size bandage-core left room for", {
+  g <- bandage_layout(
+    rgfa, genes = test_path("testdata", "ecoli_genes.bed"), nodeLengths = TRUE,
+    width = 400, height = 300
+  )
+  drawn <- drawn_labels(autoplot(g), g)
+  expect_equal(drawn$scale, 1, tolerance = 0.01)
+  placed <- g$labels[g$labels$kind %in% c("length", "gene"), ]
+  expect_setequal(placed$kind, c("length", "gene"))
+  backing <- drawn$labels[match(placed$text, drawn$labels$text), ]
+  room <- core_box(placed$kind, placed$text) * drawn$scale
+  expect_true(all(backing$w <= room$w * 1.1 & backing$w >= room$w * 0.7))
+  expect_true(all(backing$h <= room$h))
+})
+
 test_that("placeholders on one spot take one length, the longest, and the key counts the rest under nodes not shown", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))

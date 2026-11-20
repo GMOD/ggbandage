@@ -48,14 +48,17 @@ passes along the walk}
 
 \item{facet}{\code{"walk"} for a panel per walk}
 
-\item{width}{the width in px the drawing is fit to, which decides whether
-strand arrows show}
-
-\item{height}{the height in px the drawing is fit to. Under
+\item{width, height}{the size in px, 1/96 in, of the pane the drawing is fit
+to and its labels placed in, as a browser's canvas. The layout's \code{pane}
+is that pane in the drawing's units, \code{x} and \code{y} limits, which
+\link[=autoplot.bandage_layout]{autoplot()} draws as the panel. Give the size
+the panel is drawn at: a node's length and a gene's name are written in
+10 and 11 px text, which only at that size stand where bandage-core left
+room for them, and \code{width} decides whether strand arrows show. Under
 \code{engine = "stress"} the layout keeps what lies beside the reference clear
 of it at \code{width} by \code{height}, and a compressing \code{bubbleSpread} sizes its
-shortest nodes for \code{width}, so pass the size the plot is drawn at. The
-default engine under the default spread lays out the same at any size}
+shortest nodes for \code{width}. The default engine under the default spread
+lays out the same at any size}
 
 \item{region}{a 1-based locus, as a genome browser writes it, such as
 \code{"GRCh38#0#chr6:31,000,001-31,100,000"}, \code{"chr6:31000001..31100000"} or

@@ -31,10 +31,13 @@ import {
   NOT_LOADED_FILL_COLOR,
 } from '@jbrowse/bandage-core/renderer/GeometryBuilder'
 import {
+  drawingBounds,
   engineSettingsOf,
+  fitTransform,
   forceLayout,
   loadGraph,
 } from '@jbrowse/bandage-core/pipeline'
+import { axisScaleOf, viewportOf } from '@jbrowse/bandage-core/viewport'
 
 import { openIndexed } from './tabix-cut.mjs'
 import { walkCut } from './walks-cut.mjs'
@@ -103,6 +106,17 @@ async function laidOut(source, name, spec) {
   return { graph, layout, region }
 }
 
+// The width by height px pane figureData fits the drawing and its labels to,
+// in layout units
+function paneOf(layout, region, { width, height, fitToDrawing }) {
+  const pixelRows = layout.pixelRows ?? false
+  const bounds = drawingBounds(layout, {
+    region: fitToDrawing ? undefined : region,
+  })
+  const fit = fitTransform(bounds, width, height, pixelRows)
+  return viewportOf(fit, axisScaleOf(fit.scale, pixelRows), width, height)
+}
+
 export async function figure(source, name, spec, genes) {
   const { graph, layout, region } = await laidOut(source, name, spec)
   const pins = geneSource(genes)
@@ -115,6 +129,7 @@ export async function figure(source, name, spec, genes) {
       walks,
       genes: read.genes,
     }),
+    pane: paneOf(layout, region, spec),
     unmatched,
     unbound: read.unbound,
   }

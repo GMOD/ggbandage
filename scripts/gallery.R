@@ -36,14 +36,14 @@ figure <- function(id, title, locus, alt, code, width = 10, height = 6, note = N
 figures <- list(
   figure(
     "cfh_overlay", "CFHR3 and CFHR1 deleted in one haplotype", "chr1:196,640,001-196,900,000",
-    "Force-directed CFH locus with GRCh38, HG00097 and HG02055 lifted together, each shaded along its own length: GRCh38 grey, HG00097 cyan to blue and HG02055 pink to plum. GRCh38 and HG00097 run the loop through CFHR3 and CFHR1, and HG02055 alone takes the edge under it that skips both genes, its lane drawn along the edge. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097 260 kb and HG02055 175 kb, and the ribbons from HG00097 down to HG02055 break across the 85 kb HG02055 lacks",
+    "Force-directed CFH locus with GRCh38, HG00097 and HG02055 lifted together, each shaded along its own length: GRCh38 grey, HG00097 cyan to blue and HG02055 pink to plum. GRCh38 and HG00097 run the loop through CFHR3 and CFHR1, and HG02055 alone takes the edge that skips both genes, its lane drawn along the edge as an arc round the outside of the loop. Walk rows below, each on its walk's ramp, give the lengths, GRCh38 and HG00097 260 kb and HG02055 175 kb, and the ribbons from HG00097 down to HG02055 break across the 85 kb HG02055 lacks",
     r"(cfh <- "chr1:196,640,001-196,900,000"
 haps <- c("HG00097#1", "HG02055#1")
 schemes <- c(GRCh38 = "grey", "HG00097#1" = "blue", "HG02055#1" = "purple")
 progress <- lapply(names(schemes), function(w) list(walk = w, color = list(field = "progress", scheme = schemes[[w]])))
-g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = progress, genes = genes)
+g <- bandage_layout(walks, region = cfh, haplotypes = haps, walks = progress, genes = genes, width = 770, height = 190)
 rows <- bandage_walk_rows(walks, cfh, haplotypes = haps)
-autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = c(1, 1.2)))",
+autoplot(g) / autoplot(rows, hues = "walk", layout = g) + plot_layout(heights = c(2.2, 1)))",
     width = 9, height = 5, readme = TRUE
   ),
   figure(
@@ -69,7 +69,7 @@ autoplot(rows))",
   figure(
     "cyp2d6_deletion", "CYP2D6 deletion as a dashed edge past the gene", "chr22:42,118,000-42,136,000",
     "Force-directed layout of CYP2D6 from the hosted index, GRCh38 coloured by position from NDUFA6-DT in red to CYP2D7 in magenta, exons outlined in gold: GRCh38 runs down the left, through CYP2D6 along the bottom and up to CYP2D7 at the top, and a dashed edge crosses from before CYP2D6 to after it, the route of haplotypes that skip the gene. A shorter dashed edge beside NDUFA6-DT skips a short stretch of GRCh38, and non-reference sequence hangs in charcoal loops off the reference at the left and the right",
-    r"(g <- bandage_layout(index, region = "chr22:42,118,000-42,136,000", genes = genes)
+    r"(g <- bandage_layout(index, region = "chr22:42,118,000-42,136,000", genes = genes, width = 840, height = 400)
 autoplot(g))",
     width = 9, height = 5, readme = TRUE
   ),
@@ -78,7 +78,7 @@ autoplot(g))",
     "Force-directed KIV-2 array with GRCh38, HG00133 and HG00097 lifted together, each shaded along its own length from light to mid-tone: GRCh38 grey, HG00133 cyan to blue and HG00097 yellow to red-orange. GRCh38 runs straight from left to right, and where walks share nodes their lanes run side by side. HG00133 and HG00097 share one narrow loop near the right, with a boxed letter A at its tip, the nodes of block A. Of the three walks shown, only HG00133 runs the long loop at the right and the small loop near the left, sequence GRCh38 and HG00097 lack. Minigraph-Cactus stores copies beyond GRCh38's as new sequence rather than as extra turns round one copy, so the expansion shows in the loops' length and in the rows below, not in the number of loops. Walk rows below, each on its walk's ramp under a grey strip where it runs on the GRCh38 path, give the lengths: GRCh38 31 kb, HG00133 164 kb and HG00097 53 kb, with block A outlined in both",
     r"(haps <- c("HG00133#2", "HG00097#1")
 progress <- lapply(c("GRCh38", haps), function(w) list(walk = w, color = list(field = "progress")))
-g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000)
+g <- bandage_layout(walks, region = kiv2, haplotypes = haps, walks = progress, context = 30000, width = 580, height = 240)
 rows <- bandage_walk_rows(walks, kiv2, haplotypes = haps)
 steps <- bandage_walk_steps(walks, kiv2, haplotypes = haps)
 (autoplot(g) + geom_bandage_blocks(rows, steps)) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(1.6, 1)))",
@@ -108,7 +108,7 @@ lifted <- list(
   list(walk = dup, color = list(field = "pass")),
   list(walk = del, color = list(field = "walk", scheme = "purple"))
 )
-g <- bandage_layout(rhd_syng, walks = lifted, genes = genes)
+g <- bandage_layout(rhd_syng, walks = lifted, genes = genes, width = 650, height = 330)
 g$genes <- g$genes[g$genes$gene %in% c("RHD", "TMEM50A", "RHCE"), ]
 g$exons <- g$exons[0, ]
 rows <- bandage_walk_rows(rhd_syng, haplotypes = c(dup, del))
@@ -148,12 +148,12 @@ lift <- function(reference, ...) {
     list(walk = hap, color = list(field = "pass"), passNames = paste("copy", 1:3), ...)
   )
 }
-sy <- bandage_layout(syng, walks = lift("grch38"), genes = genes)
+sy <- bandage_layout(syng, walks = lift("grch38"), genes = genes, width = 550, height = 500)
 mc_steps <- bandage_walk_steps(walks, c4, haplotypes = hap)
 mc_bp <- max(mc_steps$end[startsWith(mc_steps$walk, paste0(hap, "#"))])
 flank <- (mc_bp - with(sy$keys[sy$keys$walk == hap, ], end - start)) / 2
 copies <- sy$passes[c("start", "end")] + flank
-mc <- bandage_layout(walks, region = c4, haplotypes = hap, walks = lift("GRCh38", passes = copies), genes = genes)
+mc <- bandage_layout(walks, region = c4, haplotypes = hap, walks = lift("GRCh38", passes = copies), genes = genes, width = 720, height = 500)
 drawn <- function(g, title) {
   g$genes <- g$genes[g$genes$gene %in% c("C4A", "C4B"), ]
   g$exons <- g$exons[0, ]
@@ -186,7 +186,7 @@ graphs <- drawn(mc, "Minigraph-Cactus lays the three copies out in a line") | dr
     "gstm1_core", "Core, shell and cloud at GSTM1", "chr1:109,665,000-109,715,000",
     "The GSTM1 locus cut from the walk file with all HPRC haplotypes, force-directed, each node coloured by the share of haplotypes through it: core, 95% or more, charcoal; shell, 5 to 95%, blue; cloud, under 5%, orange. A pale green band under the nodes marks GRCh38's path, from GSTM4 and GSTM2 round the GSTM1 loop to GSTM5. GSTM4, GSTM2 and GSTM5 run as thick charcoal strands, flecked pale grey where the links of small variants cross them. GSTM1's loop, labelled 16%, and the non-reference loop beside it, labelled 19%, are blue shell, and a small orange loop hangs off the second. The grey dashed edge, off the green band, skips GSTM1's loop and lands where the second loop hangs, and is labelled 84%. The caption says the percentages are shares of HPRC haplotypes and that a dashed edge skips part of GRCh38's path, and a bar below splits the graph's bp into 43% core, 34 kb, 47% shell, 37 kb, and 9% cloud, 7 kb",
     r"(gstm1 <- "chr1:109,665,000-109,715,000"
-g <- bandage_layout(walks, region = gstm1, genes = genes, small_sites = "nodes")
+g <- bandage_layout(walks, region = gstm1, genes = genes, small_sites = "nodes", width = 730, height = 340)
 classes <- c("cloud, under 5%" = "#e8a33d", "shell, 5 to 95%" = "#3b8bc2", "core, 95% or more" = "grey25")
 share <- function(frequency) cut(frequency, c(-Inf, 0.05, 0.95, Inf), labels = names(classes))
 nodes <- g$nodes[!duplicated(g$nodes$name), ]
@@ -211,7 +211,7 @@ graph <- ggplot(g) +
   geom_label(aes(x0, y0, label = scales::percent(share, 1)), data = gap, size = 3.2, fill = "white", linewidth = 0, vjust = 1.4) +
   scale_colour_manual("share of HPRC haplotypes", values = classes) +
   labs(caption = "Percentages are shares of HPRC haplotypes. The pale green band is GRCh38's path, and a dashed edge skips part of it") +
-  coord_fixed() +
+  coord_fixed(xlim = g$pane$x, ylim = g$pane$y, expand = FALSE) +
   theme_void() +
   theme(legend.position = "top", plot.caption = element_text(hjust = 0.5, size = 10))
 split <- ggplot(bp, aes(length / sum(length), "", fill = class)) +
@@ -253,10 +253,10 @@ graph / split + plot_layout(heights = c(5, 1)))",
     r"(haps <- c("HG01978#2", "HG01952#1")
 schemes <- c(grch38 = "grey", "HG01978#2" = "blue", "HG01952#1" = "orange")
 progress <- lapply(names(schemes), function(w) list(walk = w, color = list(field = "progress", scheme = schemes[[w]])))
-g <- bandage_layout(syng, walks = progress)
+g <- bandage_layout(syng, walks = progress, width = 750, height = 550)
 rows <- bandage_walk_rows(syng, haplotypes = haps)
 autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_layout(heights = c(3, 1)))",
-    width = 7, height = 8,
+    width = 9, height = 10,
     note = c(
       "[impg](https://github.com/pangenome/impg) builds a",
       "[syng](https://github.com/richarddurbin/syng) graph of C4 from 90 haplotypes",
@@ -278,7 +278,7 @@ autoplot(g) / autoplot(rows, ribbons = FALSE, hues = "walk", layout = g) + plot_
     "own_colours", "Your own colours: GSTM1 and the edge most haplotypes take past it", "chr1:109,665,000-109,715,000",
     "The GSTM1 locus cut from the walk file with all HPRC haplotypes, force-directed and drawn with plain ggplot2 layers: grey edges, exons outlined in orange, and each node coloured and sized by the share of haplotypes through it. GSTM4, GSTM2 and GSTM5 run as thick black strands that nearly every haplotype walks. GSTM1 hangs off them as a thin pale loop labelled 16%, beside a second pale loop of non-reference sequence labelled 19%, and most haplotypes take the grey dashed edge that skips GSTM1's loop and lands where the second loop hangs.",
     r"(gstm1 <- "chr1:109,665,000-109,715,000"
-g <- bandage_layout(walks, region = gstm1, genes = genes)
+g <- bandage_layout(walks, region = gstm1, genes = genes, width = 670, height = 380)
 loops <- g$nodes[g$nodes$frequency > 0.05 & g$nodes$frequency < 0.5 & g$nodes$length > 400, ]
 loops <- loops[!duplicated(loops$depth), ]
 share <- "share of HPRC haplotypes"
@@ -292,7 +292,7 @@ ggplot(g) +
   scale_linewidth(share, range = c(0.4, 3.5), labels = scales::label_percent()) +
   guides(colour = guide_legend(order = 1), linewidth = guide_legend(order = 1)) +
   labs(caption = "A dashed edge skips GRCh38 sequence") +
-  coord_fixed() +
+  coord_fixed(xlim = g$pane$x, ylim = g$pane$y, expand = FALSE) +
   theme_void() +
   theme(legend.position = "bottom", legend.title = element_text(size = 9), plot.caption = element_text(hjust = 0.5)))",
     width = 7, height = 4.5,
@@ -316,7 +316,7 @@ ggplot(g) +
   walks,
   region = kiv2, haplotypes = "HG00097#1", context = 30000,
   walks = c("GRCh38", "HG00097#1"),
-  facet = "walk"
+  facet = "walk", width = 460, height = 210
 )
 autoplot(g, ncol = 2))",
     height = 3.5
@@ -324,7 +324,7 @@ autoplot(g, ncol = 2))",
   figure(
     "kiv2_exons", "KIV-2 from the segment index, with LPA's exons", "chr6:160,616,004-160,646,753",
     "Force-directed layout of the KIV-2 array from the hosted index, GRCh38 coloured by position from red at the left to magenta at the upper right, LPA's exons outlined in gold: GRCh38's nodes run in short coloured stretches joined by links, and non-reference nodes hang off them in charcoal loops, the longest sweeping round the lower left. Two dashed edges skip reference sequence, one from the red stretch across to the blue ones and a shorter one on to the purple ones",
-    r"(g <- bandage_layout(index, region = kiv2, genes = genes)
+    r"(g <- bandage_layout(index, region = kiv2, genes = genes, width = 840, height = 400)
 autoplot(g))",
     width = 9, height = 5
   ),
@@ -333,16 +333,16 @@ autoplot(g))",
     "Force-directed layout of the complement C4 genes in the MHC from the hosted index, GRCh38 coloured by position and its genes named from C2 at the left to TNXB at the upper right: GRCh38 runs right to C4A, down through CYP21A1P and TNXA and up through C4B to CYP21A2, a dashed edge from inside C4A to inside C4B skips one module of C4, CYP21A1P and TNXA, and non-reference sequence hangs in two charcoal loops, one below C4A and one below C4B",
     r"(g <- bandage_layout(
   index,
-  region = "chr6:31,978,000-32,040,000", genes = genes
+  region = "chr6:31,978,000-32,040,000", genes = genes, width = 840, height = 400
 )
 autoplot(g))",
     width = 9, height = 5
   ),
   figure(
     "ugt2b17_frequency", "UGT2B17's deletion, each node as wide as its frequency", "chr4:68,500,000-68,680,000",
-    "Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge under the loop skips it. A few off-reference alleles hang off the loop as small dark hooks, a hairline wide, and the key's last line counts the smaller sites left out. A caption under the graph gives 51% of haplotypes walking the loop and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%",
+    "Force-directed UGT2B17 locus cut from the walk file with all 464 haplotypes, GRCh38 coloured by position and each node drawn as wide as the share of haplotypes that pass it: the flank through UGT2B15 at the right draws full width, the loop through UGT2B17 half width, and a dashed edge across the loop's middle skips it. A few off-reference alleles hang off the loop as small dark hooks, a hairline wide, and the key's last line counts the smaller sites left out. A caption under the graph gives 51% of haplotypes walking the loop and 49% taking the dashed edge, and a key gives the widths of 100%, 50% and 10%",
     r"(ugt2b17 <- "chr4:68,500,000-68,680,000"
-g <- bandage_layout(walks, region = ugt2b17, genes = genes, nodeWidth = "frequency", contigThickness = 10)
+g <- bandage_layout(walks, region = ugt2b17, genes = genes, nodeWidth = "frequency", contigThickness = 10, width = 740, height = 340)
 share <- median(g$nodes$frequency[g$nodes$node %in% g$exons$node[g$exons$gene == "UGT2B17"]])
 autoplot(g) +
   labs(caption = sprintf("%s of haplotypes walk the UGT2B17 loop, and %s take the dashed edge past it", scales::percent(share), scales::percent(1 - share))) +

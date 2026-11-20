@@ -1,5 +1,8 @@
 #' The graph as the Bandage view draws it
 #'
+#' The layout's pane as the panel, so a plot whose panel is drawn at the
+#' layout's `width` by `height` draws the graph, its text and the room
+#' bandage-core left for the text at one scale, as a browser's canvas does.
 #' Edges, nodes and arrowheads at the view's colours on white, the background
 #' the geoms mix faded ink with, the node lengths the view writes, a panel per
 #' walk when faceted, the genes pinned on the backbone, the view's key at the
@@ -59,7 +62,10 @@ autoplot.bandage_layout <- function(object, ..., ncol = NULL) {
   p <- p + if (m$pixelRows) {
     ggplot2::coord_cartesian(clip = "off")
   } else {
-    ggplot2::coord_fixed(ratio = m$scaleY / m$scaleX, clip = "off")
+    ggplot2::coord_fixed(
+      ratio = m$scaleY / m$scaleX, xlim = object$pane$x, ylim = object$pane$y,
+      expand = FALSE, clip = "off"
+    )
   }
   if (faceted) {
     panels <- object$panels
