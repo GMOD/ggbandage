@@ -15,8 +15,8 @@ importers:
         specifier: ^14.3.0
         version: 14.3.0
       '@jbrowse/graph-walks':
-        specifier: ^9.0.0
-        version: 9.0.0
+        specifier: ^9.1.0
+        version: 9.1.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -217,8 +217,8 @@ packages:
     resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-walks@9.0.0':
-    resolution: {integrity: sha512-1n5YkBjcbNQO2rPXnLKOWNqaZG+vHFyQGKgED2EdQahmnZ/c4tEoL9Y2ftsNr8beYyjtS4Q2GIORpjXZfBHGhg==}
+  '@jbrowse/graph-walks@9.1.0':
+    resolution: {integrity: sha512-H+G7WQNjaypsjJB1xwFxIMf14gSC0G7t3uckjl8LNVN44edqGlxS4YDuju3VbAyYHUHjbh22HtaUhfFvykipVA==}
     engines: {node: '>=20'}
 
   '@jbrowse/quick-lru@8.0.0':
@@ -689,7 +689,7 @@ snapshots:
 
   '@jbrowse/graph-stress-layout@1.0.0': {}
 
-  '@jbrowse/graph-walks@9.0.0':
+  '@jbrowse/graph-walks@9.1.0':
     dependencies:
       '@gmod/bgzf-filehandle': 6.8.5
       generic-filehandle2: 2.5.1
