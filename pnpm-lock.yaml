@@ -12,8 +12,8 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: ^14.3.3
-        version: 14.3.3
+        specifier: ^14.4.0
+        version: 14.4.0
       '@jbrowse/graph-walks':
         specifier: ^9.1.0
         version: 9.1.0
@@ -204,8 +204,8 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@14.3.3':
-    resolution: {integrity: sha512-ODQ3eOeky91rD1xG9BCtbb/9yy9SsuqOPNIka/FlM3I/cg5RhS3eM1AfHHbbSec2iIMClgesQ2hzJwhBWSa7tg==}
+  '@jbrowse/bandage-core@14.4.0':
+    resolution: {integrity: sha512-jMujS5qwtev2ViL/XhJ3E/sd7EEQ3XyyIcvTTxjhgKzN84cACyu4VKKZWNfG+PQ6aMr+C9uQAhO1uk4sySwJqw==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -213,8 +213,8 @@ packages:
     resolution: {integrity: sha512-/wIO50DsK87me7qTlo1D6h65Onjk2LMxaWSP19jk220kJp8bic8hL6ITz1+NTi+CttKm0CyzNWJ/eDwgSayGJw==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-stress-layout@1.0.0':
-    resolution: {integrity: sha512-Yw0aMopfOIvHftmHnTP+jPL0uINCt+fdWxHQvrGeektL5KOAvrMBrUyBB1FcNizQZCSnAtYplIoXCL5K0qN7og==}
+  '@jbrowse/graph-stress-layout@1.1.0':
+    resolution: {integrity: sha512-qP/VqpFViuCs1XUaXZdvbmfisCdl7Ti4MRn+7G2TqEgRLtQ0ZWkcMnkXqo049+qbiYE2ggFdYTLkwTYlAxYnIQ==}
     engines: {node: '>=20'}
 
   '@jbrowse/graph-walks@9.1.0':
@@ -677,17 +677,17 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@14.3.3':
+  '@jbrowse/bandage-core@14.4.0':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
       '@jbrowse/graph-fmmm-layout': 1.0.2
-      '@jbrowse/graph-stress-layout': 1.0.0
+      '@jbrowse/graph-stress-layout': 1.1.0
       '@jbrowse/tubemap-core': 2.1.0
 
   '@jbrowse/graph-fmmm-layout@1.0.2': {}
 
-  '@jbrowse/graph-stress-layout@1.0.0': {}
+  '@jbrowse/graph-stress-layout@1.1.0': {}
 
   '@jbrowse/graph-walks@9.1.0':
     dependencies:
