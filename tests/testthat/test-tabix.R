@@ -299,8 +299,14 @@ test_that("the engine loads and lays out, labels and keys a graph in a V8 with n
   lifted <- drawn(list(walks = list("K12", "IAI39")))
   expect_gt(lifted[1], 0)
   expect_gt(lifted[3], 2)
-  labelled <- drawn(list(nodeLengths = TRUE))
-  expect_gt(labelled[2], 0)
+  # the reference of a graph with walks carries no length, so the labels are
+  # those of a graph without walks
+  labelled <- ctx$call(
+    "(text, spec) => bandage.figure({ text }, 'rgfa', spec).then(d => d.labels.text.length)",
+    read_text(test_path("testdata", "ecoli_rgfa_slice.gfa.gz")), list(nodeLengths = TRUE),
+    await = TRUE
+  )
+  expect_gt(labelled, 0)
   rows <- ctx$call("(text) => bandage.walkRows({ text }, 'pggb', {}).then(r => r.rows.name.length)", read_text(pggb), await = TRUE)
   expect_gt(rows, 1)
 })
