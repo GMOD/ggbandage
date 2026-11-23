@@ -88,10 +88,10 @@ and \code{nodeWidth = "frequency"} draws them}
 
 \item{small_sites}{\code{"hidden"}, the default, leaves out each site too small
 to draw at \code{width} by \code{height}: nodes off the reference, or a link
-skipping reference sequence, drawn under 3 px long with the reference
-between where they attach, as the layout draws them; a stretch the cut
-did not load is measured by its bp at the drawn reference's px per bp
-where that is shorter. The key's last line
+skipping reference sequence, whose bp, its own and the reference's
+between where it attaches, come under 3 px at the drawn reference's px
+per bp. Everything at or over the bp the key's last line names is drawn;
+that line
 counts what it leaves out, and the layout's \code{sites} table lists each site:
 where it attaches (\code{refName}, \code{start}, \code{end}, and \code{x}, \code{y} in the
 drawing), its \code{bp}, the \code{nodes} and \code{links} it folds, and how many of the
@@ -110,9 +110,15 @@ the same either way. A GFA file or an index takes no notice of it}
 (\code{"fmmm"}, the default, or \code{"stress"}), and \code{bubbleSpread} (\code{"auto"}, the
 default, which draws node length proportional to bp; \code{"open"} or \code{"wide"},
 which lift short alleles; or \code{"compress"}, which pulls long and short
-nodes towards the mean), and \code{nodeWidth}: \code{"depth"}, the default, wider
-the more walks pass a node against the mean; \code{"frequency"}, as wide as
-the share of haplotypes that pass it, full width at 1; or \code{"uniform"}}
+nodes towards the mean), \code{nodeWidth}: \code{"walks"}, the default, as thick
+as the passes the walks make through a node, the most passes
+\code{contigThickness} thick, or by depth in a graph without walks;
+\code{"depth"}, wider the more walks pass a node against the mean;
+\code{"frequency"}, as wide as the share of haplotypes that pass it, full
+width at 1; or \code{"uniform"}, and \code{edgeWidth}: \code{"walks"}, the default, a
+link as thick as its passes on the nodes' scale, or \code{"uniform"}. Thickness
+by walks or depth is not drawn while the cut leaves stretches of a walk
+unloaded, and the key says so}
 }
 \description{
 Lay out a GFA graph with the Bandage engine

@@ -198,10 +198,10 @@ walk_origin <- function(walk) {
 #'   and `nodeWidth = "frequency"` draws them
 #' @param small_sites `"hidden"`, the default, leaves out each site too small
 #'   to draw at `width` by `height`: nodes off the reference, or a link
-#'   skipping reference sequence, drawn under 3 px long with the reference
-#'   between where they attach, as the layout draws them; a stretch the cut
-#'   did not load is measured by its bp at the drawn reference's px per bp
-#'   where that is shorter. The key's last line
+#'   skipping reference sequence, whose bp, its own and the reference's
+#'   between where it attaches, come under 3 px at the drawn reference's px
+#'   per bp. Everything at or over the bp the key's last line names is drawn;
+#'   that line
 #'   counts what it leaves out, and the layout's `sites` table lists each site:
 #'   where it attaches (`refName`, `start`, `end`, and `x`, `y` in the
 #'   drawing), its `bp`, the `nodes` and `links` it folds, and how many of the
@@ -212,9 +212,15 @@ walk_origin <- function(walk) {
 #'   (`"fmmm"`, the default, or `"stress"`), and `bubbleSpread` (`"auto"`, the
 #'   default, which draws node length proportional to bp; `"open"` or `"wide"`,
 #'   which lift short alleles; or `"compress"`, which pulls long and short
-#'   nodes towards the mean), and `nodeWidth`: `"depth"`, the default, wider
-#'   the more walks pass a node against the mean; `"frequency"`, as wide as
-#'   the share of haplotypes that pass it, full width at 1; or `"uniform"`
+#'   nodes towards the mean), `nodeWidth`: `"walks"`, the default, as thick
+#'   as the passes the walks make through a node, the most passes
+#'   `contigThickness` thick, or by depth in a graph without walks;
+#'   `"depth"`, wider the more walks pass a node against the mean;
+#'   `"frequency"`, as wide as the share of haplotypes that pass it, full
+#'   width at 1; or `"uniform"`, and `edgeWidth`: `"walks"`, the default, a
+#'   link as thick as its passes on the nodes' scale, or `"uniform"`. Thickness
+#'   by walks or depth is not drawn while the cut leaves stretches of a walk
+#'   unloaded, and the key says so
 #' @export
 bandage_layout <- function(gfa, layout = "force", walks = NULL, facet = NULL,
                            width = 1000, height = 800, region = NULL,
