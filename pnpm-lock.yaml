@@ -225,8 +225,8 @@ packages:
     resolution: {integrity: sha512-zToC0THd94TGr4cWMp9eOCRB8eeN004ncajZzVOoM8WEWV90YMTX5SX9zY6Nk1hhY7ASKWnfOmguXt7SoXaLzw==}
     engines: {node: '>=22'}
 
-  '@jbrowse/tubemap-core@2.1.1':
-    resolution: {integrity: sha512-cqtgRLdU01wvqWYo2gw9uZiTfdU5sSjzUrKYUUV4vkDWwWgf5wWyeMR4xOO81yN8ULNvWireY1zMHmUrIKtBjg==}
+  '@jbrowse/tubemap-core@2.2.0':
+    resolution: {integrity: sha512-rzryd+LA7ZY0JU4EjEgGyPGUsstRm3fIFD9E1QF2uAH9+LwDnJM1nMEP/xXSdLfAbYDjom3kh/VxyD9oxJ5Eag==}
 
   '@oxfmt/binding-android-arm-eabi@0.79.0':
     resolution: {integrity: sha512-xOCQ/rvokUXs8SxOQY5Wy2ukPaZJZ0PmdJovN0ryB1c8DVEtbcvliLdYtINUYh8QOTpmBOctIisSJk9tvh+J6w==}
@@ -683,7 +683,7 @@ snapshots:
       '@gmod/tabix': 3.13.1
       '@jbrowse/graph-fmmm-layout': 1.0.2
       '@jbrowse/graph-stress-layout': 1.1.0
-      '@jbrowse/tubemap-core': 2.1.1
+      '@jbrowse/tubemap-core': 2.2.0
 
   '@jbrowse/graph-fmmm-layout@1.0.2': {}
 
@@ -696,7 +696,7 @@ snapshots:
 
   '@jbrowse/quick-lru@8.0.0': {}
 
-  '@jbrowse/tubemap-core@2.1.1': {}
+  '@jbrowse/tubemap-core@2.2.0': {}
 
   '@oxfmt/binding-android-arm-eabi@0.79.0':
     optional: true
