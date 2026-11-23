@@ -1346,7 +1346,8 @@ test_that("a gap in a walk row says what the walk file's departures state of it"
   w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
   gaps <- w$runs[w$runs$gap, ]
   expect_equal(as.character(gaps$kind[gaps$label == "HG003#1"]), "not drawn")
-  expect_match(w$rows$readout[w$rows$label == "HG003#1"], "1.0 kb not drawn \\(last seen near chr1:2 kb\\)$")
+  expect_match(w$rows$readout[w$rows$label == "HG003#1"], ", of which 1.0 kb not drawn$")
+  expect_no_match(w$rows$readout[w$rows$label == "HG003#1"], "near")
   # HG002 leaves GRCh38 after 2 kb and rejoins it at 3 kb, with 2 kb of its
   # own: 1.3 kb between its W lines, and 700 bp on a node the cut did not
   # read, in an order the file does not state, so one gap holds both
