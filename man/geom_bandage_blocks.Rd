@@ -18,6 +18,6 @@ haplotypes}
 Letters each block that \code{\link[=autoplot]{autoplot()}} letters on walk rows at the block's
 node furthest from the middle of the drawing, so block A in the rows can be
 found in the graph above them. Add it to the plot of a \code{\link[=bandage_layout]{bandage_layout()}}
-of the same graph. It finds a block's nodes on a row that reads its walk
-forwards, so a block that only backward rows walk gets no letter.
+of the same graph. It finds a block's nodes on the first row that walks
+the block.
 }

@@ -19,3 +19,4 @@ build ecoli_pggb_abridged ecoli_pggb_subgraph.gfa --refs K12 --tile 65536 --abri
 build records records.GRCh38.gfa --refs GRCh38 --tile 1000
 build stepless stepless.REF.gfa --refs REF --tile 1000
 build tails tails.GRCh38.gfa --refs GRCh38 --tile 1000
+build orient orient.GRCh38.gfa --refs GRCh38 --tile 1000

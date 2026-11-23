@@ -365,7 +365,7 @@ test_that("a walk-hued row of a walk lifted by pass takes each pass's colour whe
   expect_equal(fill(12, 15), toupper(g$keys$stops[g$keys$field == "pass"]))
 })
 
-test_that("a backward row finds its walk's passes by contig position", {
+test_that("a row of a contig stored back to front finds its walk's passes by contig position", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
   writeLines(c(
@@ -377,13 +377,15 @@ test_that("a backward row finds its walk's passes by contig position", {
   ), gfa)
   g <- bandage_layout(gfa, walks = list(list(walk = "hap#1", color = list(field = "pass"))))
   rows <- bandage_walk_rows(gfa, region = "chr1:1200-4500")
-  expect_true(rows$rows$backward[rows$rows$label == "hap"])
+  # the bar reads hap's contig as stored, from contig 1000 up, so the
+  # repeat's passes, contig 4000-4200 and 4200-4400, lie 3000-3400 along it
+  expect_equal(rows$rows$contigStart[rows$rows$label == "hap"], 1000)
   fill <- row_fill(rows, g, "hap")
   own <- toupper(g$keys$stops[g$keys$field == "pass"])
-  expect_equal(fill(0, 490), own)
-  expect_equal(fill(510, 690), toupper(g$passes$color[2]))
-  expect_equal(fill(710, 890), toupper(g$passes$color[1]))
-  expect_equal(fill(910, 3900), own)
+  expect_equal(fill(10, 2990), own)
+  expect_equal(fill(3010, 3190), toupper(g$passes$color[1]))
+  expect_equal(fill(3210, 3390), toupper(g$passes$color[2]))
+  expect_equal(fill(3410, 3890), own)
 })
 
 test_that("pass stretches a hairline apart join, and those of another pass or further apart do not", {
@@ -615,16 +617,12 @@ test_that("bandage-core runs a row's ramp over the stretch of contig its walk is
     name = "a#1#c", walk = "a", color = "", stops = "#000000,#ffffff", field = "progress",
     contig = "c", start = 100, end = 300
   ))
-  rows <- data.frame(name = "a#1#c", bp = 100, backward = FALSE, contig = "c", contigStart = 150)
+  rows <- data.frame(name = "a#1#c", bp = 100, contig = "c", contigStart = 150)
   forward <- row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour
-  rows$backward <- TRUE
-  rows$contigStart <- 250
-  expect_equal(row_inks(rows, layout, c(0L, 0L), c(100, 0))$colour, forward)
   rows$contig <- "elsewhere"
-  expect_equal(row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour, c("#ffffff", "#000000"))
+  expect_equal(row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour, c("#000000", "#ffffff"))
   rows$contig <- NA
   rows$contigStart <- NA
-  rows$backward <- FALSE
   expect_equal(row_inks(rows, layout, c(0L, 0L), c(0, 100))$colour, c("#000000", "#ffffff"))
   lightness <- function(colour) sum(grDevices::col2rgb(colour))
   expect_gt(lightness(forward[1]), 0)
@@ -668,7 +666,7 @@ test_that("blocks past the three filled ones are keyed", {
 
 test_that("bandage-core finds a row's key by the walk's name without the cut's range", {
   rows <- data.frame(
-    name = c("a#1#c:0-10", "b#1#c"), bp = 10, backward = FALSE, contig = "c", contigStart = 0
+    name = c("a#1#c:0-10", "b#1#c"), bp = 10, contig = "c", contigStart = 0
   )
   keys <- data.frame(
     name = "a#1#c:5-9", walk = "a", color = "#123456", stops = "#123456", field = "walk",
@@ -692,14 +690,17 @@ ramp_rows <- function(walk) {
   list(rows = rows, plot = ggplot2::autoplot(rows, hues = "walk", layout = g))
 }
 
-test_that("walk-hued rows run the ramp from the bar's end for a walk read backwards", {
-  r <- ramp_rows("4-,3-,2-,1-")
-  expect_true(r$rows$rows$backward[r$rows$rows$name == "a#1#c"])
-  at <- which(vapply(r$plot$layers, function(l) "position" %in% names(l$data), TRUE))
-  bar <- r$plot$layers[[at]]$data
-  bar <- bar[bar$row == r$rows$rows$row[r$rows$rows$name == "a#1#c"], ]
-  lightness <- function(colour) sum(grDevices::col2rgb(colour))
-  expect_lt(lightness(bar$fill[1]), lightness(bar$fill[nrow(bar)]))
+test_that("walk-hued rows run the ramp along a contig stored back to front as they read it, from its start", {
+  ends <- function(walk) {
+    r <- ramp_rows(walk)
+    at <- which(vapply(r$plot$layers, function(l) "position" %in% names(l$data), TRUE))
+    bar <- r$plot$layers[[at]]$data
+    bar <- bar[bar$row == r$rows$rows$row[r$rows$rows$name == "a#1#c"], ]
+    vapply(bar$fill[c(1, nrow(bar))], function(colour) sum(grDevices::col2rgb(colour)), 0)
+  }
+  back <- ends("4-,3-,2-,1-")
+  expect_false(diff(back) == 0)
+  expect_equal(sign(diff(ends("1+,2+,3+,4+"))), sign(diff(back)))
 })
 
 test_that("walk-hued rows draw a progress ramp for a walk with no bp in the region", {
@@ -1233,12 +1234,12 @@ test_that("walk steps cover each walk end to end, a row per pass", {
   expect_equal(pieces$pass, c(0, 0, 0, 1))
 })
 
-test_that("a block's nodes are those off the reference under its stretch of the first forward row", {
+test_that("a block's nodes are those off the reference under its stretch of the first row that walks it", {
   rows <- list(
     reference = "ref#0#c",
     rows = data.frame(
       row = 0:2, name = c("ref#0#c", "h1#1#c", "h2#1#c"), contigStart = c(0, 100, 0),
-      linked = TRUE, backward = c(FALSE, FALSE, TRUE)
+      linked = TRUE
     ),
     blocks = data.frame(row = c(2, 1), xmin = c(0, 10), xmax = c(5, 30), letter = "A")
   )
@@ -1251,7 +1252,7 @@ test_that("a block's nodes are those off the reference under its stretch of the 
 
   split <- list(
     reference = "ref[0-30]",
-    rows = data.frame(row = 0:1, name = c("ref[0-30]", "h1[100-120]"), contigStart = c(0, 100), linked = TRUE, backward = FALSE),
+    rows = data.frame(row = 0:1, name = c("ref[0-30]", "h1[100-120]"), contigStart = c(0, 100), linked = TRUE),
     blocks = data.frame(row = 1, xmin = c(0, 30), xmax = c(10, 40), letter = "A")
   )
   pieces <- data.frame(
@@ -1408,10 +1409,10 @@ test_that("links takes graph-walks' two words and no other, and walk rows and st
 test_that("the rows' axis counts in bp, kb or Mb by the longest bar", {
   axis <- function(w) ggplot2::autoplot(w)$scales$get_scales("x")
   short <- axis(bandage_walk_rows(pggb))
-  expect_equal(short$name, "bp from the left flank")
+  expect_equal(short$name, "bp along the row")
   expect_equal(short$labels(c(0, 200, 400)), c("0", "200", "400"))
   long <- axis(bandage_walk_rows(records, "chr1:1001-5000", context = 0))
-  expect_equal(long$name, "kb from the left flank")
+  expect_equal(long$name, "kb along the row")
   expect_equal(long$labels(c(0, 2000, 4000)), c("0", "2", "4"))
   expect_equal(axis_unit(3e6), list(name = "Mb", bp = 1e6))
 })
@@ -1481,15 +1482,15 @@ test_that("a haplotype with no step on the reference across the window draws as 
   expect_equal(gaps$xmax - gaps$xmin, rep(w$rows$bp[1], 3))
   expect_equal(w$rows$xmax, rep(w$rows$bp[1], 4))
   expect_equal(w$rows$readout[-1], c(
-    "no step on REF across 4 kb · 0 bp of its own",
+    "no step on REF across 4 kb",
     "no step on REF across 4 kb · 2 kb of its own",
-    "no step on REF across 1 kb · 0 bp of its own"
+    "no step on REF across 1 kb"
   ))
   expect_equal(bandage_walk_rows(stepless, "chr1:3201-3800", "DEL", context = 0)$rows$label, c("REF#0", "DEL#1"))
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
 })
 
-test_that("a gap in a GFA's walk is outside the extracted subgraph, whatever its W lines' tags", {
+test_that("a gap in a GFA's walk is not drawn, whatever its W lines' tags", {
   gfa <- function(...) {
     f <- tempfile(fileext = ".gfa")
     writeLines(c(
@@ -1503,8 +1504,11 @@ test_that("a gap in a GFA's walk is outside the extracted subgraph, whatever its
     "W\tHG002\t1\tchr1\t0\t2000\t>1>2",
     "W\tHG002\t1\tchr1\t3000\t5000\t>4>5"
   ), referencePath = "GRCh38#0#chr1")
-  expect_equal(as.character(plain$runs$kind[plain$runs$gap]), "out of view")
-  expect_match(plain$rows$readout[2], "1.0 kb out of view$")
+  expect_equal(
+    as.character(plain$runs$kind[plain$runs$gap]),
+    "not drawn: between two pieces of the walk, with no step of it here"
+  )
+  expect_match(plain$rows$readout[2], "1.0 kb not drawn$")
   tagged <- bandage_walk_rows(gfa(
     "W\tHG002\t1\tchr1\t0\t2000\t>1>2\tws:Z:end\twe:Z:break,bp=1000",
     "W\tHG002\t1\tchr1\t3000\t5000\t>4>5\tws:Z:break,bp=1000\twe:Z:end"
@@ -1536,4 +1540,35 @@ test_that("a walk file whose directory states another file is refused by its siz
     sprintf("directory states %d bytes, the data holds %d", file.size(walk_file), file.size(copy))
   )
   expect_error(bandage_walk_rows(file.path(dir, "nowhere.K12.walks.gz"), "chr:1-100"), "nowhere.K12.walks.gz.idx does not exist")
+})
+
+# orient.GRCh38.gfa, bandage-core's fixture: HG01960#1 leaves chr1:2001-8000
+# and comes back twice, each stretch away 1 kb drawn 90 bp wide, and walks
+# 4 kb of it against GRCh38; HG00099#1's contig is stored back to front
+orient <- test_path("testdata", "orient.GRCh38.walks.gz")
+
+test_that("walk rows title their axis by what it is, key the break and draw keyed chevrons", {
+  w <- bandage_walk_rows(orient, "chr1:2001-8000", context = 1000)
+  p <- ggplot2::autoplot(w)
+  built <- ggplot2::ggplot_build(p)
+  expect_equal(p$scales$get_scales("x")$name, "kb along the row, breaks shortened")
+  held <- w$runs[!is.na(w$runs$heldBp), ]
+  expect_true(all(held$heldBp > held$bp))
+  expect_equal(
+    as.vector(built$plot$scales$get_scales("linewidth")$get_breaks()),
+    "// marks a stretch away from the window drawn shorter than its bp; the text beside the row sums the bp it spends away"
+  )
+  expect_equal(
+    as.vector(built$plot$scales$get_scales("linetype")$get_breaks()),
+    "walked against GRCh38#0's direction"
+  )
+  expect_equal(
+    as.character(unique(held$kind)),
+    "away from the window: elsewhere on GRCh38#0 or left out of graph"
+  )
+  chevrons <- Filter(function(d) all(c("xend", "yend") %in% names(d)) && "linetype" %in% names(d), built$data)
+  rows_with <- unique(round(unlist(lapply(chevrons, function(d) d$y))))
+  reversed <- w$rows$row[w$rows$label %in% c("HG01960#1", "HG00099#1")]
+  expect_true(all((nrow(w$rows) - reversed) %in% rows_with))
+  expect_no_error(ggplot2::ggplot_gtable(built))
 })

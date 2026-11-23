@@ -8,11 +8,13 @@ import { backboneGenes } from '@jbrowse/bandage-core/genes/backboneGenes'
 import {
   GAP_CAUSE_TEXT,
   NOT_LOADED_TEXT,
-  OUTSIDE_TEXT,
 } from '@jbrowse/bandage-core/gfa/departures'
 import {
+  BREAK_TEXT,
   NOT_COMPARED_TEXT,
   barEnd,
+  gapStyle,
+  reversedText,
   walkRowReadout,
 } from '@jbrowse/bandage-core/layout/walkRowDraw'
 import {
@@ -183,7 +185,14 @@ export async function walkRows(source, name, spec) {
       h => !cut.rows.some(r => namesWalk(h, r.name)),
     ),
     walkNames: [cut.reference, ...cut.rows].map(r => r.name),
-    causes: { ...GAP_CAUSE_TEXT, outside: OUTSIDE_TEXT },
+    // the key's words, as bandage-core's walk rows key gives them: a gap
+    // with no cause is a GFA's walk between two of its pieces
+    causes: {
+      ...GAP_CAUSE_TEXT,
+      away: gapStyle('away', undefined, cut.reference.label).label,
+      outside: gapStyle(undefined).label,
+    },
+    marks: { break: BREAK_TEXT, reversed: reversedText(cut.reference.label) },
     notLoaded: {
       text: NOT_LOADED_TEXT,
       fill: abgrHex(NOT_LOADED_FILL_COLOR),
@@ -202,7 +211,6 @@ export async function walkRows(source, name, spec) {
       linked: all.map(r => r.complete),
       stepless: all.map(r => !!r.stepless),
       placementChoice: all.map(r => !!r.placementChoice),
-      backward: all.map(r => !!r.axis?.reversed),
       contig: all.map(r => r.axis?.contig ?? null),
       contigStart: all.map(r => r.axis?.start ?? null),
       offset: all.map(r => r.axis?.offset ?? 0),

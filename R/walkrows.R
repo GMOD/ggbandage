@@ -18,19 +18,21 @@
 #' @param join bp of unshared sequence a ribbon runs across; `NULL` for 1/2000
 #'   of the longest bar
 #' @return a `bandage_walk_rows`: `rows`, a row per walk with its `label`,
-#'   `bp`, `readout`, `backward`, `TRUE` where the bar reads the walk from its
-#'   end, `linked`, `FALSE` for a walk measured from one flank, which gets
+#'   `bp`, `readout`, `linked`, `FALSE` for a walk measured from one flank, which gets
 #'   no ribbons or letters, `stepless`, `TRUE` for a haplotype with no step on
 #'   the reference across the window, whose `offReferenceBp` is its own bp
 #'   between its departure's ends, and `placementChoice`, `TRUE` where an end
 #'   of one of its departures lies on a node the reference passes more than
 #'   once, so which pass it takes was the walk file writer's choice; `runs`, a
-#'   row per stretch of a bar, `xmin` and `xmax` in bp from the left flank,
+#'   row per stretch of a bar, `xmin` and `xmax` in bp along the row,
 #'   with `kind` and, on the reference's path, `referenceStart` and
-#'   `reversed`, and on a gap, the `cause` a walk-file cut states:
+#'   `reversed`, `TRUE` where its steps run against the reference's strand,
+#'   and on a gap, the `cause` a walk-file cut states:
 #'   `missing`, `away`, `own`, `mixed`, `unread` or `departure`, else
-#'   `outside`; `causes`, the words bandage-core gives each
-#'   cause, which a gap's `kind` takes. A stretch whose nodes the cut did not
+#'   `outside`, and `heldBp`, the bp a stretch away from the window holds
+#'   where it is drawn shorter; `causes`, the words bandage-core gives each
+#'   cause, which a gap's `kind` takes. Each row reads its walk's contig as
+#'   it is stored. A stretch whose nodes the cut did not
 #'   load has the `kind` `nodes not shown`, and its row, which ribbons and
 #'   blocks leave out, ends its readout `not compared`;
 #'   and `links`, a row per ribbon from row
@@ -95,7 +97,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   structure(
     list(
       rows = rows, runs = runs, links = frame(d$links), blocks = blocks, breaks = frame(d$breaks),
-      causes = causes, not_loaded = not_loaded, origin = d$origin, reference = d$reference
+      causes = causes, marks = d$marks, not_loaded = not_loaded, origin = d$origin, reference = d$reference
     ),
     class = "bandage_walk_rows"
   )
@@ -197,8 +199,8 @@ print.bandage_walk_rows <- function(x, ...) {
 #' Letters each block that [autoplot()] letters on walk rows at the block's
 #' node furthest from the middle of the drawing, so block A in the rows can be
 #' found in the graph above them. Add it to the plot of a [bandage_layout()]
-#' of the same graph. It finds a block's nodes on a row that reads its walk
-#' forwards, so a block that only backward rows walk gets no letter.
+#' of the same graph. It finds a block's nodes on the first row that walks
+#' the block.
 #' @param rows a [bandage_walk_rows()] result
 #' @param steps [bandage_walk_steps()] of the same graph, with the rows'
 #'   haplotypes
@@ -216,13 +218,13 @@ geom_bandage_blocks <- function(rows, steps, size = 4) {
 }
 
 # The nodes off the reference's path under each block, read from every
-# stretch of it on the first row that walks it forwards. A row's bp count from
+# stretch of it on the first row that walks it. A row's bp count from
 # contigStart on its contig less its bar's offset, and a step's from the start
 # its piece's name gives, or 0
 block_nodes <- function(rows, steps) {
   base <- walk_base(steps$walk)
   reference <- steps$node[base == walk_base(rows$reference)]
-  forward <- rows$rows[rows$rows$linked & !rows$rows$backward, ]
+  forward <- rows$rows[rows$rows$linked, ]
   forward$offset <- if (is.null(forward$offset)) 0 else forward$offset
   forward <- forward[c("row", "name", "contigStart", "offset")]
   breaks <- if (is.null(rows$breaks)) NO_BREAKS else rows$breaks
@@ -300,13 +302,14 @@ bar_tiles <- function(runs, tile) {
     xmin = cells %% across * tile,
     xmax = pmin((cells %% across + 1) * tile, ends[as.character(row)]),
     kind = factor(levels(runs$kind)[share[most] %% kinds + 1], levels = levels(runs$kind)),
-    position = position[held][on][match(cells, cell[on])]
+    position = position[held][on][match(cells, cell[on])],
+    reversed = runs$reversed[i][held][on][match(cells, cell[on])]
   )
 }
 
 #' Walk rows as the Bandage view draws them
 #'
-#' A bar per walk on an axis of bp from the left flank, in bp, kb or Mb by the
+#' A bar per walk on an axis of bp along the row, in bp, kb or Mb by the
 #' longest bar, the walk's label on y
 #' and its readout past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
@@ -317,10 +320,12 @@ bar_tiles <- function(runs, tile) {
 #' walk, the same letter wherever the block recurs, and the three largest
 #' blocks are filled and the rest grey, except under `hues = "walk"`, which
 #' outlines every block. A hollow grey box is a stretch whose nodes the cut
-#' did not load, drawn as the graph draws its placeholder. White is sequence
-#' the extracted subgraph does not hold:
-#' dashed where the graph holds it outside the subgraph, and for a cut from a
-#' walk file, solid dark where a departure says the graph lacks it or the
+#' did not load, drawn as the graph draws its placeholder. White chevrons
+#' pointing left mark a stretch walked against the reference's strand. White
+#' is sequence the bar does not draw: for a cut from a walk file, dashed where
+#' the walk is away from the window, elsewhere on the reference or left out of
+#' the graph, drawn no wider than a small fixed share of the reference's bar and crossed by a
+#' slash where that shortens it, solid dark where a departure says the graph lacks it or the
 #' haplotype has no step on the reference across the window, and dotted where
 #' it is the walk's own sequence the cut did not read. The readout says where
 #' a walk went on nodes filed elsewhere in the file, and "placement choice"
@@ -379,10 +384,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   tiles <- all[on | (walk_hued & all$kind == OFF_PATH), ]
   tiles$fill <- ifelse(is.na(tiles$ink), "#9A9A9A", tiles$ink)
   plain <- tile_stretches(all[!on, ], which(!on))
-  plain$key <- ifelse(
-    plain$kind == object$causes[["away"]], object$causes[["outside"]],
-    ifelse(plain$kind %in% names(marks$fill), plain$kind, marks$off)
-  )
+  plain$key <- ifelse(plain$kind %in% names(marks$fill), plain$kind, marks$off)
   plain$fill <- ifelse(walk_hued & plain$key == marks$off, NA, marks$fill[plain$key])
 
   blocks <- object$blocks
@@ -434,14 +436,51 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       )
     )
   }
-  held <- object$runs[!is.na(object$runs$heldBp), ]
+  held <- object$runs[!is.na(object$runs$heldBp) & object$runs$heldBp > object$runs$bp, ]
   lean <- span * 0.004
-  marks_at <- data.frame(x = (held$xmin + held$xmax) / 2, y = y[held$row + 1])
-  break_mark <- function(colour, linewidth) {
+  marks_at <- data.frame(
+    x = (held$xmin + held$xmax) / 2, y = y[held$row + 1], key = rep(object$marks$`break`, nrow(held))
+  )
+  break_halo <- ggplot2::geom_segment(
+    data = marks_at,
+    ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05),
+    colour = "white", linewidth = 2.2
+  )
+  break_line <- ggplot2::geom_segment(
+    data = marks_at,
+    ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05, linewidth = key),
+    colour = "grey10", key_glyph = draw_key_break
+  )
+  chevrons <- chevron_segments(all[on & all$reversed %in% TRUE, ], which(on & all$reversed %in% TRUE), span, half)
+  chevrons$key <- rep(object$marks$reversed, nrow(chevrons))
+  chevron_layer <- function(colour, linewidth, legend) {
     ggplot2::geom_segment(
-      data = marks_at,
-      ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05),
-      colour = colour, linewidth = linewidth
+      data = chevrons,
+      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, linetype = key),
+      colour = colour, linewidth = linewidth, lineend = "round",
+      show.legend = legend, key_glyph = draw_key_chevron
+    )
+  }
+  chevron_layers <- if (nrow(chevrons)) {
+    list(
+      chevron_layer("#00000073", 0.9, FALSE),
+      chevron_layer("white", 0.4, NA),
+      ggplot2::scale_linetype_manual(
+        NULL,
+        values = stats::setNames("solid", object$marks$reversed),
+        guide = ggplot2::guide_legend(order = 4)
+      )
+    )
+  }
+  break_layers <- if (nrow(held)) {
+    list(
+      break_halo,
+      break_line,
+      ggplot2::scale_linewidth_manual(
+        NULL,
+        values = stats::setNames(0.3, object$marks$`break`),
+        guide = ggplot2::guide_legend(order = 5)
+      )
     )
   }
   readout_layer <- if (readouts) {
@@ -466,8 +505,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ) +
     ggplot2::geom_rect(data = others, bar(colour = key), fill = marks$fill[[marks$more]], linewidth = 0.25) +
     ggplot2::geom_rect(data = filled, bar(alpha = letter, fill = I(fills[block + 1]))) +
-    break_mark("white", 2.2) +
-    break_mark("grey10", 0.3) +
+    chevron_layers +
+    break_layers +
     ggplot2::geom_text(
       data = lettered,
       ggplot2::aes(x = (xmin + xmax) / 2, y = y, label = letter, colour = I("grey10")),
@@ -486,7 +525,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       breaks = y, labels = rows$label, expand = ggplot2::expansion(add = 0.4)
     ) +
     ggplot2::scale_x_continuous(
-      paste(unit$name, "from the left flank"),
+      paste(unit$name, if (nrow(held)) "along the row, breaks shortened" else "along the row"),
       labels = function(x) format(x / unit$bp, big.mark = ",", scientific = FALSE, trim = TRUE),
       expand = ggplot2::expansion(
         mult = c(if (nrow(swatches)) 0.045 else 0.01, if (readouts) readout_room(rows, span) else 0.02)
@@ -528,7 +567,8 @@ rows_key <- function(reference, causes, not_loaded, walk_hued) {
   entry <- function(label, fill, outline, dash = "solid") data.frame(label, fill, outline, dash)
   entries <- rbind(
     entry(off, if (walk_hued) STRIP_FILL else CHARCOAL, if (walk_hued) NA else CHARCOAL),
-    entry(causes[["outside"]], "white", "#9a9a9a", "22"),
+    entry(causes[["away"]], "white", "#9a9a9a", "22"),
+    entry(causes[["outside"]], "white", "#bdbdbd", "22"),
     entry(causes[["missing"]], "white", "#6e6e6e"),
     entry(causes[["departure"]], "white", "#6e6e6e"),
     entry(causes[["own"]], "white", "#9a9a9a", "12"),
@@ -574,6 +614,46 @@ rows_theme <- function() {
       legend.title = ggplot2::element_text(size = 9, colour = "grey30"),
       legend.key.size = grid::unit(10, "pt")
     )
+  )
+}
+
+# Chevrons pointing left along each stretch of tiles walked against the
+# reference, segments of about a bar's height apart, the stretches split at
+# any tile of other ink; `at` is each tile's place among all the bars' tiles
+chevron_segments <- function(tiles, at, span, half) {
+  none <- data.frame(x = numeric(), xend = numeric(), y = numeric(), yend = numeric())
+  if (!nrow(tiles)) {
+    return(none)
+  }
+  stretches <- tile_stretches(tiles, at)
+  pitch <- span * 0.012
+  depth <- span * 0.004
+  rise <- half * 0.6
+  room <- stretches$xmax - stretches$xmin - depth
+  n <- ifelse(room < 0, 0, floor(room / pitch) + 1)
+  i <- rep(seq_len(nrow(stretches)), n)
+  x <- stretches$xmin[i] + (room[i] - (n[i] - 1) * pitch) / 2 + (sequence(n) - 1) * pitch
+  y <- stretches$y[i]
+  data.frame(
+    x = c(x + depth, x), xend = c(x, x + depth),
+    y = c(y + rise, y), yend = c(y, y - rise)
+  )
+}
+
+# The key's chevron: a grey bar with a white chevron pointing left
+draw_key_chevron <- function(data, params, size) {
+  grid::grobTree(
+    grid::rectGrob(gp = grid::gpar(fill = "#9e9e9e", col = NA)),
+    grid::polylineGrob(c(0.65, 0.35, 0.65), c(0.8, 0.5, 0.2), gp = grid::gpar(col = "white", lwd = 1.6))
+  )
+}
+
+# The key's break: a slash across a pale bar, as each break is drawn
+draw_key_break <- function(data, params, size) {
+  grid::grobTree(
+    grid::rectGrob(height = 0.5, gp = grid::gpar(fill = "#e8e8e8", col = NA)),
+    grid::segmentsGrob(0.4, 0.1, 0.6, 0.9, gp = grid::gpar(col = "white", lwd = 4)),
+    grid::segmentsGrob(0.4, 0.1, 0.6, 0.9, gp = grid::gpar(col = "grey10", lwd = 1))
   )
 }
 
@@ -625,7 +705,7 @@ row_inks <- function(rows, layout, row = integer(), x = numeric(), breaks = NO_B
     engine()$call(
       "bandage.walkRowInks",
       columns_json(layout$keys[c("name", "stops", "field", "contig", "start", "end")]),
-      columns_json(rows[intersect(c("name", "bp", "contig", "contigStart", "backward", "offset"), names(rows))]),
+      columns_json(rows[intersect(c("name", "bp", "contig", "contigStart", "offset"), names(rows))]),
       columns_json(data.frame(row = row, offset = x)),
       columns_json(pass_keys(layout)),
       columns_json(breaks)

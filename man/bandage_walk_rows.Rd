@@ -47,19 +47,21 @@ of the longest bar}
 }
 \value{
 a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
-\code{bp}, \code{readout}, \code{backward}, \code{TRUE} where the bar reads the walk from its
-end, \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
+\code{bp}, \code{readout}, \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
 no ribbons or letters, \code{stepless}, \code{TRUE} for a haplotype with no step on
 the reference across the window, whose \code{offReferenceBp} is its own bp
 between its departure's ends, and \code{placementChoice}, \code{TRUE} where an end
 of one of its departures lies on a node the reference passes more than
 once, so which pass it takes was the walk file writer's choice; \code{runs}, a
-row per stretch of a bar, \code{xmin} and \code{xmax} in bp from the left flank,
+row per stretch of a bar, \code{xmin} and \code{xmax} in bp along the row,
 with \code{kind} and, on the reference's path, \code{referenceStart} and
-\code{reversed}, and on a gap, the \code{cause} a walk-file cut states:
-\code{missing}, \code{elsewhere}, \code{own}, \code{mixed}, \code{unread} or \code{departure}, else
-\code{outside}; \code{causes}, the words bandage-core gives each
-cause, which a gap's \code{kind} takes. A stretch whose nodes the cut did not
+\code{reversed}, \code{TRUE} where its steps run against the reference's strand,
+and on a gap, the \code{cause} a walk-file cut states:
+\code{missing}, \code{away}, \code{own}, \code{mixed}, \code{unread} or \code{departure}, else
+\code{outside}, and \code{heldBp}, the bp a stretch away from the window holds
+where it is drawn shorter; \code{causes}, the words bandage-core gives each
+cause, which a gap's \code{kind} takes. Each row reads its walk's contig as
+it is stored. A stretch whose nodes the cut did not
 load has the \code{kind} \verb{nodes not shown}, and its row, which ribbons and
 blocks leave out, ends its readout \verb{not compared};
 and \code{links}, a row per ribbon from row

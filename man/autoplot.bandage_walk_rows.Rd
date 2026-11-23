@@ -41,7 +41,7 @@ beside it where the walk is one flat colour; \code{hues = "walk"} takes the
 row's colours from there}
 }
 \description{
-A bar per walk on an axis of bp from the left flank, in bp, kb or Mb by the
+A bar per walk on an axis of bp along the row, in bp, kb or Mb by the
 longest bar, the walk's label on y
 and its readout past the bar's end. Sequence on the reference's path takes
 the colour of the reference position it covers, so a duplicated stretch of
@@ -52,10 +52,12 @@ letter marks a block of non-reference nodes that two or more drawn rows
 walk, the same letter wherever the block recurs, and the three largest
 blocks are filled and the rest grey, except under \code{hues = "walk"}, which
 outlines every block. A hollow grey box is a stretch whose nodes the cut
-did not load, drawn as the graph draws its placeholder. White is sequence
-the extracted subgraph does not hold:
-dashed where the graph holds it outside the subgraph, and for a cut from a
-walk file, solid dark where a departure says the graph lacks it or the
+did not load, drawn as the graph draws its placeholder. White chevrons
+pointing left mark a stretch walked against the reference's strand. White
+is sequence the bar does not draw: for a cut from a walk file, dashed where
+the walk is away from the window, elsewhere on the reference or left out of
+the graph, drawn no wider than a small fixed share of the reference's bar and crossed by a
+slash where that shortens it, solid dark where a departure says the graph lacks it or the
 haplotype has no step on the reference across the window, and dotted where
 it is the walk's own sequence the cut did not read. The readout says where
 a walk went on nodes filed elsewhere in the file, and "placement choice"
