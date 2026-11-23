@@ -12,8 +12,8 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: ^14.4.0
-        version: 14.4.0
+        specifier: ^14.4.1
+        version: 14.4.1
       '@jbrowse/graph-walks':
         specifier: ^9.1.0
         version: 9.1.0
@@ -204,8 +204,8 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@14.4.0':
-    resolution: {integrity: sha512-jMujS5qwtev2ViL/XhJ3E/sd7EEQ3XyyIcvTTxjhgKzN84cACyu4VKKZWNfG+PQ6aMr+C9uQAhO1uk4sySwJqw==}
+  '@jbrowse/bandage-core@14.4.1':
+    resolution: {integrity: sha512-8dxZ96gv7Do2yAU9tndTLzOhr5eYO1xvPv8iVUTQ7TpJtMyCz6eByXrJm/RGVegYYqVbcjmUJorVnIs6Vd5bmQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -225,8 +225,8 @@ packages:
     resolution: {integrity: sha512-zToC0THd94TGr4cWMp9eOCRB8eeN004ncajZzVOoM8WEWV90YMTX5SX9zY6Nk1hhY7ASKWnfOmguXt7SoXaLzw==}
     engines: {node: '>=22'}
 
-  '@jbrowse/tubemap-core@2.1.0':
-    resolution: {integrity: sha512-UqNSIkLOfisPZYf/xpzBWxHPB8GrGShSAydXvex39ybJZiItCUWQH3lHhEyedRuQ0fmttfxeuOH6lWh4L8yyxw==}
+  '@jbrowse/tubemap-core@2.1.1':
+    resolution: {integrity: sha512-cqtgRLdU01wvqWYo2gw9uZiTfdU5sSjzUrKYUUV4vkDWwWgf5wWyeMR4xOO81yN8ULNvWireY1zMHmUrIKtBjg==}
 
   '@oxfmt/binding-android-arm-eabi@0.79.0':
     resolution: {integrity: sha512-xOCQ/rvokUXs8SxOQY5Wy2ukPaZJZ0PmdJovN0ryB1c8DVEtbcvliLdYtINUYh8QOTpmBOctIisSJk9tvh+J6w==}
@@ -677,13 +677,13 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@14.4.0':
+  '@jbrowse/bandage-core@14.4.1':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
       '@jbrowse/graph-fmmm-layout': 1.0.2
       '@jbrowse/graph-stress-layout': 1.1.0
-      '@jbrowse/tubemap-core': 2.1.0
+      '@jbrowse/tubemap-core': 2.1.1
 
   '@jbrowse/graph-fmmm-layout@1.0.2': {}
 
@@ -696,7 +696,7 @@ snapshots:
 
   '@jbrowse/quick-lru@8.0.0': {}
 
-  '@jbrowse/tubemap-core@2.1.0': {}
+  '@jbrowse/tubemap-core@2.1.1': {}
 
   '@oxfmt/binding-android-arm-eabi@0.79.0':
     optional: true
