@@ -201,6 +201,7 @@ export async function walkRows(source, name, spec) {
       backward: all.map(r => !!r.axis?.reversed),
       contig: all.map(r => r.axis?.contig ?? null),
       contigStart: all.map(r => r.axis?.start ?? null),
+      offset: all.map(r => r.axis?.offset ?? 0),
       readout: all.map((r, i) =>
         walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
       ),

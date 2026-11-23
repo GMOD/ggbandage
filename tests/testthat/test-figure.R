@@ -1260,6 +1260,14 @@ test_that("a block's nodes are those off the reference under its stretch of the 
     start = c(0, 0, 10, 0, 10), end = c(30, 10, 20, 10, 20)
   )
   expect_equal(block_nodes(split, pieces)$node, c("b1", "b2"))
+
+  # a bar that starts 50 bp into the window has its blocks' stretches counted
+  # from there
+  shifted <- rows
+  shifted$rows$offset <- c(0, 50, 0)
+  shifted$blocks$xmin <- shifted$blocks$xmin + c(0, 50)
+  shifted$blocks$xmax <- shifted$blocks$xmax + c(0, 50)
+  expect_equal(block_nodes(shifted, steps), data.frame(letter = "A", node = c("b1", "b2")))
 })
 
 test_that("a walk file cuts the walks under a region", {
