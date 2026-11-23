@@ -170,7 +170,11 @@ export async function walkRows(source, name, spec) {
       referenceStart: run.referenceStart ?? null,
       reversed: !!run.reversed,
       unloaded: !!run.unloaded,
+      heldBp: run.heldBp ?? null,
     })),
+  )
+  const breaks = all.flatMap((row, i) =>
+    (row.axis?.breaks ?? []).map(b => ({ row: i, ...b })),
   )
   return {
     origin: cut.origin,
@@ -216,7 +220,9 @@ export async function walkRows(source, name, spec) {
       'referenceStart',
       'reversed',
       'unloaded',
+      'heldBp',
     ]),
+    breaks: columns(breaks, ['row', 'at', 'bp', 'drawn']),
     links: columns(walkRowLinks(all, join), ['row', 'a0', 'a1', 'b0', 'b1']),
     blocks: columns(walkRowBlocks(all, join), ['row', 'start', 'bp', 'block']),
   }

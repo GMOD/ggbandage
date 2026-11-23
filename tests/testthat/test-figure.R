@@ -1268,6 +1268,20 @@ test_that("a block's nodes are those off the reference under its stretch of the 
   shifted$blocks$xmin <- shifted$blocks$xmin + c(0, 50)
   shifted$blocks$xmax <- shifted$blocks$xmax + c(0, 50)
   expect_equal(block_nodes(shifted, steps), data.frame(letter = "A", node = c("b1", "b2")))
+
+  # and one whose bar holds 50 bp away from the window, drawn 5 wide, before
+  # the block: the block's stretch is where the bar draws it
+  broken <- rows
+  broken$breaks <- data.frame(row = 1, at = 0, bp = 50, drawn = 5)
+  steps_past <- steps
+  steps_past$start[steps_past$walk == "h1#1#c:100-140"] <- steps_past$start[steps_past$walk == "h1#1#c:100-140"] + 50
+  steps_past$end[steps_past$walk == "h1#1#c:100-140"] <- steps_past$end[steps_past$walk == "h1#1#c:100-140"] + 50
+  expect_equal(block_nodes(broken, steps_past), data.frame(letter = "A", node = c("b1", "b2")))
+})
+
+test_that("a row's contig positions are drawn past its breaks, and inside one in proportion", {
+  breaks <- data.frame(row = 0, at = c(10, 100), bp = c(40, 20), drawn = c(4, 4))
+  expect_equal(drawn_along(c(5, 10, 30, 50, 90, 110, 130), breaks), c(5, 10, 12, 14, 54, 66, 78))
 })
 
 test_that("a walk file cuts the walks under a region", {

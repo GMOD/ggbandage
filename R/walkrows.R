@@ -28,7 +28,7 @@
 #'   row per stretch of a bar, `xmin` and `xmax` in bp from the left flank,
 #'   with `kind` and, on the reference's path, `referenceStart` and
 #'   `reversed`, and on a gap, the `cause` a walk-file cut states:
-#'   `missing`, `elsewhere`, `own`, `mixed`, `unread` or `departure`, else
+#'   `missing`, `away`, `own`, `mixed`, `unread` or `departure`, else
 #'   `outside`; `causes`, the words bandage-core gives each
 #'   cause, which a gap's `kind` takes. A stretch whose nodes the cut did not
 #'   load has the `kind` `nodes not shown`, and its row, which ribbons and
@@ -94,7 +94,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   blocks$letter <- block_letters(blocks$block)
   structure(
     list(
-      rows = rows, runs = runs, links = frame(d$links), blocks = blocks,
+      rows = rows, runs = runs, links = frame(d$links), blocks = blocks, breaks = frame(d$breaks),
       causes = causes, not_loaded = not_loaded, origin = d$origin, reference = d$reference
     ),
     class = "bandage_walk_rows"
@@ -225,17 +225,35 @@ block_nodes <- function(rows, steps) {
   forward <- rows$rows[rows$rows$linked & !rows$rows$backward, ]
   forward$offset <- if (is.null(forward$offset)) 0 else forward$offset
   forward <- forward[c("row", "name", "contigStart", "offset")]
+  breaks <- if (is.null(rows$breaks)) NO_BREAKS else rows$breaks
   blocks <- merge(rows$blocks, forward, by = "row")
   blocks <- blocks[blocks$row == stats::ave(blocks$row, blocks$letter, FUN = min), ]
   middle <- walk_origin(steps$walk) + (steps$start + steps$end) / 2
   found <- lapply(seq_len(nrow(blocks)), function(i) {
     b <- blocks[i, ]
-    x <- middle - b$contigStart + b$offset
+    x <- drawn_along(middle - b$contigStart, breaks[breaks$row == b$row, ]) + b$offset
     under <- base == walk_base(b$name) & x >= b$xmin & x <= b$xmax & !(steps$node %in% reference)
     data.frame(letter = rep(b$letter, sum(under)), node = steps$node[under])
   })
   nodes <- do.call(rbind, c(list(data.frame(letter = character(), node = character())), found))
   nodes[!duplicated(nodes), ]
+}
+
+NO_BREAKS <- data.frame(row = integer(), at = numeric(), bp = numeric(), drawn = numeric())
+
+# Where `along` bp of a row's contig past its bar's start are drawn, past
+# its breaks: each `bp` of contig from `at` drawn `drawn` wide
+drawn_along <- function(along, breaks) {
+  shift <- numeric(length(along))
+  inside <- rep(NA_real_, length(along))
+  for (i in seq_len(nrow(breaks))) {
+    b <- breaks[i, ]
+    past <- is.na(inside) & along >= b$at + b$bp
+    within <- is.na(inside) & !past & along > b$at
+    inside[within] <- b$at - shift[within] + (along[within] - b$at) * b$drawn / b$bp
+    shift[past] <- shift[past] + b$bp - b$drawn
+  }
+  ifelse(is.na(inside), along - shift, inside)
 }
 
 block_spots <- function(model, nodes) {
@@ -339,7 +357,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   span <- max(rows$xmax)
   unit <- axis_unit(span)
   all <- bar_tiles(object$runs, span / 600)
-  inks <- row_inks(rows, layout, all$row, (all$xmin + all$xmax) / 2)
+  inks <- row_inks(rows, layout, all$row, (all$xmin + all$xmax) / 2, object$breaks)
   if (walk_hued && all(is.na(inks$colour))) {
     stop(
       'hues = "walk" needs a `layout` that lifts the rows\' walks in flat colours or progress ramps',
@@ -362,7 +380,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   tiles$fill <- ifelse(is.na(tiles$ink), "#9A9A9A", tiles$ink)
   plain <- tile_stretches(all[!on, ], which(!on))
   plain$key <- ifelse(
-    plain$kind == object$causes[["elsewhere"]], object$causes[["outside"]],
+    plain$kind == object$causes[["away"]], object$causes[["outside"]],
     ifelse(plain$kind %in% names(marks$fill), plain$kind, marks$off)
   )
   plain$fill <- ifelse(walk_hued & plain$key == marks$off, NA, marks$fill[plain$key])
@@ -416,6 +434,16 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       )
     )
   }
+  held <- object$runs[!is.na(object$runs$heldBp), ]
+  lean <- span * 0.004
+  marks_at <- data.frame(x = (held$xmin + held$xmax) / 2, y = y[held$row + 1])
+  break_mark <- function(colour, linewidth) {
+    ggplot2::geom_segment(
+      data = marks_at,
+      ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05),
+      colour = colour, linewidth = linewidth
+    )
+  }
   readout_layer <- if (readouts) {
     ggplot2::layer(
       geom = GeomBandageReadout, stat = "identity", position = "identity",
@@ -438,6 +466,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
     ) +
     ggplot2::geom_rect(data = others, bar(colour = key), fill = marks$fill[[marks$more]], linewidth = 0.25) +
     ggplot2::geom_rect(data = filled, bar(alpha = letter, fill = I(fills[block + 1]))) +
+    break_mark("white", 2.2) +
+    break_mark("grey10", 0.3) +
     ggplot2::geom_text(
       data = lettered,
       ggplot2::aes(x = (xmin + xmax) / 2, y = y, label = letter, colour = I("grey10")),
@@ -588,7 +618,7 @@ pass_keys <- function(layout) {
 # rows give `x` bp along bar `row`, `colour`: the lifted walk's flat colour,
 # its progress ramp at the contig position `x` covers, or the colour of the
 # pass it is on where it steps a node again, NA on a row no lifted walk inks
-row_inks <- function(rows, layout, row = integer(), x = numeric()) {
+row_inks <- function(rows, layout, row = integer(), x = numeric(), breaks = NO_BREAKS) {
   inks <- if (is.null(layout$keys)) {
     list(key = NULL, color = NULL)
   } else {
@@ -597,7 +627,8 @@ row_inks <- function(rows, layout, row = integer(), x = numeric()) {
       columns_json(layout$keys[c("name", "stops", "field", "contig", "start", "end")]),
       columns_json(rows[intersect(c("name", "bp", "contig", "contigStart", "backward", "offset"), names(rows))]),
       columns_json(data.frame(row = row, offset = x)),
-      columns_json(pass_keys(layout))
+      columns_json(pass_keys(layout)),
+      columns_json(breaks)
     )
   }
   list(
