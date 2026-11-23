@@ -3,13 +3,11 @@ rgfa <- test_path("testdata", "ecoli_rgfa_slice.gfa.gz")
 walk_file <- test_path("testdata", "ecoli_pggb.K12.walks.gz")
 lifted <- c("K12#1#chr:1004500-1004961", "IAI39#1#chr:2249412-2249872")
 
-# bandage-core leaves out a site drawn under 3 px: its own nodes and links and
-# the reference between where it attaches, as drawn. The force layout floors
-# a node at 5 units and gives a link a fixed length, so at the default 1000 by
-# 800 px every site of the E. coli subgraph is drawn longer than that. A
-# thumbnail a fifth that size draws its sixteen 1 bp alleles, the two-node
-# site 13+,15+ and the skip 37 over the 1 bp node 29+ under it, and leaves
-# those 18 nodes and 1 skip out
+# bandage-core leaves out a site whose bp comes to under 3 px at the
+# reference's px a bp. At the default 1000 by 800 px that is the 1 bp node 38+
+# and the skip 37 over the 1 bp node 29+; a thumbnail a fifth that size also
+# leaves out the other fifteen 1 bp alleles and the two-node site 13+,15+, 18
+# nodes and 1 skip
 thumbnail <- function(...) bandage_layout(pggb, ..., width = 200, height = 160)
 
 drawn_keys <- function(plot, width, side = "top") {
@@ -51,7 +49,7 @@ test_that("the key is bandage-core's graph key: each lifted walk, what the lift 
   k <- drawn_keys(ggplot2::autoplot(g), 8)
   expect_equal(k$labels, key_words(g))
   expect_equal(utils::head(k$labels, 3), c("K12", "IAI39", "other haplotypes"))
-  expect_true(all(c("Node thickness", "short skip") %in% k$labels))
+  expect_true(all(c("Thickness", "skips K12 chr sequence") %in% k$labels))
 })
 
 test_that("under compress the key says node lengths are not to scale", {
@@ -67,7 +65,7 @@ test_that("under compress the key says node lengths are not to scale", {
 })
 
 test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and says nothing once small sites are drawn", {
-  line <- "18 nodes and 1 skip under 5 bp not drawn"
+  line <- "18 nodes and 1 skip under 14 bp not drawn"
   bare <- thumbnail(walks = lifted)
   expect_equal(bare$graph_key$text[bare$graph_key$section == "too-small"], line)
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(bare), 8)$labels, 1), line)
@@ -77,8 +75,8 @@ test_that("the key ends with what the drawing leaves out as too small, bare or f
   expect_false("too-small" %in% drawn$graph_key$section)
   expect_false(any(grepl("not drawn$", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
   full <- bandage_layout(pggb, walks = lifted)
-  expect_false("too-small" %in% full$graph_key$section)
-  expect_equal(nrow(full$sites), 0)
+  expect_equal(full$graph_key$text[full$graph_key$section == "too-small"], "1 node and 1 skip under 2 bp not drawn")
+  expect_equal(nrow(full$sites), 2)
 })
 
 test_that("small sites are left out by default and listed in the sites table, and small_sites = \"nodes\" draws every node", {
@@ -137,7 +135,7 @@ test_that("printed, a layout counts the nodes and links it draws and says what i
     utils::capture.output(print(hidden)),
     c(
       sprintf("<bandage_layout> 36 nodes and 35 links drawn, 1 panel(s), %s", hidden$meta$generator),
-      '18 nodes and 1 skip under 5 bp not drawn; small_sites = "nodes" draws them'
+      '18 nodes and 1 skip under 14 bp not drawn; small_sites = "nodes" draws them'
     )
   )
   drawn <- thumbnail(small_sites = "nodes")
@@ -553,8 +551,8 @@ test_that("a tail's free end no drawn link meets ends in a dark tab with no notc
 # the background, drawn before every row the lift keeps
 test_that("what a lift fades is drawn first, one layer under the rest, opaque in its colour mixed with the background", {
   g <- bandage_layout(pggb, walks = lifted)
-  expect_equal(sum(g$nodes$faded), 178)
-  expect_equal(sum(g$edges$faded), 18)
+  expect_equal(sum(g$nodes$faded), 174)
+  expect_equal(sum(g$edges$faded), 13)
   p <- ggplot2::autoplot(g)
   layer_rows <- function(i) nrow(ggplot2::layer_data(p, i))
   faded_rows <- c(
@@ -562,7 +560,7 @@ test_that("what a lift fades is drawn first, one layer under the rest, opaque in
     nrow(geom_bandage_nodes(data = g, faded = TRUE)$data),
     nrow(geom_bandage_edges(data = g, over_nodes = TRUE, faded = TRUE)$data)
   )
-  expect_equal(faded_rows[2], 178)
+  expect_equal(faded_rows[2], 174)
   expect_equal(vapply(1:3, layer_rows, 1), faded_rows)
   expect_equal(layer_rows(5), nrow(geom_bandage_edges(data = g, over_nodes = FALSE, faded = FALSE)$data))
   expect_equal(layer_rows(6), nrow(geom_bandage_nodes(data = g, faded = FALSE)$data))
@@ -809,7 +807,7 @@ test_that("walk rows draw a stretch the cut did not load hollow, key it as the g
   expect_equal(as.vector(built$plot$scales$get_scales("colour")$get_breaks()), "nodes not shown")
 })
 
-test_that("a placeholder's length is labelled as the Bandage view labels it, every node's with nodeLengths", {
+test_that("a placeholder's length is labelled as the Bandage view labels it, and with nodeLengths every node's but the reference's", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))
   writeLines(unloaded_gfa, gfa)
@@ -821,7 +819,7 @@ test_that("a placeholder's length is labelled as the Bandage view labels it, eve
   expect_true("nodes not shown" %in% g$graph_key$text)
   every <- bandage_layout(gfa, layout = "auto", referencePath = "R", nodeLengths = TRUE)
   expect_equal(every$labels$kind[1], "placeholder")
-  expect_setequal(every$labels$text, c("75 kb", "30 kb", "25 kb", "20 kb"))
+  expect_setequal(every$labels$text, "75 kb")
 })
 
 # Three haplotypes leave the reference at one point for 300, 500 and 700 bp

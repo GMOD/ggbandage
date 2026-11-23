@@ -433,7 +433,7 @@ key_rows <- function(model) {
     rim = k$rim, rim_px = as.numeric(k$rimPx),
     stringsAsFactors = FALSE
   )
-  headed <- which(k$group %in% c("Node thickness", "Link thickness") & !duplicated(k$group))
+  headed <- which(k$group %in% c("Thickness", "Node thickness", "Link thickness") & !duplicated(k$group))
   heads <- if (length(headed)) key_entry(strong = k$group[headed]) else empty_key()
   out <- rbind(rows, heads)
   out[order(c(seq_len(nrow(rows)), headed - 0.5)), ]
