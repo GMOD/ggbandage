@@ -797,6 +797,7 @@ test_that("walk rows draw a stretch the cut did not load hollow, key it as the g
   w <- bandage_walk_rows(gfa)
   expect_equal(as.character(w$runs$kind[w$runs$row == 1]), c("on the reference's path", "nodes not shown", "on the reference's path"))
   expect_equal(w$rows$readout, c("75 kb", "120 kb (+45 kb) \u00b7 not compared"))
+  expect_equal(w$rows$line, c("75 kb", "120 kb (+45 kb) \u00b7 not compared"))
   g <- bandage_layout(gfa, walks = c("R", "A"))
   expect_equal(c(w$not_loaded$fill, w$not_loaded$rim), c(g$meta$inks$placeholderFill, g$meta$inks$placeholderRim))
   built <- ggplot2::ggplot_build(autoplot(w))
@@ -1045,6 +1046,7 @@ test_that("a walk measured from one flank says it gets no ribbons", {
   partial <- w$rows[w$rows$label == "cut#1", ]
   expect_false(partial$linked)
   expect_match(partial$readout, "no ribbons$")
+  expect_match(partial$line, "no ribbons$")
   expect_false(any(grepl("no ribbons", w$rows$readout[w$rows$linked])))
   expect_false(any(grepl("the cut", w$rows$readout)))
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(w)))
@@ -1409,36 +1411,31 @@ test_that("the rows' axis counts in bp, kb or Mb by the longest bar", {
   expect_equal(axis_unit(3e6), list(name = "Mb", bp = 1e6))
 })
 
-test_that("the room past the bars fits the readout reaching furthest", {
-  rows <- data.frame(xmax = c(100, 50), readout = c("1 kb", strrep("x", 80)))
+test_that("the room past the bars fits the line reaching furthest", {
+  rows <- data.frame(xmax = c(100, 50), line = c("1 kb", strrep("x", 80)))
   expect_equal(readout_room(rows, 100), 0.3)
   rows$xmax[2] <- 100
-  rows$readout[2] <- strrep("x", 50)
+  rows$line[2] <- strrep("x", 50)
   expect_equal(readout_room(rows, 100), 0.01 + 50 * 0.007)
-  rows$readout[2] <- strrep("x", 200)
+  rows$line[2] <- strrep("x", 200)
   expect_equal(readout_room(rows, 100), 0.5)
 })
 
-test_that("a readout with too little room wraps between two parts, or is cut by whole parts and says so", {
-  text <- "7.0 kb, of which 1.3 kb left out of graph \u00b7 contig ends inside the window \u00b7 no ribbons"
+test_that("a line with too little room stays on one line, cut by whole parts, and says so", {
+  text <- "\u2265 7.0 kb \u00b7 // 1.3 kb \u00b7 no ribbons"
   expect_equal(fit_readout(text, 200, nchar), text)
-  expect_equal(
-    fit_readout(text, 50, nchar),
-    "7.0 kb, of which 1.3 kb left out of graph\ncontig ends inside the window \u00b7 no ribbons"
-  )
-  expect_equal(
-    fit_readout("31 kb \u00b7 placement choice \u00b7 contig ends inside the window", 28, nchar),
-    "31 kb \u00b7 placement choice \u00b7 \u2026"
-  )
-  expect_equal(fit_readout(text, 12, nchar), "7.0 kb, \u2026")
-  expect_equal(fit_readout(text, 0, nchar), "7.0 kb, \u2026")
+  expect_equal(fit_readout(text, 25, nchar), "\u2265 7.0 kb \u00b7 // 1.3 kb \u00b7 \u2026")
+  expect_equal(fit_readout(text, 12, nchar), "\u2265 7.0 kb \u00b7 \u2026")
+  expect_equal(fit_readout(text, 0, nchar), "\u2265 7.0 kb \u00b7 \u2026")
   expect_equal(fit_readout("31 kb", 3, nchar), "31 kb")
+  expect_equal(fit_readout("", 0, nchar), "")
   expect_equal(fit_readout("120 kb (+45 kb) \u00b7 not compared", 5, nchar), "120 kb (+45 kb) \u00b7 \u2026")
+  expect_false(any(grepl("\n", vapply(c(200, 25, 12, 0), function(room) fit_readout(text, room, nchar), ""))))
 })
 
-test_that("no readout is drawn past the plot's right edge, however narrow the plot", {
-  w <- bandage_walk_rows(records, "chr1:1001-5000", context = 0)
-  expect_gt(max(nchar(w$rows$readout)), 60)
+test_that("no line is drawn past the plot's right edge, however narrow the plot", {
+  w <- bandage_walk_rows(test_path("testdata", "orient.GRCh38.walks.gz"), "chr1:2001-8000", context = 1000)
+  expect_true(any(grepl(PART, w$rows$line, fixed = TRUE)))
   readouts <- function(inches) {
     grDevices::pdf(NULL, width = inches, height = 4)
     on.exit(grDevices::dev.off())
@@ -1449,15 +1446,15 @@ test_that("no readout is drawn past the plot's right edge, however narrow the pl
     grid::pushViewport(grid::viewport(width = grid::unit(wide, "inches")))
     text <- grid::makeContent(key)$children[[1]]
     ends <- grid::convertWidth(text$x, "inches", valueOnly = TRUE) +
-      vapply(strsplit(text$label, "\n"), function(lines) {
-        max(c(0, vapply(lines, function(l) grid::convertWidth(grid::grobWidth(grid::textGrob(l, gp = text$gp)), "inches", valueOnly = TRUE), 0)))
-      }, 0)
+      vapply(text$label, function(l) grid::convertWidth(grid::grobWidth(grid::textGrob(l, gp = text$gp)), "inches", valueOnly = TRUE), 0)
     list(label = text$label, over = max(ends) - wide)
   }
-  expect_equal(readouts(14)$label, w$rows$readout)
+  expect_equal(readouts(14)$label, w$rows$line)
   narrow <- readouts(5)
   expect_lte(narrow$over, 0)
-  expect_false(identical(narrow$label, w$rows$readout))
+  expect_false(identical(narrow$label, w$rows$line))
+  expect_false(any(grepl("\n", narrow$label)))
+  expect_true(all(startsWith(w$rows$line, sub(paste0(PART, ELLIPSIS), "", narrow$label, fixed = TRUE))))
 })
 
 # REF walks seven 1 kb nodes, DEL >1>6>7, INS >1>8>6>7 through a 2 kb node of
@@ -1539,17 +1536,19 @@ test_that("a walk file whose directory states another file is refused by its siz
 # 4 kb of it against GRCh38; HG00099#1's contig is stored back to front
 orient <- test_path("testdata", "orient.GRCh38.walks.gz")
 
-test_that("walk rows title their axis by what it is, key the break and draw keyed chevrons", {
+test_that("walk rows title their axis by what it is, sum each row's breaks in its line and draw keyed chevrons", {
   w <- bandage_walk_rows(orient, "chr1:2001-8000", context = 1000)
   p <- ggplot2::autoplot(w)
   built <- ggplot2::ggplot_build(p)
   expect_equal(p$scales$get_scales("x")$name, "kb along the row, breaks shortened")
   held <- w$runs[!is.na(w$runs$heldBp), ]
   expect_true(all(held$heldBp > held$bp))
-  expect_equal(
-    as.vector(built$plot$scales$get_scales("linewidth")$get_breaks()),
-    "// marks a stretch away from the window drawn shorter than its bp; the text beside the row sums the bp it spends away"
-  )
+  away <- tapply(held$heldBp, held$label, sum)
+  lines <- stats::setNames(w$rows$line, w$rows$label)[names(away)]
+  expect_equal(unname(sub(".*// (\\S+ \\S+).*", "\\1", lines)), unname(vapply(away, function(bp) sprintf("%.1f kb", bp / 1000), "")))
+  expect_null(built$plot$scales$get_scales("linewidth"))
+  readouts <- Filter(function(l) inherits(l$geom, "GeomBandageReadout"), p$layers)
+  expect_equal(readouts[[1]]$data$label, w$rows$line)
   expect_equal(
     as.vector(built$plot$scales$get_scales("linetype")$get_breaks()),
     "walked against GRCh38#0's direction"

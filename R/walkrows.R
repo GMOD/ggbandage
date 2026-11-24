@@ -5,7 +5,8 @@
 #' A repeat expansion reads as bar length, which no node layout shows. On a
 #' walk file, a haplotype with no step on the reference across the window
 #' draws as a stepless row under the reference's bar, its readout stating the
-#' stretch of reference between its departure's ends and its own bp there.
+#' stretch of reference between its departure's ends and its own bp there,
+#' and no line beside its bar.
 #' @inheritParams bandage_layout
 #' @param haplotypes the walks to draw under the reference, by sample or
 #'   `sample#haplotype`, every one when `NULL`. On a walk file, also the walks
@@ -18,7 +19,12 @@
 #' @param join bp of unshared sequence a ribbon runs across; `NULL` for 1/2000
 #'   of the longest bar
 #' @return a `bandage_walk_rows`: `rows`, a row per walk with its `label`,
-#'   `bp`, `readout`, `linked`, `FALSE` for a walk measured from one flank, which gets
+#'   `bp`, `line`, the one line [autoplot()] writes beside its bar: the bp the
+#'   bar shows, after a greater-or-equal sign where its contig runs on, its
+#'   change against the reference
+#'   where it crosses the whole window, and `// N kb` for the bp its breaks
+#'   stand for; `readout`, everything bandage-core says of the row, which a
+#'   browser gives on hover; `linked`, `FALSE` for a walk measured from one flank, which gets
 #'   no ribbons or letters, `stepless`, `TRUE` for a haplotype with no step on
 #'   the reference across the window, whose `offReferenceBp` is its own bp
 #'   between its departure's ends, and `placementChoice`, `TRUE` where an end
@@ -34,7 +40,7 @@
 #'   cause, which a gap's `kind` takes. Each row reads its walk's contig as
 #'   it is stored. A stretch whose nodes the cut did not
 #'   load has the `kind` `nodes not shown`, and its row, which ribbons and
-#'   blocks leave out, ends its readout `not compared`;
+#'   blocks leave out, ends its line and readout `not compared`;
 #'   and `links`, a row per ribbon from row
 #'   `row` to the next, `a0`/`a1` along the upper bar and `b0`/`b1` along the
 #'   lower, `b0 > b1` where the lower walks it backwards; and `blocks`, a row
@@ -80,13 +86,12 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$end
   rows$end <- NULL
-  rows$readout <- paste0(
-    rows$readout,
-    ifelse(
-      !rows$linked, paste0(PART, "no ribbons"),
-      ifelse(rows$unloadedBp > 0, paste0(PART, not_loaded$notCompared), "")
-    )
+  compared <- ifelse(
+    !rows$linked, paste0(PART, "no ribbons"),
+    ifelse(rows$unloadedBp > 0, paste0(PART, not_loaded$notCompared), "")
   )
+  rows$readout <- paste0(rows$readout, compared)
+  rows$line <- paste0(rows$line, compared)
   blocks <- frame(d$blocks)
   big <- sort(unique(blocks$block[blocks$bp >= max(rows$bp) * letter_share]))
   blocks <- blocks[blocks$block %in% big, ]
@@ -103,51 +108,26 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   )
 }
 
-# Room past the longest bar for the readouts, as a share of it: 30%, or what
-# the readout reaching furthest takes at about 0.7% a character, which fits a
-# figure 10 in wide, up to half. A readout with less room than it needs wraps
-# or is cut as it is drawn
+# Room past the longest bar for the lines beside the bars, as a share of it:
+# 30%, or what the line reaching furthest takes at about 0.7% a character,
+# which fits a figure 10 in wide, up to half. A line with less room than it
+# needs is cut as it is drawn
 readout_room <- function(rows, span) {
-  reach <- (rows$xmax / span + 0.01 + nchar(rows$readout) * 0.007) - 1
+  reach <- (rows$xmax / span + 0.01 + nchar(rows$line) * 0.007) - 1
   min(0.5, max(0.3, reach))
 }
 
 PART <- " \u00b7 "
 ELLIPSIS <- "\u2026"
 
-# A readout as it fits `room`, by `measure`: whole; or on two lines, broken
-# between two of its parts where the longer line comes out shortest; or cut
-# by whole parts from the end, closed with an ellipsis, as bandage-core's
-# walk rows cut one, down to its total, which stands whatever the room
+# A line as it fits `room`, by `measure`: whole, or cut by whole parts from
+# the end and closed with an ellipsis, down to its first part and the
+# ellipsis, which stand whatever the room
 fit_readout <- function(text, room, measure) {
-  fits <- function(lines) all(vapply(lines, measure, 0) <= room)
-  if (fits(text)) {
-    text
-  } else {
-    at <- gregexpr(paste0(PART, "|, "), text)[[1]]
-    wraps <- lapply(seq_along(at)[at > 0], function(k) {
-      comma <- attr(at, "match.length")[k] == 2
-      c(substring(text, 1, at[k] - 1 + comma), substring(text, at[k] + attr(at, "match.length")[k]))
-    })
-    wraps <- Filter(fits, wraps)
-    if (length(wraps)) {
-      longer <- vapply(wraps, function(lines) max(vapply(lines, measure, 0)), 0)
-      paste(wraps[[which.min(longer)]], collapse = "\n")
-    } else {
-      parts <- strsplit(text, PART, fixed = TRUE)[[1]]
-      kept <- rev(seq_len(length(parts) - 1))
-      total <- sub(", of which .*", "", parts[1])
-      cuts <- vapply(kept, function(k) paste(c(parts[seq_len(k)], ELLIPSIS), collapse = PART), "")
-      shortest <- if (total != parts[1]) {
-        paste0(total, ", ", ELLIPSIS)
-      } else if (length(parts) > 1) {
-        paste0(total, PART, ELLIPSIS)
-      } else {
-        text
-      }
-      c(Filter(fits, cuts), shortest)[1]
-    }
-  }
+  parts <- strsplit(text, PART, fixed = TRUE)[[1]]
+  kept <- rev(seq_len(max(0, length(parts) - 1)))
+  cuts <- vapply(kept, function(k) paste(c(parts[seq_len(k)], ELLIPSIS), collapse = PART), "")
+  c(Filter(function(line) measure(line) <= room, c(text, cuts)), cuts[length(cuts)], text)[1]
 }
 
 GeomBandageReadout <- ggplot2::ggproto("GeomBandageReadout", ggplot2::Geom,
@@ -309,7 +289,7 @@ bar_tiles <- function(runs, tile) {
 #'
 #' A bar per walk on an axis of bp along the row, in bp, kb or Mb by the
 #' longest bar, the walk's label on y
-#' and its readout past the bar's end. Sequence on the reference's path takes
+#' and its line past the bar's end. Sequence on the reference's path takes
 #' the colour of the reference position it covers, so a duplicated stretch of
 #' the reference shows the same colours wherever it recurs and an inverted
 #' one shows them reversed. Charcoal is sequence on non-reference nodes,
@@ -325,17 +305,19 @@ bar_tiles <- function(runs, tile) {
 #' the graph, drawn no wider than a small fixed share of the reference's bar and crossed by a
 #' slash where that shortens it, solid dark where a departure says the graph lacks it or the
 #' haplotype has no step on the reference across the window, and dotted where
-#' it is the walk's own sequence the cut did not read. The readout says where
-#' a walk went on nodes filed elsewhere in the file, and "placement choice"
-#' where a departure's place was the walk file writer's choice. Ribbons join the graph nodes
+#' it is the walk's own sequence the cut did not read. The line past a bar
+#' gives `// N kb` for the bp its slashes stand for; the rest, as where a walk
+#' went on nodes filed elsewhere in the file and "placement choice" where a
+#' departure's place was the walk file writer's choice, is in the rows'
+#' `readout` column. Ribbons join the graph nodes
 #' neighbouring rows share, violet where one row walks them backwards. Inside
 #' a repeat, the ribbons show one pairing of the copies that keeps both rows in
 #' order, and a missing ribbon does not mean the rows share nothing there.
 #' @param object a `bandage_walk_rows`
 #' @param ... unused
-#' @param readouts write each bar's length and its difference from the
-#'   reference past its end. A readout longer than the room beside its bar
-#'   goes onto two lines, or is cut at the end and closed with an ellipsis
+#' @param readouts write each row's `line` past its bar's end: its length and
+#'   its difference from the reference. A line longer than the room beside its
+#'   bar is cut by whole parts at the end and closed with an ellipsis
 #' @param ribbons join the graph nodes neighbouring rows share
 #' @param hues `"viridis"`; `"bandage"` for the Bandage view's position
 #'   hues, as [scale_fill_bandage_position()] draws them, to set walk rows under
@@ -436,9 +418,7 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   }
   held <- object$runs[!is.na(object$runs$heldBp) & object$runs$heldBp > object$runs$bp, ]
   lean <- span * 0.004
-  marks_at <- data.frame(
-    x = (held$xmin + held$xmax) / 2, y = y[held$row + 1], key = rep(object$marks$`break`, nrow(held))
-  )
+  marks_at <- data.frame(x = (held$xmin + held$xmax) / 2, y = y[held$row + 1])
   break_halo <- ggplot2::geom_segment(
     data = marks_at,
     ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05),
@@ -446,8 +426,8 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
   )
   break_line <- ggplot2::geom_segment(
     data = marks_at,
-    ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05, linewidth = key),
-    colour = "grey10", key_glyph = draw_key_break
+    ggplot2::aes(x = x - lean, xend = x + lean, y = y - half - 0.05, yend = y + half + 0.05),
+    colour = "grey10", linewidth = 0.3
   )
   chevrons <- chevron_segments(all[on & all$reversed %in% TRUE, ], which(on & all$reversed %in% TRUE), span, half)
   chevrons$key <- rep(object$marks$reversed, nrow(chevrons))
@@ -470,21 +450,11 @@ autoplot.bandage_walk_rows <- function(object, ..., readouts = TRUE, ribbons = T
       )
     )
   }
-  break_layers <- if (nrow(held)) {
-    list(
-      break_halo,
-      break_line,
-      ggplot2::scale_linewidth_manual(
-        NULL,
-        values = stats::setNames(0.3, object$marks$`break`),
-        guide = ggplot2::guide_legend(order = 5)
-      )
-    )
-  }
+  break_layers <- if (nrow(held)) list(break_halo, break_line)
   readout_layer <- if (readouts) {
     ggplot2::layer(
       geom = GeomBandageReadout, stat = "identity", position = "identity",
-      data = data.frame(x = rows$xmax, y = y, label = rows$readout),
+      data = data.frame(x = rows$xmax, y = y, label = rows$line),
       mapping = ggplot2::aes(x = x, y = y, label = label),
       inherit.aes = FALSE, show.legend = FALSE
     )
@@ -643,15 +613,6 @@ draw_key_chevron <- function(data, params, size) {
   grid::grobTree(
     grid::rectGrob(gp = grid::gpar(fill = "#9e9e9e", col = NA)),
     grid::polylineGrob(c(0.65, 0.35, 0.65), c(0.8, 0.5, 0.2), gp = grid::gpar(col = "white", lwd = 1.6))
-  )
-}
-
-# The key's break: a slash across a pale bar, as each break is drawn
-draw_key_break <- function(data, params, size) {
-  grid::grobTree(
-    grid::rectGrob(height = 0.5, gp = grid::gpar(fill = "#e8e8e8", col = NA)),
-    grid::segmentsGrob(0.4, 0.1, 0.6, 0.9, gp = grid::gpar(col = "white", lwd = 4)),
-    grid::segmentsGrob(0.4, 0.1, 0.6, 0.9, gp = grid::gpar(col = "grey10", lwd = 1))
   )
 }
 

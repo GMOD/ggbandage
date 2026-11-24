@@ -30,31 +30,37 @@ autoplot(rows)
 
 - **x:** distance from the left flank in bp, kb or Mb, counted along each
   walk, not reference coordinates
-- **Readout:** a bar's bp between the flanks, so GRCh38 reads 31 kb at KIV-2
+- **Line beside a bar:** the bp the bar shows, so GRCh38 reads 31 kb at
+  KIV-2; `≥` before it where the walk's contig runs on past an end of the
+  bar; its change against the reference where it crosses the whole window;
+  and `// N kb`, the bp the row's slashes stand for
 
 | Mark | Key | Meaning |
 | --- | --- | --- |
 | Gradient colour | The position scale | Sequence on the reference's path, coloured by the reference position it covers. A duplicated stretch repeats its colours, an inverted one runs them backwards |
 | Charcoal | off the GRCh38 path, by the reference's name | Sequence on non-reference nodes. It can still resemble the reference, as an extra repeat copy does |
 | Letter | The block letters | A block of non-reference nodes that two or more drawn rows walk. A is the block with the most bp; `autoplot()` fills the three largest |
-| Hollow grey box | nodes not shown | A stretch whose nodes the cut did not load, drawn as the graph draws its placeholder. The row gets no ribbons or letters, and its readout ends `not compared` |
-| White, dashed pale outline | out of view | Graph sequence beyond the part drawn |
+| Hollow grey box | nodes not shown | A stretch whose nodes the cut did not load, drawn as the graph draws its placeholder. The row gets no ribbons or letters, and its line ends `not compared` |
+| White, dashed outline | away from the window | The walk's sequence away from the window, elsewhere on the reference or left out of the graph. Walk files only |
 | White, solid dark outline | left out of graph | bp of the walk's contig that the graph builder dropped. Walk files only |
-| White, solid dark outline, the whole row | no step on the reference | The haplotype has no step on the reference across the window. The readout states the stretch between its departure's ends and its own bp there. Walk files only |
+| White, solid dark outline, the whole row | no step on the reference | The haplotype has no step on the reference across the window. No line is drawn beside it; `rows$rows$readout` states the stretch between its departure's ends and its own bp there. Walk files only |
 | White, dotted pale outline | own sequence not drawn | The walk's own sequence between a departure's ends, on nodes the cut did not read. Walk files only |
 | White, dotted dark outline | not drawn or left out of graph | Some of each of the two above. Walk files only |
-| White, dashed dark outline | not drawn | Graph sequence the walk went on to after leaving the view. Walk files only |
+| White, dashed outline | not drawn | Graph sequence beyond the part drawn, or that the walk went on to after leaving the view |
+| White chevrons pointing left | walked against GRCh38#0's direction | A stretch the walk steps against the reference's strand |
+| Slash across a white stretch | none | A stretch away from the window drawn shorter than its bp. The line's `// N kb` sums the bp a row spends away |
 | Pale blue ribbon | ribbon: next row walks the same nodes | Neighbouring rows walk the same graph nodes |
 | Violet ribbon | ribbon: next row walks them backwards | Neighbouring rows walk the same graph nodes backwards |
 
-- A readout longer than the room beside its bar goes onto two lines, or is cut
-  at the end and closed with `…`; `rows$rows$readout` has it whole
+- A line longer than the room beside its bar is cut by whole parts at the end
+  and closed with `…`; `rows$rows$line` has it whole, and `rows$rows$readout`
+  has everything else bandage-core says of the row
 - Shared nodes mean similar sequence, not shared ancestry
 - `autoplot(rows, ribbons = FALSE)` drops the ribbons, as for rows that share
   almost every node
 - `order = "shared"` puts each row under the row it shares the most nodes
   with. The order is a layout aid and does not show relatedness
-- `rows$rows` has each walk's `bp` and readout, `rows$runs` each stretch of
+- `rows$rows` has each walk's `bp`, line and readout, `rows$runs` each stretch of
   each bar, `rows$links` each ribbon and `rows$blocks` each stretch of a block
 
 ## Edge cases
@@ -78,11 +84,11 @@ autoplot(rows)
   keeps both rows in order. A missing ribbon there does not mean the rows
   share nothing
 - **One-flank walks:** a walk measured from one flank gets no ribbons or
-  letters, and its readout ends `· no ribbons`
+  letters, and its line and readout end `· no ribbons`
 - **Dotted gaps:** the walk's own sequence between a departure's ends, on
   nodes the cut did not read, such as those of a W line that visits no
   reference node, which the walk file leaves out
-- **Placement choice:** a readout ends `placement choice` where an end of a
+- **Placement choice:** a row's `readout` ends `placement choice` where an end of a
   departure lies on a node the reference passes more than once. The walk file
   writer chose which pass the step takes, so another pass would put the
   departure elsewhere or make it none, as where a walk follows one copy of a

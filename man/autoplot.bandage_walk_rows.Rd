@@ -18,9 +18,9 @@
 
 \item{...}{unused}
 
-\item{readouts}{write each bar's length and its difference from the
-reference past its end. A readout longer than the room beside its bar
-goes onto two lines, or is cut at the end and closed with an ellipsis}
+\item{readouts}{write each row's \code{line} past its bar's end: its length and
+its difference from the reference. A line longer than the room beside its
+bar is cut by whole parts at the end and closed with an ellipsis}
 
 \item{ribbons}{join the graph nodes neighbouring rows share}
 
@@ -43,7 +43,7 @@ row's colours from there}
 \description{
 A bar per walk on an axis of bp along the row, in bp, kb or Mb by the
 longest bar, the walk's label on y
-and its readout past the bar's end. Sequence on the reference's path takes
+and its line past the bar's end. Sequence on the reference's path takes
 the colour of the reference position it covers, so a duplicated stretch of
 the reference shows the same colours wherever it recurs and an inverted
 one shows them reversed. Charcoal is sequence on non-reference nodes,
@@ -59,9 +59,11 @@ the walk is away from the window, elsewhere on the reference or left out of
 the graph, drawn no wider than a small fixed share of the reference's bar and crossed by a
 slash where that shortens it, solid dark where a departure says the graph lacks it or the
 haplotype has no step on the reference across the window, and dotted where
-it is the walk's own sequence the cut did not read. The readout says where
-a walk went on nodes filed elsewhere in the file, and "placement choice"
-where a departure's place was the walk file writer's choice. Ribbons join the graph nodes
+it is the walk's own sequence the cut did not read. The line past a bar
+gives \verb{// N kb} for the bp its slashes stand for; the rest, as where a walk
+went on nodes filed elsewhere in the file and "placement choice" where a
+departure's place was the walk file writer's choice, is in the rows'
+\code{readout} column. Ribbons join the graph nodes
 neighbouring rows share, violet where one row walks them backwards. Inside
 a repeat, the ribbons show one pairing of the copies that keeps both rows in
 order, and a missing ribbon does not mean the rows share nothing there.

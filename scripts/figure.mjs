@@ -10,11 +10,11 @@ import {
   NOT_LOADED_TEXT,
 } from '@jbrowse/bandage-core/gfa/departures'
 import {
-  BREAK_TEXT,
   NOT_COMPARED_TEXT,
   barEnd,
   gapStyle,
   reversedText,
+  walkRowLine,
   walkRowReadout,
 } from '@jbrowse/bandage-core/layout/walkRowDraw'
 import {
@@ -191,7 +191,7 @@ export async function walkRows(source, name, spec) {
       ...GAP_CAUSE_TEXT,
       outside: gapStyle(undefined).label,
     },
-    marks: { break: BREAK_TEXT, reversed: reversedText(cut.reference.label) },
+    marks: { reversed: reversedText(cut.reference.label) },
     notLoaded: {
       text: NOT_LOADED_TEXT,
       fill: abgrHex(NOT_LOADED_FILL_COLOR),
@@ -214,6 +214,9 @@ export async function walkRows(source, name, spec) {
       contigStart: all.map(r => r.axis?.start ?? null),
       readout: all.map((r, i) =>
         walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
+      ),
+      line: all.map((r, i) =>
+        walkRowLine(r, order[i] === 0 ? undefined : cut.reference),
       ),
     },
     runs: columns(runs, [

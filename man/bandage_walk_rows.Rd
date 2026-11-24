@@ -47,7 +47,12 @@ of the longest bar}
 }
 \value{
 a \code{bandage_walk_rows}: \code{rows}, a row per walk with its \code{label},
-\code{bp}, \code{readout}, \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
+\code{bp}, \code{line}, the one line \code{\link[=autoplot]{autoplot()}} writes beside its bar: the bp the
+bar shows, after a greater-or-equal sign where its contig runs on, its
+change against the reference
+where it crosses the whole window, and \verb{// N kb} for the bp its breaks
+stand for; \code{readout}, everything bandage-core says of the row, which a
+browser gives on hover; \code{linked}, \code{FALSE} for a walk measured from one flank, which gets
 no ribbons or letters, \code{stepless}, \code{TRUE} for a haplotype with no step on
 the reference across the window, whose \code{offReferenceBp} is its own bp
 between its departure's ends, and \code{placementChoice}, \code{TRUE} where an end
@@ -63,7 +68,7 @@ where it is drawn shorter; \code{causes}, the words bandage-core gives each
 cause, which a gap's \code{kind} takes. Each row reads its walk's contig as
 it is stored. A stretch whose nodes the cut did not
 load has the \code{kind} \verb{nodes not shown}, and its row, which ribbons and
-blocks leave out, ends its readout \verb{not compared};
+blocks leave out, ends its line and readout \verb{not compared};
 and \code{links}, a row per ribbon from row
 \code{row} to the next, \code{a0}/\code{a1} along the upper bar and \code{b0}/\code{b1} along the
 lower, \code{b0 > b1} where the lower walks it backwards; and \code{blocks}, a row
@@ -79,5 +84,6 @@ of the sequence it carries between the reference nodes flanking the region.
 A repeat expansion reads as bar length, which no node layout shows. On a
 walk file, a haplotype with no step on the reference across the window
 draws as a stepless row under the reference's bar, its readout stating the
-stretch of reference between its departure's ends and its own bp there.
+stretch of reference between its departure's ends and its own bp there,
+and no line beside its bar.
 }
