@@ -1498,7 +1498,7 @@ test_that("a gap in a GFA's walk is not drawn, whatever its W lines' tags", {
   ), referencePath = "GRCh38#0#chr1")
   expect_equal(
     as.character(plain$runs$kind[plain$runs$gap]),
-    "not drawn: between two pieces of the walk, with no step of it here"
+    "not drawn"
   )
   expect_match(plain$rows$readout[2], "1.0 kb not drawn$")
   tagged <- bandage_walk_rows(gfa(

@@ -75,7 +75,7 @@ bandage_walk_rows <- function(gfa, region = NULL, haplotypes = NULL,
   )
   runs$kind <- factor(
     ifelse(runs$gap, causes[as.character(runs$cause)], kind),
-    levels = c(ON_PATH, OFF_PATH, causes, not_loaded$text)
+    levels = unique(c(ON_PATH, OFF_PATH, causes, not_loaded$text))
   )
   runs$label <- rows$label[runs$row + 1]
   rows$xmax <- rows$end
