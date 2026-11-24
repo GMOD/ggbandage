@@ -206,9 +206,7 @@ walk_origin <- function(walk) {
 #'   where it attaches (`refName`, `start`, `end`, and `x`, `y` in the
 #'   drawing), its `bp`, the `nodes` and `links` it folds, and how many of the
 #'   shown haplotypes step it, `count` of `total`. `"nodes"` draws every node
-#'   and link at any size, but for a skip, in a graph with walks, whose span
-#'   on screen is too short for an arch its stroke can shape, which the key's
-#'   last line counts
+#'   and link at any size
 #' @param ... other figure spec fields, such as `referencePath`,
 #'   `colorScheme`, `contigThickness`, `quality`, `engine`
 #'   (`"fmmm"`, the default, or `"stress"`), and `bubbleSpread` (`"auto"`, the
@@ -400,7 +398,7 @@ print.bandage_layout <- function(x, ...) {
   ))
   folded <- x$graph_key$text[x$graph_key$section == "too-small"]
   if (length(folded)) {
-    cat(folded, if (nrow(x$sites) > 0) '; small_sites = "nodes" draws the folded sites', "\n", sep = "")
+    cat(folded, '; small_sites = "nodes" draws them\n', sep = "")
   }
   invisible(x)
 }

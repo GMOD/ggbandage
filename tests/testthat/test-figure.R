@@ -64,7 +64,7 @@ test_that("under compress the key says node lengths are not to scale", {
   expect_true(note %in% drawn_keys(ggplot2::autoplot(unlifted), 8)$labels)
 })
 
-test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and folds nothing once small sites are drawn", {
+test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and says nothing once small sites are drawn", {
   line <- "18 nodes and 1 skip under 14 bp not drawn"
   bare <- thumbnail(walks = lifted)
   expect_equal(bare$graph_key$text[bare$graph_key$section == "too-small"], line)
@@ -72,14 +72,14 @@ test_that("the key ends with what the drawing leaves out as too small, bare or f
   faceted <- thumbnail(walks = lifted, facet = "walk")
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(faceted), 8, "bottom")$labels, 1), line)
   drawn <- thumbnail(walks = lifted, small_sites = "nodes")
-  expect_false(any(grepl("bp not drawn", drawn$graph_key$text)))
-  expect_false(any(grepl("bp not drawn", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
+  expect_false("too-small" %in% drawn$graph_key$section)
+  expect_false(any(grepl("not drawn$", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
   full <- bandage_layout(pggb, walks = lifted)
   expect_equal(full$graph_key$text[full$graph_key$section == "too-small"], "1 node and 1 skip under 2 bp not drawn")
   expect_equal(nrow(full$sites), 2)
 })
 
-test_that("small sites are left out by default and listed in the sites table, and small_sites = \"nodes\" draws every node and every skip its span on screen holds", {
+test_that("small sites are left out by default and listed in the sites table, and small_sites = \"nodes\" draws every node", {
   hidden <- thumbnail(walks = lifted)
   expect_equal(hidden$meta$smallSites$mode, "hidden")
   expect_equal(nrow(hidden$sites), 18)
@@ -93,9 +93,7 @@ test_that("small sites are left out by default and listed in the sites table, an
   expect_equal(nrow(drawn$sites), 0)
   expect_named(drawn$sites, names(hidden$sites))
   expect_true("38+" %in% drawn$nodes$node)
-  expect_true(all(c(50, 51) %in% drawn$edges$edge))
-  expect_false(37 %in% drawn$edges$edge)
-  expect_equal(drawn$graph_key$text[drawn$graph_key$section == "too-small"], "1 skip too short on screen to draw")
+  expect_true(all(c(37, 50, 51) %in% drawn$edges$edge))
   expect_error(bandage_layout(pggb, small_sites = "ticks"), "should be one of")
 })
 
@@ -137,16 +135,13 @@ test_that("printed, a layout counts the nodes and links it draws and says what i
     utils::capture.output(print(hidden)),
     c(
       sprintf("<bandage_layout> 36 nodes and 35 links drawn, 1 panel(s), %s", hidden$meta$generator),
-      '18 nodes and 1 skip under 14 bp not drawn; small_sites = "nodes" draws the folded sites'
+      '18 nodes and 1 skip under 14 bp not drawn; small_sites = "nodes" draws them'
     )
   )
   drawn <- thumbnail(small_sites = "nodes")
   expect_equal(
     utils::capture.output(print(drawn)),
-    c(
-      sprintf("<bandage_layout> 54 nodes and 71 links drawn, 1 panel(s), %s", drawn$meta$generator),
-      "1 skip too short on screen to draw"
-    )
+    sprintf("<bandage_layout> 54 nodes and 72 links drawn, 1 panel(s), %s", drawn$meta$generator)
   )
 })
 
