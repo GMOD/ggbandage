@@ -189,7 +189,6 @@ export async function walkRows(source, name, spec) {
     // with no cause is a GFA's walk between two of its pieces
     causes: {
       ...GAP_CAUSE_TEXT,
-      away: gapStyle('away', undefined, cut.reference.label).label,
       outside: gapStyle(undefined).label,
     },
     marks: { break: BREAK_TEXT, reversed: reversedText(cut.reference.label) },
@@ -213,7 +212,6 @@ export async function walkRows(source, name, spec) {
       placementChoice: all.map(r => !!r.placementChoice),
       contig: all.map(r => r.axis?.contig ?? null),
       contigStart: all.map(r => r.axis?.start ?? null),
-      offset: all.map(r => r.axis?.offset ?? 0),
       readout: all.map((r, i) =>
         walkRowReadout(r, order[i] === 0 ? undefined : cut.reference),
       ),

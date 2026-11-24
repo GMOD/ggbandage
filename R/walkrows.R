@@ -219,21 +219,19 @@ geom_bandage_blocks <- function(rows, steps, size = 4) {
 
 # The nodes off the reference's path under each block, read from every
 # stretch of it on the first row that walks it. A row's bp count from
-# contigStart on its contig less its bar's offset, and a step's from the start
-# its piece's name gives, or 0
+# contigStart on its contig, and a step's from the start its piece's name
+# gives, or 0
 block_nodes <- function(rows, steps) {
   base <- walk_base(steps$walk)
   reference <- steps$node[base == walk_base(rows$reference)]
-  forward <- rows$rows[rows$rows$linked, ]
-  forward$offset <- if (is.null(forward$offset)) 0 else forward$offset
-  forward <- forward[c("row", "name", "contigStart", "offset")]
+  forward <- rows$rows[rows$rows$linked, c("row", "name", "contigStart")]
   breaks <- if (is.null(rows$breaks)) NO_BREAKS else rows$breaks
   blocks <- merge(rows$blocks, forward, by = "row")
   blocks <- blocks[blocks$row == stats::ave(blocks$row, blocks$letter, FUN = min), ]
   middle <- walk_origin(steps$walk) + (steps$start + steps$end) / 2
   found <- lapply(seq_len(nrow(blocks)), function(i) {
     b <- blocks[i, ]
-    x <- drawn_along(middle - b$contigStart, breaks[breaks$row == b$row, ]) + b$offset
+    x <- drawn_along(middle - b$contigStart, breaks[breaks$row == b$row, ])
     under <- base == walk_base(b$name) & x >= b$xmin & x <= b$xmax & !(steps$node %in% reference)
     data.frame(letter = rep(b$letter, sum(under)), node = steps$node[under])
   })
@@ -705,7 +703,7 @@ row_inks <- function(rows, layout, row = integer(), x = numeric(), breaks = NO_B
     engine()$call(
       "bandage.walkRowInks",
       columns_json(layout$keys[c("name", "stops", "field", "contig", "start", "end")]),
-      columns_json(rows[intersect(c("name", "bp", "contig", "contigStart", "offset"), names(rows))]),
+      columns_json(rows[intersect(c("name", "bp", "contig", "contigStart"), names(rows))]),
       columns_json(data.frame(row = row, offset = x)),
       columns_json(pass_keys(layout)),
       columns_json(breaks)

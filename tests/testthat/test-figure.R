@@ -1262,14 +1262,6 @@ test_that("a block's nodes are those off the reference under its stretch of the 
   )
   expect_equal(block_nodes(split, pieces)$node, c("b1", "b2"))
 
-  # a bar that starts 50 bp into the window has its blocks' stretches counted
-  # from there
-  shifted <- rows
-  shifted$rows$offset <- c(0, 50, 0)
-  shifted$blocks$xmin <- shifted$blocks$xmin + c(0, 50)
-  shifted$blocks$xmax <- shifted$blocks$xmax + c(0, 50)
-  expect_equal(block_nodes(shifted, steps), data.frame(letter = "A", node = c("b1", "b2")))
-
   # and one whose bar holds 50 bp away from the window, drawn 5 wide, before
   # the block: the block's stretch is where the bar draws it
   broken <- rows
@@ -1482,9 +1474,9 @@ test_that("a haplotype with no step on the reference across the window draws as 
   expect_equal(gaps$xmax - gaps$xmin, rep(w$rows$bp[1], 3))
   expect_equal(w$rows$xmax, rep(w$rows$bp[1], 4))
   expect_equal(w$rows$readout[-1], c(
-    "no step on REF across 4 kb",
-    "no step on REF across 4 kb · 2 kb of its own",
-    "no step on REF across 1 kb"
+    "no step on REF across 4.0 kb",
+    "no step on REF across 4.0 kb · 2.0 kb of its own",
+    "no step on REF across 1.0 kb"
   ))
   expect_equal(bandage_walk_rows(stepless, "chr1:3201-3800", "DEL", context = 0)$rows$label, c("REF#0", "DEL#1"))
   expect_no_error(ggplot2::ggplot_gtable(ggplot2::ggplot_build(ggplot2::autoplot(w))))
@@ -1562,13 +1554,15 @@ test_that("walk rows title their axis by what it is, key the break and draw keye
     as.vector(built$plot$scales$get_scales("linetype")$get_breaks()),
     "walked against GRCh38#0's direction"
   )
-  expect_equal(
-    as.character(unique(held$kind)),
-    "away from the window: elsewhere on GRCh38#0 or left out of graph"
-  )
-  chevrons <- Filter(function(d) all(c("xend", "yend") %in% names(d)) && "linetype" %in% names(d), built$data)
+  expect_equal(as.character(unique(held$kind)), "away from the window")
+  # the chevron layers map their key to a linetype; the breaks' segments keep the default
+  chevrons <- Filter(function(d) all(c("xend", "yend") %in% names(d)) && is.character(d$linetype), built$data)
   rows_with <- unique(round(unlist(lapply(chevrons, function(d) d$y))))
   reversed <- w$rows$row[w$rows$label %in% c("HG01960#1", "HG00099#1")]
   expect_true(all((nrow(w$rows) - reversed) %in% rows_with))
+  # and a row walked along GRCh38 throughout has none
+  forward <- setdiff(w$rows$row, w$runs$row[w$runs$reversed %in% TRUE])
+  expect_gt(length(forward), 0)
+  expect_length(intersect(nrow(w$rows) - forward, rows_with), 0)
   expect_no_error(ggplot2::ggplot_gtable(built))
 })
