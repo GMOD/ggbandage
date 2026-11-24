@@ -64,7 +64,7 @@ test_that("under compress the key says node lengths are not to scale", {
   expect_true(note %in% drawn_keys(ggplot2::autoplot(unlifted), 8)$labels)
 })
 
-test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and says nothing once small sites are drawn", {
+test_that("the key ends with what the drawing leaves out as too small, bare or faceted, and with small sites drawn still counts the skip too short on screen to arch", {
   line <- "18 nodes and 1 skip under 14 bp not drawn"
   bare <- thumbnail(walks = lifted)
   expect_equal(bare$graph_key$text[bare$graph_key$section == "too-small"], line)
@@ -72,8 +72,8 @@ test_that("the key ends with what the drawing leaves out as too small, bare or f
   faceted <- thumbnail(walks = lifted, facet = "walk")
   expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(faceted), 8, "bottom")$labels, 1), line)
   drawn <- thumbnail(walks = lifted, small_sites = "nodes")
-  expect_false("too-small" %in% drawn$graph_key$section)
-  expect_false(any(grepl("not drawn$", drawn_keys(ggplot2::autoplot(drawn), 8)$labels)))
+  expect_equal(drawn$graph_key$text[drawn$graph_key$section == "too-small"], "1 skip under 2 bp not drawn")
+  expect_equal(utils::tail(drawn_keys(ggplot2::autoplot(drawn), 8)$labels, 1), "1 skip under 2 bp not drawn")
   full <- bandage_layout(pggb, walks = lifted)
   expect_equal(full$graph_key$text[full$graph_key$section == "too-small"], "1 node and 1 skip under 2 bp not drawn")
   expect_equal(nrow(full$sites), 2)
@@ -128,20 +128,24 @@ test_that("nothing is drawn on a folded site: no node, link, arrowhead, label or
 })
 
 # The thumbnail leaves out 18 of the 54 nodes and 37 of the 72 links: two
-# links each of the 16 one-node sites, four of 13+,15+ and the skip
+# links each of the 16 one-node sites, four of 13+,15+ and the skip, which
+# drawn whole is too short on screen to arch and drawn as its plain link
 test_that("printed, a layout counts the nodes and links it draws and says what it leaves out", {
   hidden <- thumbnail()
   expect_equal(
     utils::capture.output(print(hidden)),
     c(
       sprintf("<bandage_layout> 36 nodes and 35 links drawn, 1 panel(s), %s", hidden$meta$generator),
-      '18 nodes and 1 skip under 14 bp not drawn; small_sites = "nodes" draws them'
+      '18 nodes and 1 skip under 14 bp not drawn; small_sites = "nodes" draws the nodes'
     )
   )
   drawn <- thumbnail(small_sites = "nodes")
   expect_equal(
     utils::capture.output(print(drawn)),
-    sprintf("<bandage_layout> 54 nodes and 72 links drawn, 1 panel(s), %s", drawn$meta$generator)
+    c(
+      sprintf("<bandage_layout> 54 nodes and 72 links drawn, 1 panel(s), %s", drawn$meta$generator),
+      "1 skip under 2 bp not drawn"
+    )
   )
 })
 

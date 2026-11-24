@@ -96,7 +96,9 @@ counts what it leaves out, and the layout's \code{sites} table lists each site:
 where it attaches (\code{refName}, \code{start}, \code{end}, and \code{x}, \code{y} in the
 drawing), its \code{bp}, the \code{nodes} and \code{links} it folds, and how many of the
 shown haplotypes step it, \code{count} of \code{total}. \code{"nodes"} draws every node
-and link at any size}
+at any size. Either way, in a graph with walks, a skip whose span on
+screen is too short to arch is drawn as its plain link, and the key's
+last line counts it}
 
 \item{links}{on a walk file, the links drawn: \code{"walked"}, the default, for
 those walked by the haplotypes shown, which are the reference and the
