@@ -12,8 +12,8 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: ^14.6.0
-        version: 14.6.0
+        specifier: ^14.7.0
+        version: 14.7.0
       '@jbrowse/graph-walks':
         specifier: ^9.1.0
         version: 9.1.0
@@ -204,8 +204,8 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@14.6.0':
-    resolution: {integrity: sha512-onu+pRFWJ84A5Q2OXnS8ahz8AwXQel06+uPJ1zxDt7H+jWv1PPeBkeUJ7jkhElL7tsJ2HCYw+OI3zG5uPYytnQ==}
+  '@jbrowse/bandage-core@14.7.0':
+    resolution: {integrity: sha512-u3HS6la8K9YwIIWMKU+gbnRQob3d1yy3utXR1/KJIsy6CGW1G71Pr9RuS9r1ZDdnWd14Eg6Q1BJc1kfUxkHhXA==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -213,8 +213,8 @@ packages:
     resolution: {integrity: sha512-lCrMFwpqBmolL0Tb/WDNuyvMNAUx5nUINCYdhcQUFNOZHxMEZiqIZ+XI3vVmMMu0uZxBzwnEkN/LkvWuBfBvDA==}
     engines: {node: '>=20'}
 
-  '@jbrowse/graph-fold@1.1.0':
-    resolution: {integrity: sha512-Oa9rp055ACkD52R8IeEjAONlitEkxHj6Fot48VIggt4xUy4U8bwTS3LcP7Lbmi6+5seNQm512PtwK6IEG+dPZA==}
+  '@jbrowse/graph-fold@1.2.0':
+    resolution: {integrity: sha512-rTjerGvVBeJt9Y85U904bzzwZsfEHYd7b0N3M73LmAToMECovCJgBnY3HmwUJob0dOsmcZ2mPDE7nMgHidaXxw==}
 
   '@jbrowse/graph-stress-layout@1.1.0':
     resolution: {integrity: sha512-qP/VqpFViuCs1XUaXZdvbmfisCdl7Ti4MRn+7G2TqEgRLtQ0ZWkcMnkXqo049+qbiYE2ggFdYTLkwTYlAxYnIQ==}
@@ -680,18 +680,18 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@14.6.0':
+  '@jbrowse/bandage-core@14.7.0':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
       '@jbrowse/graph-fmmm-layout': 1.1.0
-      '@jbrowse/graph-fold': 1.1.0
+      '@jbrowse/graph-fold': 1.2.0
       '@jbrowse/graph-stress-layout': 1.1.0
       '@jbrowse/tubemap-core': 2.2.0
 
   '@jbrowse/graph-fmmm-layout@1.1.0': {}
 
-  '@jbrowse/graph-fold@1.1.0': {}
+  '@jbrowse/graph-fold@1.2.0': {}
 
   '@jbrowse/graph-stress-layout@1.1.0': {}
 
