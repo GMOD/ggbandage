@@ -31,7 +31,7 @@ paints as one layer under everything else, \code{FALSE} for only the rest,
 \item{...}{passed to \code{\link[ggplot2:layer]{ggplot2::layer()}} params}
 }
 \description{
-A link that skips reference sequence, dashed or short and solid, or that
+A link that skips reference sequence, an arch or short and solid, or that
 reads one reference node as the reference does and the next against it, is
 the only mark of what it joins, and a plain link whose ends the layout lays
 apart along the nodes would be hidden under them, so draw these over the

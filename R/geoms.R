@@ -167,7 +167,7 @@ in_layer <- function(d, faded) {
 
 #' Graph edges as their Bezier curves
 #'
-#' A link that skips reference sequence, dashed or short and solid, or that
+#' A link that skips reference sequence, an arch or short and solid, or that
 #' reads one reference node as the reference does and the next against it, is
 #' the only mark of what it joins, and a plain link whose ends the layout lays
 #' apart along the nodes would be hidden under them, so draw these over the
@@ -429,7 +429,7 @@ key_rows <- function(model) {
   rows <- data.frame(
     strong = k$strong, text = k$text, under = k$under, swatch = k$swatch,
     colour = k$color, alpha = k$alpha, stops = k$stops,
-    px = as.numeric(k$px), dashed = as.logical(k$dashed),
+    px = as.numeric(k$px), dashed = as.logical(k$dashed), arch = as.logical(k$arch),
     rim = k$rim, rim_px = as.numeric(k$rimPx),
     stringsAsFactors = FALSE
   )
@@ -443,7 +443,7 @@ key_rows <- function(model) {
 key_entry <- function(strong = "", text = "", swatch = "", stops = "") {
   data.frame(
     strong = strong, text = text, under = "", swatch = swatch, colour = "", alpha = 1,
-    stops = stops, px = NA_real_, dashed = FALSE, rim = "", rim_px = NA_real_
+    stops = stops, px = NA_real_, dashed = FALSE, arch = FALSE, rim = "", rim_px = NA_real_
   )
 }
 
@@ -451,7 +451,7 @@ empty_key <- function() {
   data.frame(
     strong = character(), text = character(), under = character(), swatch = character(),
     colour = character(), alpha = numeric(), stops = character(), px = numeric(),
-    dashed = logical(), rim = character(), rim_px = numeric()
+    dashed = logical(), arch = logical(), rim = character(), rim_px = numeric()
   )
 }
 
@@ -465,7 +465,7 @@ walk_bars <- function(model) {
   data.frame(
     strong = k$walk, text = k$note, under = k$scale, swatch = ifelse(shades, "scale", "swatch"),
     colour = ifelse(shades, "", k$stops), alpha = 1, stops = ifelse(shades, k$stops, ""),
-    px = NA_real_, dashed = FALSE, rim = "", rim_px = NA_real_,
+    px = NA_real_, dashed = FALSE, arch = FALSE, rim = "", rim_px = NA_real_,
     panel = factor(k$panel, levels = model$panels$panel)
   )
 }
@@ -478,7 +478,7 @@ GeomBandageKey <- ggplot2::ggproto("GeomBandageKey", ggplot2::Geom,
   required_aes = c("swatch", "text"),
   default_aes = ggplot2::aes(
     strong = "", under = "", ink = "", alpha = 1, stops = "", px = NA,
-    dashed = FALSE, rim = "", rim_px = NA
+    dashed = FALSE, arch = FALSE, rim = "", rim_px = NA
   ),
   extra_params = c("na.rm", "text"),
   draw_panel = function(data, panel_params, coord, text = TRUE) {
@@ -528,7 +528,12 @@ swatch_grob <- function(k, at, mid) {
       x(1), mid, px(16), px(8), just = "left", r = grid::unit(0.5, "snpc"),
       gp = grid::gpar(col = k$rim, fill = ink(), lwd = lwd(k$rim_px))
     ),
-    line = if (isTRUE(k$dashed)) {
+    line = if (isTRUE(k$arch)) {
+      grid::bezierGrob(
+        x(c(2, 20 / 3, 34 / 3, 16)), mid + px(c(-4, 4, 4, -4)),
+        gp = grid::gpar(col = ink(), lwd = lwd(1.5), lineend = "butt")
+      )
+    } else if (isTRUE(k$dashed)) {
       grid::segmentsGrob(x(0), mid, x(18), mid, gp = grid::gpar(col = ink(), lwd = lwd(2), lty = "22", lineend = "butt"))
     } else {
       grid::segmentsGrob(x(5), mid, x(13), mid, gp = grid::gpar(col = ink(), lwd = lwd(1.5), lineend = "butt"))
@@ -655,7 +660,7 @@ geom_bandage_keys <- function(data = NULL, text = TRUE) {
     data = table_from(data, keys_of),
     mapping = ggplot2::aes(
       swatch = swatch, text = text, strong = strong, under = under, ink = colour,
-      alpha = I(alpha), stops = stops, px = px, dashed = dashed, rim = rim, rim_px = rim_px
+      alpha = I(alpha), stops = stops, px = px, dashed = dashed, arch = arch, rim = rim, rim_px = rim_px
     ),
     inherit.aes = FALSE, show.legend = FALSE,
     params = list(text = text)

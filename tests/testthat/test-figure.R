@@ -1160,15 +1160,19 @@ test_that("a layout coloured by position keys its ramp by the reference's name a
   expect_false("ramp" %in% lifted$graph_key$section)
 })
 
-test_that("the key's skip rows are bandage-core's, drawn as dashes and a short plain stroke", {
+test_that("the key's skip rows are bandage-core's, a graph with walks keying its skips by an arch and no dashes", {
   g <- bandage_layout(pggb, width = 4000)
   skips <- g$graph_key[g$graph_key$section == "skips", ]
   expect_gt(nrow(skips), 0)
+  expect_true(any(skips$arch))
+  expect_false(any(skips$dashed))
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
   grobs <- key_grobs(key_rows(g), TRUE, 2000)$grobs
-  lines <- Filter(function(x) inherits(x, "segments") && identical(x$gp$lwd, px_linewidth(2) * ggplot2::.pt), grobs)
-  expect_equal(length(lines) > 0, any(skips$dashed))
+  arches <- Filter(function(x) inherits(x, "beziergrob"), grobs)
+  dashes <- Filter(function(x) inherits(x, "segments") && identical(x$gp$lwd, px_linewidth(2) * ggplot2::.pt), grobs)
+  expect_length(arches, sum(skips$arch))
+  expect_length(dashes, 0)
 })
 
 test_that("autoplot draws plain links, then nodes, then the links that skip reference sequence, then arrowheads", {

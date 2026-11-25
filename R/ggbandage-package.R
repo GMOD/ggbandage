@@ -8,7 +8,7 @@ utils::globalVariables(c(
   "color", "alpha", "panel", "name", "stretch", "gene", "stops", "walk",
   "note", "xmin", "xmax", "kind", "label", "id", "position",
   "letter", "block", "key", "colour", "slide_x", "slide_y",
-  "strong", "text", "under", "swatch", "px", "dashed", "rim", "rim_px",
+  "strong", "text", "under", "swatch", "px", "dashed", "arch", "rim", "rim_px",
   "size", "x1", "y1", "x2", "y2", "fill", "start", "end", "halo",
   "deletion", "turn", "along", "runsOn"
 ))
