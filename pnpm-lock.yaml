@@ -12,8 +12,8 @@ importers:
         specifier: 3.13.1
         version: 3.13.1
       '@jbrowse/bandage-core':
-        specifier: ^14.5.0
-        version: 14.5.0
+        specifier: ^14.6.0
+        version: 14.6.0
       '@jbrowse/graph-walks':
         specifier: ^9.1.0
         version: 9.1.0
@@ -204,8 +204,8 @@ packages:
   '@gmod/tabix@3.13.1':
     resolution: {integrity: sha512-usyBxD1EQ/wfIzeT/wQsqJBT6aGZwgaIFG94lBYFhWdK+csHjQU7t9i/iIjDSCIcZFTFiQ1TFp3McCMf4aH/4A==}
 
-  '@jbrowse/bandage-core@14.5.0':
-    resolution: {integrity: sha512-LEhhNrLzxXYUQDu235yYhKvF9G7FeQwqtdjIyI9uvXQVP25vJkmUpEWzJRTqNJarsM0BKe9avxoxfdCl7GShxQ==}
+  '@jbrowse/bandage-core@14.6.0':
+    resolution: {integrity: sha512-onu+pRFWJ84A5Q2OXnS8ahz8AwXQel06+uPJ1zxDt7H+jWv1PPeBkeUJ7jkhElL7tsJ2HCYw+OI3zG5uPYytnQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -680,7 +680,7 @@ snapshots:
       '@jbrowse/quick-lru': 8.0.0
       generic-filehandle2: 2.5.1
 
-  '@jbrowse/bandage-core@14.5.0':
+  '@jbrowse/bandage-core@14.6.0':
     dependencies:
       '@gmod/gbz-base': 7.4.1
       '@gmod/tabix': 3.13.1
