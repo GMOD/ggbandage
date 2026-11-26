@@ -311,6 +311,19 @@ test_that("a walk's passes take the names given them, one name or many, and a gr
   expect_equal(nrow(bandage_layout(pggb, walks = "K12")$passes), 0)
 })
 
+test_that("the pass bar runs the bp core's bar does, for a walk whose record states no start too, along the walk", {
+  gfa <- tempfile(fileext = ".gfa")
+  on.exit(unlink(gfa))
+  writeLines(sub("\tdup\t1\tchr\t0\t15\t", "\tdup\t1\tchr\t*\t*\t", repeat_gfa, fixed = TRUE), gfa)
+  g <- bandage_layout(gfa, walks = by_pass(), engine = "stress")
+  expect_true(is.na(g$keys$start[g$keys$walk == "dup"]))
+  expect_equal(g$pass_bars$bp, 15)
+  expect_true(g$pass_bars$ownLengths)
+  built <- ggplot2::ggplot_build(bandage_pass_bar(g))
+  expect_equal(c(built$data[[1]]$xmin, built$data[[1]]$xmax), c(0, 15))
+  expect_equal(built$plot$scales$get_scales("x")$name, "bp along dup")
+})
+
 test_that("the pass bar draws the walk in its own colour, each pass's stretches in the pass's, under a bracket and a name", {
   gfa <- tempfile(fileext = ".gfa")
   on.exit(unlink(gfa))

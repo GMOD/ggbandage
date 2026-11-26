@@ -377,6 +377,7 @@ as_bandage_layout <- function(d) {
   sites <- upright(frame(if (is.null(d$sites)) no_sites else d$sites))
   passes <- frame(d$passes)
   pass_runs <- frame(d$passRuns)
+  pass_bars <- frame(d$passBars)
   graph_key <- frame(d$meta$graphKey)
   pane <- list(x = c(d$pane$minX, d$pane$maxX), y = -c(d$pane$maxY, d$pane$minY))
 
@@ -384,7 +385,7 @@ as_bandage_layout <- function(d) {
     list(
       nodes = nodes, edges = edges, arrows = arrows, rows = rows,
       panels = panels, keys = keys, genes = genes, exons = exons,
-      labels = labels, passes = passes, pass_runs = pass_runs,
+      labels = labels, passes = passes, pass_runs = pass_runs, pass_bars = pass_bars,
       sites = sites, graph_key = graph_key, pane = pane, meta = d$meta
     ),
     class = "bandage_layout"

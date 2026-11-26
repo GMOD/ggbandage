@@ -663,7 +663,7 @@ row_inks <- function(rows, layout, row = integer(), x = numeric(), breaks = NO_B
   } else {
     engine()$call(
       "bandage.walkRowInks",
-      columns_json(layout$keys[c("name", "stops", "field", "contig", "start", "end")]),
+      columns_json(layout$keys[intersect(c("name", "stops", "field", "contig", "start", "end", "ownLengths"), names(layout$keys))]),
       columns_json(rows[intersect(c("name", "bp", "contig", "contigStart"), names(rows))]),
       columns_json(data.frame(row = row, offset = x)),
       columns_json(pass_keys(layout)),

@@ -169,7 +169,9 @@ bandage_pass_bar <- function(layout) {
   }
   walks <- unique(passes$walk)
   key <- layout$keys[match(walks, layout$keys$walk), ]
-  bp <- key$end - key$start
+  bars <- layout$pass_bars[match(walks, layout$pass_bars$walk), ]
+  bp <- bars$bp
+  own <- all(bars$ownLengths)
   unit <- axis_unit(max(bp))
   at <- function(walk) length(walks) + 1 - match(walk, walks)
   bp_per_px <- max(bp) / (layout$meta$width - 2 * PASS_BAR_SIDE_PX)
@@ -208,7 +210,12 @@ bandage_pass_bar <- function(layout) {
       size = 3, fontface = "bold", vjust = 0
     ) +
     ggplot2::scale_x_continuous(
-      paste(unit$name, "along", if (length(walks) == 1) walks else "each walk"),
+      if (own) {
+        paste(unit$name, "along", if (length(walks) == 1) walks else "each walk")
+      } else {
+        paste(if (length(walks) == 1) walks else "each walk", "along its drawn route")
+      },
+      breaks = if (own) ggplot2::waiver() else NULL,
       labels = function(x) format(x / unit$bp, big.mark = ",", scientific = FALSE, trim = TRUE),
       expand = ggplot2::expansion(mult = 0.01)
     ) +
