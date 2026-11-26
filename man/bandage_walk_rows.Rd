@@ -32,7 +32,7 @@ the core crops to}
 to cut}
 
 \item{context}{on a walk file, bp of reference kept past each end of
-\code{region}; \code{NULL} keeps what the browser readers keep, graph-walks'
+\code{region}; \code{NULL} keeps what the browser readers keep, gfa-tabix's
 \code{WALK_CONTEXT}}
 
 \item{referencePath}{the reference walk, when it is not the one rank-0

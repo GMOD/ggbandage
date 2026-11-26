@@ -1,5 +1,5 @@
 import { TabixIndexedFile } from '@gmod/tabix'
-import { rgfaCut } from '@jbrowse/graph-walks'
+import { GfaTabixFile } from '@gmod/gfa-tabix'
 
 import { rangeFile } from './v8-host.mjs'
 
@@ -63,7 +63,7 @@ export async function cutTabix({
     await (files.graph ?? files.segments).getReferenceSequenceNames(),
     refName,
   )
-  return rgfaCut(files, { refName: name, start, end }, { hops: 1 })
+  return new GfaTabixFile(files).getGraphForRange(name, start, end, { hops: 1 })
 }
 
 // The lines of an indexed file under a region, as one string

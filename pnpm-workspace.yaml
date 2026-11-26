@@ -5,6 +5,7 @@ allowBuilds:
 minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - '@jbrowse/*'
+  - '@gmod/gfa-tabix'
   - '@gmod/tabix@3.13.1'
   - oxlint@1.92.0
   - '@oxlint/*'

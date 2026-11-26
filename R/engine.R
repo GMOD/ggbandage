@@ -25,7 +25,7 @@ loaded <- new.env(parent = emptyenv())
 
 read_text <- function(path) paste(read_lines(path), collapse = "\n")
 
-# A format 7 walk file, or an older .walks.bed.gz, which graph-walks refuses
+# A format 7 walk file, or an older .walks.bed.gz, which gfa-tabix refuses
 # by name, asking for a rebuild
 is_walk_file <- function(x) grepl("\\.walks(\\.bed)?\\.gz$", bare_name(x))
 
@@ -184,7 +184,7 @@ walk_origin <- function(walk) {
 #' @param haplotypes on a walk file, the `sample#haplotype` walks to cut, every
 #'   one when `NULL`
 #' @param context on a walk file, bp of reference kept past each end of
-#'   `region`; `NULL` keeps what the browser readers keep, graph-walks'
+#'   `region`; `NULL` keeps what the browser readers keep, gfa-tabix's
 #'   `WALK_CONTEXT`
 #' @param links on a walk file, the links drawn: `"walked"`, the default, for
 #'   those walked by the haplotypes shown, which are the reference and the

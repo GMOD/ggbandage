@@ -12,16 +12,16 @@ fetches every byte it reads.
 - **In:** a `<prefix>.<sample>.walks.gz` from `gfa-to-tabix --walks`, in
   walk format 8 (gfa-to-tabix 5.0 or later), with its directory
   `<prefix>.<sample>.walks.gz.idx` beside it, and a `region`. A format 7
-  file fails with graph-walks' `WalkFormatError`, which asks for a rebuild
+  file fails with gfa-tabix's `WalkFormatError`, which asks for a rebuild
 - **Out:** the reference over the region, `context` bp past each end, the
   walks of the `haplotypes` asked for, and every departure from the reference
   over the cut, as graph tables
-- `walkCut` in `scripts/walks-cut.mjs` opens the file with
-  [@jbrowse/graph-walks](https://github.com/GMOD/graph-walks)'
-  `WalkReader.open(file, openFile)`, where `openFile` gives the reader a
-  handle over the R byte-range callback below for the file and for its
-  `.idx`, which the reader names from the file's location, before any query
-  string. It then calls `cutRegion`, as BandageJS does
+- `walkCut` in `scripts/walks-cut.mjs` opens the file as
+  [@gmod/gfa-tabix](https://github.com/GMOD/gfa-tabix-js)'s
+  `new WalkFile({ walksFilehandle, idxFilehandle })`, where `openFile` gives
+  each a handle over the R byte-range callback below: one for the file and
+  one for its `.idx`, named from the file's location, before any query
+  string. It then calls `getGraphForRange`, as BandageJS does
 - `bandage_layout()` and `bandage_walk_rows()` send the cut's request, not
   its text: `bandage.figure` and `bandage.walkRows` cut in V8 and hand the
   tables to bandage-core's `loadGraph`. GFA has no line for a departure or
@@ -31,11 +31,11 @@ fetches every byte it reads.
 - bandage-core's `laidOutGraph` takes GFA text only, so `scripts/figure.mjs`
   lays out the loaded graph with the same calls
 - `bandage_layout()` and `bandage_gfa()` pass their `links` argument to the
-  cut as graph-walks' option of the same name and values. Links drawn:
+  cut as gfa-tabix's option of the same name and values. Links drawn:
   `"walked"`, the default, walked by the haplotypes shown, or `"between"`,
   taken by any haplotype between the nodes shown. `bandage_walk_rows()` and
   `bandage_walk_steps()` read walks alone, so their cuts stay on `"walked"`
-- The cut takes graph-walks' `CUT_PRESETS.figure`: the browser readers'
+- The cut takes gfa-tabix's `CUT_PRESETS.figure`: the browser readers'
   `context`, `contained` and `attachBp`, so a region draws the graph BandageJS,
   the JBrowse graph plugin and sequenceTubeMap draw, with the step, byte and
   departure-read budgets lifted, since R asks for one region and waits. It
@@ -55,8 +55,8 @@ bandage_layout()            R/engine.R
     @gmod/tabix             asks its filehandles for bytes
       console.r.call()      V8 calls back into R, synchronously
         fetch_range()       R/standalone-byte-ranges.R    reads a local file or sends a Range request
-    rgfaCut()               @jbrowse/graph-walks: the segments and links under
-                            the region, as GFA text
+    GfaTabixFile            @gmod/gfa-tabix: getGraphForRange() gives the
+                            segments and links under the region, as GFA text
   bandage.figure()          scripts/figure.mjs: bandage-core lays the GFA out,
                             as for any GFA file
 ```
@@ -91,7 +91,7 @@ with those it does. The cut keeps a link when:
 
 The cut also adds the segments at the far end of each kept link, so a window
 shows the neighbour each edge leads to. The JBrowse graph plugin cuts with the
-same `rgfaCut`, so the two draw the same cut.
+same `GfaTabixFile`, so the two draw the same cut.
 
 ### A segment index at HPRC scale
 
@@ -126,7 +126,7 @@ Timed on 2026-10-30 over a home connection, with `layout = "auto"`:
 ## Why the bytes come from R
 
 V8 has no file system or network access, so `rangeFile` in `v8-host.mjs`
-gives `@gmod/tabix` and graph-walks' `WalkReader` a filehandle whose
+gives `@gmod/tabix` and gfa-tabix's `WalkFile` a filehandle whose
 `read(length, position)` calls `ggbandage:::fetch_range` through
 `console.r.call`, and whose `stat()` calls `ggbandage:::fetch_size`. Walk
 files, their `.idx` directories and segment indexes all read through it.
@@ -143,7 +143,7 @@ files, their `.idx` directories and segment indexes all read through it.
   and the `.idx`
 - `fetch_size` answers a local file's size, or the total a server's
   `Content-Range` states for a one-byte GET, which a presigned URL allows
-  where a HEAD is not. graph-walks checks it against the byte count the
+  where a HEAD is not. gfa-tabix checks it against the byte count the
   `.idx` states, and takes 0, which a server stating no size gives, as unknown
 - A range that runs past the end of a file returns the bytes that exist, and
   an HTTP 416 reads as no bytes, because the reader asks for whole 64 kB
@@ -189,7 +189,7 @@ against it.
 
 ## The engine bundle
 
-`inst/js/bandage.js` is bandage-core, the tabix reader and graph-walks bundled
+`inst/js/bandage.js` is bandage-core, the tabix reader and gfa-tabix bundled
 for V8, committed so installing needs no JavaScript toolchain. Its first line
 names the core release it was built from, the one `package.json` pins. To
 take the latest releases by hand:
@@ -301,7 +301,7 @@ gfa-to-tabix ecoli_pggb_subgraph.gfa --reference K12 --layout contig -o ecoli_co
 The walk files are format 8, made with gfa-to-tabix 5.0.0 by
 `tests/testthat/testdata/build.sh <gfa-to-tabix>` from the GFAs beside them:
 the pggb GFA's, the same with its two costliest paths abridged, the
-departures `records.GRCh38.gfa` states (graph-walks' fixture of that name),
+departures `records.GRCh38.gfa` states (gfa-tabix's fixture of that name),
 and haplotypes with no step on the reference across a window. Each is a
 `.walks.gz` with its `.idx` directory.
 

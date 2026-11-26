@@ -23,7 +23,7 @@ the core crops to}
 one when \code{NULL}}
 
 \item{context}{on a walk file, bp of reference kept past each end of
-\code{region}; \code{NULL} keeps what the browser readers keep, graph-walks'
+\code{region}; \code{NULL} keeps what the browser readers keep, gfa-tabix's
 \code{WALK_CONTEXT}}
 }
 \value{

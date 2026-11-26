@@ -1398,7 +1398,7 @@ test_that("links = \"between\" adds the links another haplotype takes between th
   expect_gt(length(unique(drawn("between")$edges$edge)), length(unique(drawn("walked")$edges$edge)))
 })
 
-test_that("links takes graph-walks' two words and no other, and walk rows and steps take none", {
+test_that("links takes gfa-tabix's two words and no other, and walk rows and steps take none", {
   expect_error(bandage_gfa(records, "chr1:1-10000", links = "all"), "should be one of")
   expect_error(bandage_layout(records, region = "chr1:1-10000", links = "none"), "should be one of")
   expect_error(bandage_layout(pggb, links = "none"), "should be one of")
